@@ -222,14 +222,14 @@ rt.sizeDelta = Vector2.zero;
 
 ## 七、Text 方案
 
-**当前阶段使用 UGUI Text（`UnityEngine.UI.Text`），不使用 TextMeshPro。**
+**当前阶段使用 TextMeshPro（TMP），不再使用 UGUI Text（`UnityEngine.UI.Text`）。**
 
-原因：
+- UI 文字渲染已全量迁移到 `TextMeshProUGUI`。
+- 新增 UI 必须使用 TMP 节点，前缀为 `m_text_` / `m_tmp_`。
+- 默认字体资产路径：`Assets/AssetRaw/Fonts/MainUIFont.asset`。
+- 如需将旧 UGUI Text 迁移到 TMP，可使用菜单 `Tools/Migration/Migrate UI Prefabs to TMP`。
 
-- 项目当前已全部基于 UGUI Text
-- HUD 类界面以数字和短文本为主，UGUI 够用
-- 切换 TMP 需要批量替换所有 Text 节点和代码，改动大
-- 等后续多语言或复杂字体效果需求明确后，再统一评估迁移
+> 历史说明：本文档早期版本曾建议继续使用 UGUI Text，该内容已过期。
 
 ---
 

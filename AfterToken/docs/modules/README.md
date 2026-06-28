@@ -1,7 +1,8 @@
 # 模块文档索引
 
 > 模块按系统分类存放。
-> 每次开始新模块前，在对应分类下创建 `<module-name>/README.md` 与 `<module-name>/progress.md`，并同步更新 `docs/TODO.md`。」
+> 每次开始新模块前，在对应分类下创建 `<module-name>/README.md` 与 `<module-name>/progress.md`，并同步更新 `docs/TODO.md`。
+> 所有新增模块代码必须遵循项目规范：`../standards/CODING_STANDARDS.md`。
 
 ## 目录结构
 
@@ -78,7 +79,8 @@ docs/modules/
 | `asset-pipeline` | [README](./pipeline/asset-pipeline/README.md) | [progress](./pipeline/asset-pipeline/progress.md) |
 | `editor-tools` | [README](./pipeline/editor-tools/README.md) | [progress](./pipeline/editor-tools/progress.md) |
 | `hotfix-pipeline` | [README](./pipeline/hotfix-pipeline/README.md) | [progress](./pipeline/hotfix-pipeline/progress.md) |
-| `luban-config-system` | [README](./pipeline/luban-config-system/README.md) | [progress](./pipeline/luban-config-system/progress.md) |
+| `config-system`（配置表系统总览） | [README](./pipeline/config-system/README.md) | [progress](./pipeline/config-system/progress.md) |
+| `luban-config-system`（Luban 详细配置） | [README](./pipeline/luban-config-system/README.md) | [progress](./pipeline/luban-config-system/progress.md) |
 
 ## 文件模板
 
