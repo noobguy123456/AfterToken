@@ -26,7 +26,6 @@ namespace GameLogic
         #endregion
 
         [Header("伤害指示器")]
-        [SerializeField] private float _indicatorShowDuration = 1f;
         [SerializeField] private float _indicatorFadeSpeed = 2f;
 
         public static HitFeedbackUI Instance { get; private set; }

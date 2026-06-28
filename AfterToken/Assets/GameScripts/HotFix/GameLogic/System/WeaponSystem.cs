@@ -312,5 +312,16 @@ namespace GameLogic
         {
             return CurrentWeapon != null && CurrentWeapon.Config.aimAssistEnabled;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// GM：直接装备并切换到指定武器。
+        /// </summary>
+        public void GM_EquipAndSwitch(int weaponConfigId)
+        {
+            EquipWeapon(_currentSlot, weaponConfigId);
+            SwitchToSlot(_currentSlot);
+        }
+#endif
     }
 }

@@ -1,0 +1,44 @@
+@echo off
+setlocal
+
+set LUBAN_DLL=..\..\Tools\Luban\Luban.dll
+set CONF_ROOT=%CD%
+set CODE_OUT=..\..\Assets\GameScripts\HotFix\GameProto
+set DATA_OUT=..\..\Assets\AssetRaw\Configs\bytes
+
+echo [Luban] 开始生成配置表...
+echo [Luban] 配置根目录: %CONF_ROOT%
+echo [Luban] 代码输出: %CODE_OUT%
+echo [Luban] 数据输出: %DATA_OUT%
+
+if not exist "%LUBAN_DLL%" (
+    echo [Luban] 错误: 找不到 %LUBAN_DLL%
+    echo [Luban] 请从 https://github.com/focus-creative-games/luban/releases 下载 Luban.dll 放到 Tools/Luban/ 目录
+    pause
+    exit /b 1
+)
+
+:: 复制桥接文件
+xcopy /Y /I "%CONF_ROOT%\CustomTemplate\ConfigSystem.cs" "%CODE_OUT%\ConfigSystem.cs"
+xcopy /Y /I "%CONF_ROOT%\CustomTemplate\ExternalTypeUtil.cs" "%CODE_OUT%\ExternalTypeUtil.cs"
+
+:: 生成代码和数据
+dotnet "%LUBAN_DLL%" ^
+    -t client ^
+    -c cs-bin ^
+    -d bin ^
+    --conf "%CONF_ROOT%\luban.conf" ^
+    --customTemplateDir "%CONF_ROOT%\CustomTemplate\CustomTemplate_Client_LazyLoad" ^
+    -x outputCodeDir="%CODE_OUT%\GameConfig" ^
+    -x outputDataDir="%DATA_OUT%"
+
+if %ERRORLEVEL% neq 0 (
+    echo [Luban] 生成失败
+    pause
+    exit /b %ERRORLEVEL%
+)
+
+echo [Luban] 生成成功
+echo [Luban] 代码: %CODE_OUT%\GameConfig
+echo [Luban] 数据: %DATA_OUT%
+pause

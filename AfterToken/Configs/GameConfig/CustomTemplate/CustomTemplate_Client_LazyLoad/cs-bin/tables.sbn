@@ -1,0 +1,39 @@
+using System;
+using Luban;
+
+namespace {{namespace}}
+{
+{{for table in tables}}
+    public partial class {{table.name}}
+    {
+    }
+{{end}}
+
+    public partial class Tables
+    {
+{{for table in tables}}
+        private {{table.full_name}} _{{table.name}};
+        public {{table.full_name}} {{table.name}}
+        {
+            get
+            {
+                if (_{{table.name}} == null)
+                {
+                    _{{table.name}} = new {{table.full_name}}(_byteBufLoader);
+                }
+                return _{{table.name}};
+            }
+        }
+{{end}}
+
+        private Func<string, ByteBuf> _byteBufLoader;
+
+        public Tables(Func<string, ByteBuf> byteBufLoader)
+        {
+            _byteBufLoader = byteBufLoader;
+{{for table in tables}}
+            {{table.name}} = new {{table.full_name}}(byteBufLoader);
+{{end}}
+        }
+    }
+}

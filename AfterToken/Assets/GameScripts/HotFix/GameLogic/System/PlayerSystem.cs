@@ -21,6 +21,9 @@ namespace GameLogic
         private int _maxHp = 100;
         private int _currentHp = 100;
 
+        public int CurrentHp => _currentHp;
+        public int MaxHp => _maxHp;
+
         /// <summary>
         /// 设置玩家最大血量（需在创建玩家前调用）。
         /// </summary>
@@ -166,6 +169,27 @@ namespace GameLogic
         /// 获取玩家实体。
         /// </summary>
         public PlayerEntity GetPlayerEntity() => _playerEntity;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// GM：设置当前血量。
+        /// </summary>
+        public void GM_SetHp(int hp)
+        {
+            _currentHp = Mathf.Clamp(hp, 0, _maxHp);
+            GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
+        }
+
+        /// <summary>
+        /// GM：设置最大血量并回满。
+        /// </summary>
+        public void GM_SetMaxHp(int maxHp)
+        {
+            _maxHp = Mathf.Max(1, maxHp);
+            _currentHp = _maxHp;
+            GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
+        }
+#endif
 
         /// <summary>
         /// 获取玩家位置。

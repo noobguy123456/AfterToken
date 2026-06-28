@@ -1,0 +1,24 @@
+[
+  {
+    "id": 9001,
+    "name": "Training Dummy",
+    "maxHp": 50,
+    "moveSpeed": 2,
+    "rotationSpeed": 360,
+    "attackDamage": 10,
+    "attackRange": 1.5,
+    "attackInterval": 1,
+    "prefab": "Enemy_Dummy"
+  },
+  {
+    "id": 9002,
+    "name": "Assault Bot",
+    "maxHp": 80,
+    "moveSpeed": 3,
+    "rotationSpeed": 360,
+    "attackDamage": 15,
+    "attackRange": 2,
+    "attackInterval": 1.2,
+    "prefab": "Enemy_Assault"
+  }
+]

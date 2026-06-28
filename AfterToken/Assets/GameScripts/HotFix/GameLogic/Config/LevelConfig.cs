@@ -1,7 +1,7 @@
 namespace GameLogic
 {
     /// <summary>
-    /// 关卡配置（临时实现，后续由 Luban 生成替代）。
+    /// 关卡配置（对 Luban 生成配置的运行时适配）。
     /// </summary>
     public class LevelConfig
     {
@@ -54,5 +54,21 @@ namespace GameLogic
         /// 敌人最大血量。
         /// </summary>
         public int enemyMaxHp;
+
+        public LevelConfig() { }
+
+        public LevelConfig(GameConfig.cfg.Level level)
+        {
+            id = level.Id;
+            displayName = level.DisplayName;
+            sceneName = level.SceneName;
+            description = level.Description;
+            defaultWeaponIds = level.DefaultWeaponIds;
+            playerMaxHp = level.PlayerMaxHp;
+            enemyCount = level.EnemyCount;
+            enemySpawnRadius = level.EnemySpawnRadius;
+            enemyConfigId = level.EnemyConfigId;
+            enemyMaxHp = level.EnemyMaxHp;
+        }
     }
 }

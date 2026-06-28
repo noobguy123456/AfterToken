@@ -12,7 +12,6 @@ namespace GameLogic
         public static HitFeedbackSystem Instance { get; private set; }
 
         [Header("伤害指示器")]
-        [SerializeField] private float _indicatorShowDuration = 1f;
 
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
 

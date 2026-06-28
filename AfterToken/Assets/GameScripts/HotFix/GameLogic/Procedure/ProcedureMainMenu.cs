@@ -18,6 +18,12 @@ namespace GameLogic
                 HideLauncherUI();
                 await GameModule.UI.ShowUIAsyncAwait<MainMenuUI>();
                 Log.Debug("[ProcedureMainMenu] MainMenuUI 已打开");
+
+#if UNITY_EDITOR
+                // TODO: 临时调试入口，自动进入战斗
+                await UniTask.Delay(500, cancellationToken: ct);
+                GameApp.ChangeProcedure<ProcedureBattle>();
+#endif
             });
         }
 

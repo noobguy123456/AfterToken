@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "displayName": "Training Ground",
+    "sceneName": "BattleScene",
+    "description": "Basic training level.",
+    "defaultWeaponIds": [
+      1001,
+      1002,
+      1003
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 3,
+    "enemySpawnRadius": 6,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 50
+  },
+  {
+    "id": 2,
+    "displayName": "Abandoned Factory",
+    "sceneName": "BattleScene_L01",
+    "description": "Advanced level with more enemies.",
+    "defaultWeaponIds": [
+      1002,
+      1003,
+      1004
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 5,
+    "enemySpawnRadius": 8,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 80
+  }
+]

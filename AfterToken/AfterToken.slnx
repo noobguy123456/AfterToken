@@ -10,9 +10,9 @@
   <Project Path="GameLogic.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="YooAsset.RuntimeExtension.csproj" />
+  <Project Path="GameProto.csproj" />
   <Project Path="YooAsset.EditorExtension.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="GameProto.csproj" />
   <Project Path="HybridCLR.Runtime.csproj" />
   <Project Path="UniTask.Addressables.csproj" />
   <Project Path="UniTask.Editor.csproj" />

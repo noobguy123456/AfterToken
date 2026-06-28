@@ -52,7 +52,7 @@ docs/
 | `MainMenuUI` | `Assets/AssetRaw/UI/MainMenuUI/MainMenuUI.prefab` | 全屏 |
 | `LobbyUI` | `Assets/AssetRaw/UI/LobbyUI/LobbyUI.prefab` | 全屏 |
 | `LoadingUI` | `Assets/AssetRaw/UI/LoadingUI/LoadingUI.prefab` | `UILayer.System` |
-| `BattleMainUI` | `Assets/AssetRaw/UI/BattleMainUI.prefab` | HUD |
+| `BattleMainUI` | `Assets/AssetRaw/UI/BattleMainUI/BattleMainUI.prefab` | HUD |
 | `DamageNumberUI` | `Assets/AssetRaw/UI/DamageNumberUI/DamageNumberUI.prefab` | 伤害飘字 |
 | `HitFeedbackUI` | `Assets/AssetRaw/UI/HitFeedbackUI/HitFeedbackUI.prefab` | `UILayer.System` |
 | `WeaponWheelUI` | `Assets/AssetRaw/UI/WeaponWheelUI/WeaponWheelUI.prefab` | 武器轮盘 |
@@ -69,7 +69,7 @@ docs/
 | 资源加载 | [resource-api.md](references/resource-api.md) | [resource-patterns.md](references/resource-patterns.md) | P0 |
 | 模块使用 | [modules.md](references/modules.md) | — | P0 |
 | 热更代码 | [hotfix-workflow.md](references/hotfix-workflow.md) | — | P1 |
-| 代码规范 | [naming-rules.md](references/naming-rules.md) | — | P1 |
+| 代码规范 | [CODING_STANDARDS.md](../../../docs/standards/CODING_STANDARDS.md) | [naming-rules.md](references/naming-rules.md) | P0 |
 | Luban 配置 | [luban-config.md](references/luban-config.md) | — | P1 |
 | 项目结构 | [architecture.md](references/architecture.md) | — | P2 |
 | 问题排查 | [troubleshooting.md](references/troubleshooting.md) | — | P2 |

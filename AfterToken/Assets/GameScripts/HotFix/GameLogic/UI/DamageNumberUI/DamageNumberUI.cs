@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
+using UnityEngine.UI;
 using TEngine;
 
 namespace GameLogic
@@ -13,29 +13,28 @@ namespace GameLogic
     public class DamageNumberUI : UIWindow
     {
         #region 脚本工具生成的代码
-        private TextMeshProUGUI _textTemplate;
+        private Text _textTemplate;
         private RectTransform _rootRect;
 
         protected override void ScriptGenerator()
         {
-            _textTemplate = FindChildComponent<TextMeshProUGUI>("m_text_Template");
+            _textTemplate = FindChildComponent<Text>("m_text_Template");
             _rootRect = rectTransform;
         }
         #endregion
 
         [Header("飘字动画")]
         [SerializeField] private int _poolSize = 16;
-        [SerializeField] private float _floatSpeed = 60f;
         [SerializeField] private float _fadeDuration = 0.8f;
         [SerializeField] private float _moveOffset = 40f;
 
         private static DamageNumberUI _instance;
-        private readonly Queue<TextMeshProUGUI> _pool = new Queue<TextMeshProUGUI>();
+        private readonly Queue<Text> _pool = new Queue<Text>();
         private readonly List<ActiveNumber> _activeNumbers = new List<ActiveNumber>();
 
         private class ActiveNumber
         {
-            public TextMeshProUGUI Text;
+            public Text Text;
             public float Timer;
             public Vector2 StartPos;
         }
@@ -45,6 +44,9 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             _instance = this;
+            // 兜底：无论Prefab中模板是否隐藏，都确保模板节点 inactive。
+            var templateTransform = rectTransform?.Find("m_text_Template");
+            templateTransform?.gameObject.SetActive(false);
             InitializePool();
             Log.Debug("[DamageNumberUI] 已创建");
         }
@@ -80,7 +82,7 @@ namespace GameLogic
             if (_textTemplate == null || _rootRect == null) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rootRect, screenPos, null, out var localPos)) return;
 
-            TextMeshProUGUI txt;
+            Text txt;
             if (_pool.Count > 0)
             {
                 txt = _pool.Dequeue();
@@ -133,7 +135,7 @@ namespace GameLogic
             }
         }
 
-        private void ReturnToPool(TextMeshProUGUI txt)
+        private void ReturnToPool(Text txt)
         {
             txt.gameObject.SetActive(false);
             _pool.Enqueue(txt);

@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "levelId": 1,
+    "waveIndex": 1,
+    "enemyId": 9001,
+    "count": 3,
+    "spawnInterval": 1,
+    "spawnRadius": 6
+  },
+  {
+    "id": 2,
+    "levelId": 1,
+    "waveIndex": 2,
+    "enemyId": 9001,
+    "count": 2,
+    "spawnInterval": 1,
+    "spawnRadius": 6
+  },
+  {
+    "id": 3,
+    "levelId": 1,
+    "waveIndex": 3,
+    "enemyId": 9002,
+    "count": 1,
+    "spawnInterval": 1,
+    "spawnRadius": 6
+  },
+  {
+    "id": 4,
+    "levelId": 2,
+    "waveIndex": 1,
+    "enemyId": 9001,
+    "count": 3,
+    "spawnInterval": 1,
+    "spawnRadius": 8
+  },
+  {
+    "id": 5,
+    "levelId": 2,
+    "waveIndex": 2,
+    "enemyId": 9002,
+    "count": 2,
+    "spawnInterval": 1.5,
+    "spawnRadius": 8
+  }
+]

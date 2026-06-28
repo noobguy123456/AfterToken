@@ -1,0 +1,59 @@
+[
+  {
+    "id": 10000,
+    "name": "新手剑",
+    "desc": "初始武器",
+    "price": 100,
+    "quality": 0,
+    "upgradeToItemId": 10001,
+    "batchUseable": false,
+    "exchangeList": [
+      {
+        "id": 10001,
+        "num": 2
+      }
+    ]
+  },
+  {
+    "id": 10001,
+    "name": "铁剑",
+    "desc": "进阶武器",
+    "price": 200,
+    "quality": 1,
+    "upgradeToItemId": 10002,
+    "batchUseable": false,
+    "exchangeList": [
+      {
+        "id": 10001,
+        "num": 2
+      },
+      {
+        "id": 10002,
+        "num": 3
+      }
+    ]
+  },
+  {
+    "id": 10002,
+    "name": "钢剑",
+    "desc": "高级武器",
+    "price": 500,
+    "quality": 2,
+    "upgradeToItemId": 10003,
+    "batchUseable": false,
+    "exchangeList": [
+      {
+        "id": 10001,
+        "num": 2
+      },
+      {
+        "id": 10002,
+        "num": 3
+      },
+      {
+        "id": 10003,
+        "num": 1
+      }
+    ]
+  }
+]

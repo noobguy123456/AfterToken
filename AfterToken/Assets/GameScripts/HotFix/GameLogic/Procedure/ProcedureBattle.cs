@@ -62,6 +62,10 @@ namespace GameLogic
             _battleRoot.AddComponent<HitFeedbackSystem>();
             _battleRoot.AddComponent<PoolSystem>();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _battleRoot.AddComponent<GameLogic.GM.GMController>();
+#endif
+
             var mainCamera = Camera.main;
             if (mainCamera != null)
             {

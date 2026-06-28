@@ -82,5 +82,16 @@ namespace GameLogic
 
             return spread;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// GM：设置当前弹药。
+        /// </summary>
+        public void GM_SetAmmo(int ammo)
+        {
+            CurrentAmmo = Mathf.Clamp(ammo, 0, Config.clipSize);
+            GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
+        }
+#endif
     }
 }

@@ -11,8 +11,9 @@ namespace GameLogic
 
         protected override void OnUpdate(IFsm<PlayerEntity> fsm, float elapse, float real)
         {
-            var owner = fsm.Owner;
+            base.OnUpdate(fsm, elapse, real);
 
+            var owner = fsm.Owner;
             if (owner.MoveDirection.sqrMagnitude > 0.001f)
             {
                 ChangeState<PlayerMoveState>(fsm);

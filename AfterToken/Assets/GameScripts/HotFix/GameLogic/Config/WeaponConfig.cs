@@ -3,7 +3,7 @@ using UnityEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 武器配置（临时实现，后续由 Luban 生成替代）。
+    /// 武器配置（对 Luban 生成配置的运行时适配）。
     /// </summary>
     public class WeaponConfig
     {
@@ -69,5 +69,72 @@ namespace GameLogic
         public string hitEffect;
         public string fireSound;
         public string reloadSound;
+
+        public WeaponConfig() { }
+
+        public WeaponConfig(GameConfig.cfg.Weapon w)
+        {
+            id = w.Id;
+            name = w.Name;
+            weaponType = (WeaponType)w.WeaponType;
+            ballisticType = (BallisticType)w.BallisticType;
+            fireMode = (FireMode)w.FireMode;
+            damage = w.Damage;
+            fireRate = w.FireRate;
+            clipSize = w.ClipSize;
+            reloadTime = w.ReloadTime;
+            maxRange = w.MaxRange;
+            baseSpread = w.BaseSpread;
+            moveSpreadMultiplier = w.MoveSpreadMultiplier;
+            fireSpreadIncrement = w.FireSpreadIncrement;
+            spreadRecoveryRate = w.SpreadRecoveryRate;
+            aimSpreadMultiplier = w.AimSpreadMultiplier;
+            moveSpeedMultiplier = w.MoveSpeedMultiplier;
+            fireMoveSpeedMultiplier = w.FireMoveSpeedMultiplier;
+            aimFov = w.AimFov;
+            aimSensitivityMultiplier = w.AimSensitivityMultiplier;
+            aimAssistEnabled = w.AimAssistEnabled;
+            tracerSpeed = w.TracerSpeed;
+            tracerDelay = w.TracerDelay;
+            projectileSpeed = w.ProjectileSpeed;
+            projectileLifeTime = w.ProjectileLifeTime;
+            projectilePrefab = w.ProjectilePrefab;
+            explosionRadius = w.ExplosionRadius;
+            explosionDamageFalloff = w.ExplosionDamageFalloff;
+            recoilIntensity = w.RecoilIntensity;
+            raycastRadius = w.RaycastRadius;
+            hitLayers = ParseLayerMask(w.HitLayers);
+            showDebugRay = w.ShowDebugRay;
+            debugRayDuration = w.DebugRayDuration;
+            debugHitColor = ToUnityColor(w.DebugHitColor);
+            debugMissColor = ToUnityColor(w.DebugMissColor);
+            trackingTime = w.TrackingTime;
+            trackingLaserColor = ToUnityColor(w.TrackingLaserColor);
+            lockOnSound = w.LockOnSound;
+            muzzleEffect = w.MuzzleEffect;
+            hitEffect = w.HitEffect;
+            fireSound = w.FireSound;
+            reloadSound = w.ReloadSound;
+        }
+
+        private static LayerMask ParseLayerMask(string layers)
+        {
+            if (string.IsNullOrWhiteSpace(layers)) return 0;
+            var mask = 0;
+            foreach (var part in layers.Split(',', ';'))
+            {
+                var layerName = part.Trim();
+                if (string.IsNullOrEmpty(layerName)) continue;
+                var layer = LayerMask.NameToLayer(layerName);
+                if (layer >= 0) mask |= 1 << layer;
+            }
+            return mask;
+        }
+
+        private static Color ToUnityColor(GameConfig.cfg.Color c)
+        {
+            if (c == null) return Color.white;
+            return new Color(c.R, c.G, c.B, c.A);
+        }
     }
 }
