@@ -182,6 +182,57 @@ private void OnSetWindowVisible()
 2. **输入隔离**：避免下方窗口的按钮被误触。
 3. **符合直觉的窗口堆叠**：手机/PC 游戏中，全屏弹窗打开时，背后的界面通常不可交互。
 
+### 关键机制补充
+
+#### `Visible = false` 只改根节点 layer
+
+`UIWindow.Visible` 的 setter 会把窗口根 `Canvas.gameObject` 的 `layer` 设为 `WINDOW_HIDE_LAYER`（`Ignore Raycast`，值 2），子 `Canvas` 也会同步修改，但**普通子节点不会递归改 layer**。
+
+- 被隐藏的窗口 GameObject 仍然是 `active` 的，内存和独立 `MonoBehaviour.Update` 仍会运行。
+- 如果 UI 结构复杂，部分子节点可能仍保持可见，但 `UIWindow.OnUpdate()` 已经停止，逻辑层处于“冻结”状态。
+- 因此需要持续运行的逻辑必须拆到独立 `MonoBehaviour`（见 `CrosshairUpdater`、`DamageNumberUpdater`），而不是依赖 `UIWindow.OnUpdate`。
+
+#### `OnUpdate` 停止条件
+
+`UIModule.OnUpdate()` 每帧遍历 `_uiStack` 并调用 `UIWindow.InternalUpdate()`，而 `InternalUpdate()` 第一行就是：
+
+```csharp
+if (!IsPrepare || !Visible)
+    return false;
+```
+
+所以 `OnUpdate()` 会在以下情况停止：
+
+1. 窗口尚未加载完成（`!IsPrepare`）。
+2. 窗口被隐藏（`Visible == false`）：被全屏窗口遮挡、被 `HideUI()`、或栈规则判定隐藏。
+3. 窗口已关闭并从 `_uiStack` 移除。
+
+#### 子窗口 / `UIWidget` 更新规则
+
+`UIWidget` 的更新依赖父级 `UIBase` 的更新列表：
+
+- 若 `OnUpdate()` 没有把 `_hasOverrideUpdate` 置为 `true`，该 Widget 会被父级移出更新列表，后续不再调用其 `OnUpdate()`。
+- 需要恢复更新时，手动调用 `SetUpdateDirty()`。
+- Widget 更新不检查自身 `Visible` / `gameObject.activeSelf`，只依赖所属 `UIWindow` 的 `Visible`。
+
+#### `HideUI` 的默认超时
+
+`WindowAttribute` 默认 `hideTimeToClose = 10` 秒。调用 `HideUI()` 后，若 10 秒内没有重新打开，窗口会被自动 `CloseUI()` 销毁。
+
+若希望隐藏后长期保留，需显式设置 `hideTimeToClose = 0`，或避免使用 `HideUI()`。
+
+#### 同层窗口数量上限
+
+层级深度计算：`depth = layer * 2000 + index * 100`，同层间距 100。
+
+- `Bottom`：0, 100, ...
+- `UI`：2000, 2100, ...
+- `Top`：4000, 4100, ...
+- `Tips`：6000, ...
+- `System`：8000, ...
+
+同层超过 20 个窗口后，`sortingOrder` 会进入下一个 `UILayer` 的范围，可能导致渲染顺序混乱。
+
 ### 对后续 UI 开发的影响
 
 1. **`OnUpdate` 会停止执行**
@@ -195,8 +246,10 @@ private void OnSetWindowVisible()
    只要栈中有一个全屏窗口在上方，它下方的所有窗口都会被隐藏。例如：
    - 打开 `BattleMainUI`（非全屏）
    - 打开 `DamageNumberUI`（非全屏）
-   - 打开 `HitFeedbackUI`（全屏）
-   - 结果：`HitFeedbackUI` 显示，`BattleMainUI` 和 `DamageNumberUI` 被隐藏。
+   - 打开 `WeaponWheelUI`（全屏）
+   - 结果：`WeaponWheelUI` 显示，`BattleMainUI` 和 `DamageNumberUI` 被隐藏。
+   
+   > 注意：`HitFeedbackUI` 曾是 `FullScreen = true`，导致战斗中常驻 HUD 被隐藏、武器轮盘/狙击镜无法显示，已修复为 `FullScreen = false`。
 
 3. **层级和打开顺序共同决定显隐**
    
@@ -224,6 +277,53 @@ private void OnSetWindowVisible()
 | `BattleSceneSetup` | `Assets/Editor/BattleSetup/BattleSceneSetup.cs` | `Battle/Setup Battle Scene & Resources` | 一键初始化/更新战斗 Prefab、场景、UI，并执行 SimulateBuild |
 | `UIPrefabGenerator` | `Assets/Editor/UI/UIPrefabGenerator.cs` | `Tools/UI/Create UI Prefab` | 单个 UI 脚本 + Prefab 生成 |
 | `TMPPrefabMigrator` | `Assets/Editor/TMPMigration/TMPPrefabMigrator.cs` | `Tools/Migration/Migrate UI Prefabs to TMP` | 将现有 UI Prefab 的 uGUI Text 迁移为 TextMeshProUGUI |
+
+## 已修复的框架相关 Bug
+
+### 1. 准星在鼠标移动时停止跟随
+
+**原因**：`BattleMainUI` 不是全屏窗口，当上层打开全屏弹窗时被隐藏，`UIWindow.OnUpdate()` 停止执行，导致准星位置不再刷新。
+
+**修复**：新增 `CrosshairUpdater : MonoBehaviour`，挂载在准星节点上，脱离 `UIWindow.OnUpdate()` 独立驱动。
+
+### 2. 伤害数字不消失
+
+**原因**：`DamageNumberUI` 的飘字淡出逻辑写在 `UIWindow.OnUpdate()` 中，当 `DamageNumberUI` 被上层全屏窗口遮挡导致 `Visible = false` 时，`OnUpdate()` 停止，数字永远停留在最后一帧。
+
+**修复**：在 `DamageNumberUI` 面板上挂载内部类 `DamageNumberUpdater : MonoBehaviour`，在 `MonoBehaviour.Update()` 中驱动飘字动画，不再受 UI 栈显隐规则影响。
+
+### 3. 玩家附近出现白圈
+
+**原因**：`DamageNumberUI` 的模板节点 `m_text_Template` 在 Prefab 中默认 active，且 `DamageNumberUI` 代码原本引用 `TextMeshProUGUI` 而 Prefab 上是 `UnityEngine.UI.Text`，导致 `_textTemplate` 绑定失败，`InitializePool()` 未执行，模板节点保持显示，在屏幕中央显示一个白色的 "0"。
+
+**修复**：
+- `DamageNumberUI.cs` 中 `TextMeshProUGUI` 全部改为 `UnityEngine.UI.Text`，与 Prefab 匹配。
+- `OnCreate()` 中兜底隐藏 `m_text_Template`。
+- `DamageNumberUI.prefab` 中 `m_text_Template` 的 `m_IsActive` 改为 0。
+
+### 4. `HitFeedbackUI` 误标全屏导致 HUD 被隐藏
+
+**原因**：`HitFeedbackUI` 是常驻 HUD（命中标记 + 受击方向指示），却标记为 `[Window(UILayer.System, ..., fullScreen: true)]`，导致：
+- 战斗中 `BattleMainUI`、`DamageNumberUI` 等下层窗口被隐藏；
+- 打开 `WeaponWheelUI` / `SniperScopeUI` 时，由于 `HitFeedbackUI` 在 `System` 层且是 FullScreen，弹窗也会被隐藏。
+
+**修复**：将 `HitFeedbackUI` 的 `fullScreen` 改为 `false`，保留 `UILayer.System` 以确保渲染在最上层。
+
+## 后续 UI 开发检查清单
+
+新增 UI 窗口前，请确认：
+
+- [ ] 是否真正需要全屏独占？透明/半透明 HUD 不要标记 `FullScreen = true`。
+- [ ] 该 UI 是否需要在被遮挡时继续运行动画/计时器？若是，使用独立 `MonoBehaviour`。
+- [ ] 是否放在合适的 `UILayer`？
+  - `Bottom`：场景底层 UI
+  - `UI`：普通 HUD、主界面
+  - `Top`：弹窗、轮盘、狙击镜
+  - `Tips`：提示 Toast
+  - `System`：Loading、全局受击反馈等最顶层元素
+- [ ] 是否需要 `HideUI()` 长期隐藏？若是，设置 `hideTimeToClose = 0`。
+- [ ] 资源路径 `location` 是否与 Prefab 文件名一致？
+- [ ] 全屏窗口是否在 `OnCreate()` 中调用了 `FixFullScreenCanvas()`？
 
 ## 人机协作规则
 

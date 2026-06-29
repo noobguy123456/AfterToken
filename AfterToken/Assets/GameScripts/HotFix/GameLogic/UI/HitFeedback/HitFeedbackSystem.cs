@@ -20,7 +20,7 @@ namespace GameLogic
             Instance = this;
 
             _eventMgr.AddEvent<float, float>(IHitFeedbackEvent_Event.OnDamageIndicator, OnDamageIndicator);
-            _eventMgr.AddEvent<bool>(IHitFeedbackEvent_Event.OnHitTarget, OnHitTarget);
+            _eventMgr.AddEvent<bool, Vector2>(IHitFeedbackEvent_Event.OnHitTarget, OnHitTarget);
         }
 
         private void OnDestroy()
@@ -34,9 +34,9 @@ namespace GameLogic
             HitFeedbackUI.Instance?.ShowDamageIndicator(angle);
         }
 
-        private void OnHitTarget(bool isCritical)
+        private void OnHitTarget(bool isCritical, Vector2 screenPos)
         {
-            HitFeedbackUI.Instance?.ShowHitMarker(isCritical);
+            HitFeedbackUI.Instance?.ShowHitMarker(isCritical, screenPos);
         }
     }
 }

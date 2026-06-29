@@ -48,6 +48,10 @@ namespace GameLogic
             var templateTransform = rectTransform?.Find("m_text_Template");
             templateTransform?.gameObject.SetActive(false);
             InitializePool();
+            // 用独立 MonoBehaviour 驱动飘字动画，避免 UIWindow.OnUpdate 被 UI 栈显隐规则中断。
+            var updater = gameObject.GetComponent<DamageNumberUpdater>();
+            if (updater == null) updater = gameObject.AddComponent<DamageNumberUpdater>();
+            updater.Owner = this;
             Log.Debug("[DamageNumberUI] 已创建");
         }
 
@@ -112,8 +116,11 @@ namespace GameLogic
         protected override void OnUpdate()
         {
             base.OnUpdate();
+            UpdateNumbers(Time.deltaTime);
+        }
 
-            float delta = Time.deltaTime;
+        internal void UpdateNumbers(float delta)
+        {
             for (int i = _activeNumbers.Count - 1; i >= 0; i--)
             {
                 var item = _activeNumbers[i];
@@ -139,6 +146,19 @@ namespace GameLogic
         {
             txt.gameObject.SetActive(false);
             _pool.Enqueue(txt);
+        }
+
+        /// <summary>
+        /// 独立驱动飘字动画的 MonoBehaviour，避免被 TEngine UI 栈显隐中断。
+        /// </summary>
+        private class DamageNumberUpdater : MonoBehaviour
+        {
+            public DamageNumberUI Owner;
+
+            private void Update()
+            {
+                Owner?.UpdateNumbers(Time.deltaTime);
+            }
         }
     }
 }

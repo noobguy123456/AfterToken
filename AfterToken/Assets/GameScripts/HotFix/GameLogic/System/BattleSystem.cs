@@ -51,8 +51,13 @@ namespace GameLogic
                     {
                         enemy.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
 
-                        // 命中反馈：准心闪烁 + 伤害飘字
-                        GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false);
+                        // 命中反馈：在敌人位置显示受击标记 + 伤害飘字
+                        var mainCamera = Camera.main;
+                        if (mainCamera != null)
+                        {
+                            var enemyScreenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);
+                            GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false, enemyScreenPos);
+                        }
                         ShowDamageNumber(damageInfo);
                     }
                     else

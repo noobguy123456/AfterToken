@@ -19,10 +19,18 @@ namespace GameLogic
         [Header("瞄准辅助可视化")]
         [SerializeField] private LineRenderer _lockOnLaserPrefab;
 
+        [Header("Tracer 表现")]
+        [SerializeField] private float _tracerStartWidth = 0.1f;
+        [SerializeField] private float _tracerEndWidth = 0.05f;
+        [SerializeField] private float _tracerTailLength = 0.5f;
+        [SerializeField] private int _maxActiveTracers = 30;
+
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
         private readonly List<TracerVisual> _activeTracers = new List<TracerVisual>();
+        private readonly Queue<TracerVisual> _tracerPool = new Queue<TracerVisual>();
         private Transform _tracerRoot;
         private LineRenderer _rocketLaser;
+        private Material _tracerMaterial;
 
         private void Awake()
         {
@@ -38,12 +46,31 @@ namespace GameLogic
             var root = new GameObject("TracerRoot");
             root.transform.SetParent(transform, false);
             _tracerRoot = root.transform;
+
+            _tracerMaterial = new Material(Shader.Find("Sprites/Default"));
         }
 
         private void OnDestroy()
         {
             _eventMgr.Clear();
             Instance = null;
+
+            foreach (var tracer in _activeTracers)
+                DestroyTracer(tracer);
+            _activeTracers.Clear();
+
+            while (_tracerPool.Count > 0)
+            {
+                var tracer = _tracerPool.Dequeue();
+                if (tracer?.GameObject != null)
+                    Destroy(tracer.GameObject);
+            }
+
+            if (_tracerMaterial != null)
+                Destroy(_tracerMaterial);
+
+            if (_rocketLaser != null)
+                Destroy(_rocketLaser.gameObject);
         }
 
         private void Update()
@@ -52,7 +79,7 @@ namespace GameLogic
             for (int i = _activeTracers.Count - 1; i >= 0; i--)
             {
                 var tracer = _activeTracers[i];
-                if (tracer == null)
+                if (tracer == null || tracer.GameObject == null)
                 {
                     _activeTracers.RemoveAt(i);
                     continue;
@@ -61,7 +88,7 @@ namespace GameLogic
                 tracer.LifeTime -= deltaTime;
                 if (tracer.LifeTime <= 0)
                 {
-                    Destroy(tracer.GameObject);
+                    ReleaseTracer(tracer);
                     _activeTracers.RemoveAt(i);
                     continue;
                 }
@@ -69,10 +96,18 @@ namespace GameLogic
                 tracer.Position += tracer.Direction * tracer.Speed * deltaTime;
                 tracer.Transform.position = tracer.Position;
 
+                // 更新 tracer 拖尾线段
+                if (tracer.LineRenderer != null)
+                {
+                    float tailLength = Mathf.Min(_tracerTailLength, Vector2.Distance(tracer.Position, tracer.HitPoint));
+                    tracer.LineRenderer.SetPosition(0, tracer.Position);
+                    tracer.LineRenderer.SetPosition(1, tracer.Position - tracer.Direction * tailLength);
+                }
+
                 // 接近命中点时结束
                 if ((tracer.Position - tracer.HitPoint).sqrMagnitude < 0.01f)
                 {
-                    Destroy(tracer.GameObject);
+                    ReleaseTracer(tracer);
                     _activeTracers.RemoveAt(i);
                 }
             }
@@ -178,32 +213,70 @@ namespace GameLogic
             float delay = config.tracerDelay;
             float lifeTime = distance / speed + delay;
 
+            // 限制最大同时存在的 tracer 数量，回收最旧的
+            if (_activeTracers.Count >= _maxActiveTracers)
+            {
+                var oldest = _activeTracers[0];
+                ReleaseTracer(oldest);
+                _activeTracers.RemoveAt(0);
+            }
+
+            var tracer = AcquireTracer();
+            tracer.Position = origin;
+            tracer.Direction = direction;
+            tracer.HitPoint = hitPoint;
+            tracer.Speed = speed;
+            tracer.LifeTime = lifeTime;
+
+            tracer.GameObject.SetActive(true);
+            tracer.Transform.position = origin;
+
+            if (tracer.LineRenderer != null)
+            {
+                tracer.LineRenderer.SetPosition(0, origin);
+                tracer.LineRenderer.SetPosition(1, origin + direction * Mathf.Min(_tracerTailLength, distance));
+            }
+
+            _activeTracers.Add(tracer);
+        }
+
+        private TracerVisual AcquireTracer()
+        {
+            if (_tracerPool.Count > 0)
+                return _tracerPool.Dequeue();
+
             var go = new GameObject("Tracer");
             go.transform.SetParent(_tracerRoot, false);
-            go.transform.position = origin;
 
             var lr = go.AddComponent<LineRenderer>();
             lr.useWorldSpace = true;
-            lr.startWidth = 0.05f;
-            lr.endWidth = 0.02f;
+            lr.startWidth = _tracerStartWidth;
+            lr.endWidth = _tracerEndWidth;
             lr.positionCount = 2;
-            lr.SetPosition(0, origin);
-            lr.SetPosition(1, origin + direction * 0.1f);
-            lr.material = new Material(Shader.Find("Sprites/Default"));
-            lr.startColor = Color.yellow;
-            lr.endColor = Color.yellow;
+            lr.material = _tracerMaterial;
+            lr.startColor = new Color(1f, 0.9f, 0.2f, 0.9f);
+            lr.endColor = new Color(1f, 0.6f, 0f, 0.3f);
 
-            _activeTracers.Add(new TracerVisual
+            return new TracerVisual
             {
                 GameObject = go,
                 Transform = go.transform,
-                Position = origin,
-                Direction = direction,
-                HitPoint = hitPoint,
-                Speed = speed,
-                LifeTime = lifeTime,
                 LineRenderer = lr,
-            });
+            };
+        }
+
+        private void ReleaseTracer(TracerVisual tracer)
+        {
+            if (tracer == null) return;
+            if (tracer.GameObject != null)
+                tracer.GameObject.SetActive(false);
+            _tracerPool.Enqueue(tracer);
+        }
+
+        private void DestroyTracer(TracerVisual tracer)
+        {
+            if (tracer?.GameObject != null)
+                Destroy(tracer.GameObject);
         }
 
         private void UpdateRocketLaser()

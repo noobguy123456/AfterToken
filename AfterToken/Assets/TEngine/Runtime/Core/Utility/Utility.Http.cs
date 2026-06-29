@@ -93,22 +93,19 @@ namespace TEngine
             {
                 try
                 {
-                    var (isCanceled, _) = await unityWebRequest.SendWebRequest().WithCancellation(cts.Token).SuppressCancellationThrow();
-                    if (isCanceled)
-                    {
-                        Log.Warning($"HttpPost {unityWebRequest.url} be canceled!");
-                        unityWebRequest.Dispose();
-                        return string.Empty;
-                    }
+                    UnityWebRequestAsyncOperation op = unityWebRequest.SendWebRequest();
+                    await op.WithCancellation(cts.Token);
                 }
                 catch (OperationCanceledException ex)
                 {
                     if (ex.CancellationToken == cts.Token)
                     {
-                        Log.Warning("HttpPost Timeout");
+                        Log.Warning($"HttpPost {unityWebRequest.url} be canceled/timeout!");
                         unityWebRequest.Dispose();
                         return string.Empty;
                     }
+
+                    throw;
                 }
 
                 string ret = unityWebRequest.downloadHandler.text;

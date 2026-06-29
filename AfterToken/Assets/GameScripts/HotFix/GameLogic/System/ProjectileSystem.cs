@@ -58,7 +58,7 @@ namespace GameLogic
 
         private async void Start()
         {
-            await PreloadProjectilesAsync(20);
+            await PreloadProjectilesAsync(5);
         }
 
         private async UniTask PreloadProjectilesAsync(int count)

@@ -20,7 +20,8 @@ namespace GameLogic
         /// 命中目标反馈。
         /// </summary>
         /// <param name="isCritical">是否暴击/弱点。</param>
-        void OnHitTarget(bool isCritical);
+        /// <param name="screenPos">目标在屏幕上的位置。</param>
+        void OnHitTarget(bool isCritical, Vector2 screenPos);
 
         /// <summary>
         /// 火箭锁定完成。

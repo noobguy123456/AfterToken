@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TEngine;
@@ -8,12 +9,13 @@ namespace GameLogic
     /// 命中反馈与受击方向指示 UI。
     /// 由 HitFeedbackSystem 驱动，负责显示命中标记和 8 方向受击指示。
     /// </summary>
-    [Window(UILayer.System, location: "HitFeedbackUI", fullScreen: true)]
+    [Window(UILayer.System, false, "HitFeedbackUI", false)]
     public class HitFeedbackUI : UIWindow
     {
         #region 脚本工具生成的代码
         private Image[] _directionIndicators = new Image[8];
-        private Image _hitMarker;
+        private Image _hitMarkerTemplate;
+        private RectTransform _indicatorRoot;
 
         protected override void ScriptGenerator()
         {
@@ -21,17 +23,29 @@ namespace GameLogic
             {
                 _directionIndicators[i] = FindChildComponent<Image>($"m_rect_IndicatorRoot/m_img_Indicator_{i}");
             }
-            _hitMarker = FindChildComponent<Image>("m_rect_IndicatorRoot/m_img_HitMarker");
+            _hitMarkerTemplate = FindChildComponent<Image>("m_rect_IndicatorRoot/m_img_HitMarker");
+            _indicatorRoot = FindChildComponent<RectTransform>("m_rect_IndicatorRoot");
         }
         #endregion
 
         [Header("伤害指示器")]
         [SerializeField] private float _indicatorFadeSpeed = 2f;
 
+        [Header("命中标记")]
+        [SerializeField] private int _hitMarkerPoolSize = 8;
+        [SerializeField] private float _hitMarkerDuration = 0.15f;
+        [SerializeField] private float _hitMarkerSize = 32f;
+
         public static HitFeedbackUI Instance { get; private set; }
 
-        private float _hitMarkerTimer;
-        private float _hitMarkerDuration;
+        private readonly Queue<Image> _hitMarkerPool = new Queue<Image>();
+        private readonly List<ActiveHitMarker> _activeHitMarkers = new List<ActiveHitMarker>();
+
+        private class ActiveHitMarker
+        {
+            public Image Image;
+            public float Timer;
+        }
 
         protected override void OnCreate()
         {
@@ -39,7 +53,8 @@ namespace GameLogic
             FixFullScreenCanvas();
             Instance = this;
             InitializeIndicators();
-            Log.Debug($"[HitFeedbackUI] 节点绑定: HitMarker={_hitMarker != null}, Indicators={CountBoundIndicators()}");
+            InitializeHitMarkerPool();
+            Log.Debug($"[HitFeedbackUI] 节点绑定: HitMarkerTemplate={_hitMarkerTemplate != null}, Indicators={CountBoundIndicators()}");
         }
 
         protected override void OnDestroy()
@@ -57,10 +72,27 @@ namespace GameLogic
                     _directionIndicators[i].color = new Color(1, 0, 0, 0);
                 }
             }
-            if (_hitMarker != null)
+        }
+
+        private void InitializeHitMarkerPool()
+        {
+            if (_hitMarkerTemplate == null || _indicatorRoot == null) return;
+            _hitMarkerTemplate.gameObject.SetActive(false);
+
+            for (int i = 0; i < _hitMarkerPoolSize; i++)
             {
-                _hitMarker.color = new Color(1, 0, 0, 0);
+                var marker = CreateHitMarker();
+                if (marker != null) _hitMarkerPool.Enqueue(marker);
             }
+        }
+
+        private Image CreateHitMarker()
+        {
+            if (_hitMarkerTemplate == null || _indicatorRoot == null) return null;
+            var marker = Object.Instantiate(_hitMarkerTemplate, _indicatorRoot, false);
+            marker.gameObject.SetActive(false);
+            marker.rectTransform.sizeDelta = new Vector2(_hitMarkerSize, _hitMarkerSize);
+            return marker;
         }
 
         private int CountBoundIndicators()
@@ -76,18 +108,33 @@ namespace GameLogic
         protected override void OnUpdate()
         {
             base.OnUpdate();
+            UpdateHitMarkers();
+            UpdateDamageIndicators();
+        }
 
-            // 命中标记淡出
-            if (_hitMarker != null && _hitMarkerTimer < _hitMarkerDuration)
+        private void UpdateHitMarkers()
+        {
+            float delta = Time.deltaTime;
+            for (int i = _activeHitMarkers.Count - 1; i >= 0; i--)
             {
-                _hitMarkerTimer += Time.deltaTime;
-                float alpha = 1 - (_hitMarkerTimer / _hitMarkerDuration);
-                var color = _hitMarker.color;
-                color.a = alpha;
-                _hitMarker.color = color;
-            }
+                var item = _activeHitMarkers[i];
+                item.Timer += delta;
+                float t = item.Timer / _hitMarkerDuration;
+                if (t >= 1f)
+                {
+                    ReturnHitMarker(item.Image);
+                    _activeHitMarkers.RemoveAt(i);
+                    continue;
+                }
 
-            // 伤害指示器淡出
+                var c = item.Image.color;
+                c.a = 1 - t;
+                item.Image.color = c;
+            }
+        }
+
+        private void UpdateDamageIndicators()
+        {
             for (int i = 0; i < _directionIndicators.Length; i++)
             {
                 var img = _directionIndicators[i];
@@ -101,6 +148,13 @@ namespace GameLogic
                     img.color = c;
                 }
             }
+        }
+
+        private void ReturnHitMarker(Image marker)
+        {
+            if (marker == null) return;
+            marker.gameObject.SetActive(false);
+            _hitMarkerPool.Enqueue(marker);
         }
 
         /// <summary>
@@ -117,16 +171,35 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 显示命中标记。
+        /// 在目标屏幕位置显示命中标记。
         /// </summary>
-        public void ShowHitMarker(bool isCritical = false)
+        /// <param name="isCritical">是否暴击/弱点。</param>
+        /// <param name="screenPos">目标在屏幕上的位置。</param>
+        public void ShowHitMarker(bool isCritical, Vector2 screenPos)
         {
-            if (_hitMarker != null)
+            if (_indicatorRoot == null) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_indicatorRoot, screenPos, null, out var localPos)) return;
+
+            Image marker;
+            if (_hitMarkerPool.Count > 0)
             {
-                _hitMarker.color = isCritical ? new Color(1, 0.5f, 0, 1) : new Color(1, 0, 0, 1);
-                _hitMarkerTimer = 0;
-                _hitMarkerDuration = 0.15f;
+                marker = _hitMarkerPool.Dequeue();
             }
+            else
+            {
+                marker = CreateHitMarker();
+                if (marker == null) return;
+            }
+
+            marker.gameObject.SetActive(true);
+            marker.color = isCritical ? new Color(1, 0.5f, 0, 1) : new Color(1, 0, 0, 1);
+            marker.rectTransform.anchoredPosition = localPos;
+
+            _activeHitMarkers.Add(new ActiveHitMarker
+            {
+                Image = marker,
+                Timer = 0f,
+            });
         }
     }
 }
