@@ -38,6 +38,7 @@
 | UI Prefab 工作流 | ✅ | - | - | `docs/modules/ui/ui-prefab-workflow/` | 全部热更域 UI 已 Prefab 化并放 `AssetRaw/UI/` |
 | LoadingUI 与场景过渡 | ✅ | - | - | `docs/modules/ui/loading-system/` | `GameplayProcedureBase` 统一加载 |
 | 命中反馈 | ✅ | - | - | `docs/modules/ui/hit-feedback-system/` | 伤害飘字、受击指示、命中标记 |
+| 光标系统 | ✅ | - | - | `docs/modules/ui/cursor-system/` | 显示/隐藏、锁定模式、自定义光标纹理 |
 | 设置 UI | ⏳ | P2 | 共享层部分完成 | `docs/modules/ui/settings-ui/` | 音量、画质、操作设置（新增模块） |
 | 经营 UI | ⏳ | P2 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | SimulationMainUI、建筑/资源/订单 Widget |
 
@@ -167,3 +168,6 @@ Luban 配置表数据补充
 | 2026-06-30 | 实现敌人头顶血条；更新 `EnemyEntity.cs`、`BattleSceneSetup.cs`；同步更新 `enemy-system` 模块文档与 `射击模块实现文档.md` |
 | 2026-06-30 | 实现自动换弹与换弹转圈准星；更新 `WeaponInstance.cs`、`WeaponSystem.cs`、`IWeaponEvent.cs`、`BattleMainUI.cs`、`CrosshairUpdater.cs`；同步更新 `weapon-system` 模块文档与 `射击模块实现文档.md` |
 | 2026-06-30 | 修复镜头跟随卡顿；`CameraSystem` 改在 `LateUpdate` 直接读取玩家 `Transform`；玩家 `Rigidbody2D` 启用 `Interpolate`；新增 `CameraFollowMode`（Hard/Exponential/SmoothDamp）；同步更新 `camera-system` 模块文档与 `射击模块实现文档.md` |
+| 2026-06-30 | 新增光标管理系统；`CursorManager` 管理光标显示/隐藏与锁定模式；`MainMenuUI`/`LobbyUI`/`WeaponWheelUI` 按需显示；流程切换时强制设置；新增 `cursor-system` 模块文档；同步更新 `射击模块实现文档.md` |
+| 2026-06-30 | 光标资源可配置化；`CursorManager` 支持 `SetDefaultCursor`/`SetCursor` 自定义 `Texture2D` 光标纹理；`MainMenuUI.SetupDefaultCursor()` 生成默认箭头光标并支持后续替换为美术资源；更新 `cursor-system` 模块文档与 `射击模块实现文档.md` |
+| 2026-06-30 | 修复 Console 编译报错：将自定义枚举 `CursorLockMode` 重命名为 `GameCursorLockMode`，避免与 `UnityEngine.CursorLockMode` 冲突；查看 `Editor.log` 确认编译通过 |

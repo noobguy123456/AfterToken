@@ -33,6 +33,7 @@ namespace GameLogic
         {
             base.OnCreate();
             FixFullScreenCanvas();
+            CursorManager.Instance?.ShowCursor();
             Log.Debug($"[LobbyUI] 节点绑定: Title={_titleText != null}, LevelList={_levelListRoot != null}, Template={_levelButtonTemplate != null}, Back={_backButton != null}");
             BuildUI();
         }
@@ -100,6 +101,7 @@ namespace GameLogic
         protected override void OnDestroy()
         {
             ClearLevelButtons();
+            CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }
     }

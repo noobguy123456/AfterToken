@@ -28,8 +28,73 @@ namespace GameLogic
         {
             base.OnCreate();
             FixFullScreenCanvas();
+            SetupDefaultCursor();
+            CursorManager.Instance?.ShowCursor();
             Log.Debug($"[MainMenuUI] 节点绑定: Title={_titleText != null}, Start={_startButton != null}, Exit={_exitButton != null}");
             BindEvents();
+        }
+
+        protected override void OnDestroy()
+        {
+            CursorManager.Instance?.HideCursor();
+            base.OnDestroy();
+        }
+
+        /// <summary>
+        /// 设置默认光标纹理。
+        /// 若后续希望替换为美术资源，可将纹理放到 YooAsset 并修改此处加载逻辑。
+        /// </summary>
+        private void SetupDefaultCursor()
+        {
+            var texture = CreateDefaultCursorTexture();
+            Vector2 hotSpot = new Vector2(texture.width * 0.1f, texture.height * 0.1f);
+            CursorManager.Instance?.SetDefaultCursor(texture, hotSpot);
+        }
+
+        /// <summary>
+        /// 创建一个默认箭头形状光标纹理（占位，可替换为美术资源）。
+        /// </summary>
+        private Texture2D CreateDefaultCursorTexture()
+        {
+            int size = 32;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            Color clear = Color.clear;
+            Color green = new Color(0.2f, 1f, 0.2f, 0.95f);
+            Color white = new Color(1f, 1f, 1f, 0.95f);
+
+            for (int x = 0; x < size; x++)
+            for (int y = 0; y < size; y++)
+                tex.SetPixel(x, y, clear);
+
+            // 绘制简单箭头
+            for (int i = 0; i < size - 4; i++)
+            {
+                int x = i;
+                int y = size - 4 - i;
+                if (x >= 0 && x < size && y >= 0 && y < size)
+                {
+                    tex.SetPixel(x, y, green);
+                    tex.SetPixel(x + 1, y, green);
+                    tex.SetPixel(x, y - 1, green);
+                }
+            }
+
+            // 箭头外框
+            for (int i = 0; i < size - 6; i++)
+            {
+                int x = i;
+                int y = size - 6 - i;
+                if (x >= 0 && x < size && y >= 0 && y < size)
+                {
+                    tex.SetPixel(x + 1, y + 1, white);
+                }
+            }
+
+            tex.Apply();
+            return tex;
         }
 
         private void BindEvents()

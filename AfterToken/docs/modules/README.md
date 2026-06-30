@@ -22,6 +22,7 @@ docs/modules/
 
 | 模块 | README | 进度 |
 |---|---|---|
+| `cursor-system` | [README](./ui/cursor-system/README.md) | [progress](./ui/cursor-system/progress.md) |
 | `hit-feedback-system` | [README](./ui/hit-feedback-system/README.md) | [progress](./ui/hit-feedback-system/progress.md) |
 | `loading-system` | [README](./ui/loading-system/README.md) | [progress](./ui/loading-system/progress.md) |
 | `simulation-ui` | [README](./ui/simulation-ui/README.md) | [progress](./ui/simulation-ui/progress.md) |

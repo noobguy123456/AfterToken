@@ -35,6 +35,7 @@ namespace GameLogic
         {
             base.OnCreate();
             FixFullScreenCanvas();
+            CursorManager.Instance?.ShowCursor();
             RefreshAllSlots();
             Log.Debug($"[WeaponWheelUI] 节点绑定: Root={_wheelRoot != null}, Highlight={_highlight != null}");
         }
@@ -83,6 +84,12 @@ namespace GameLogic
             if (angle < 120f) _selectedSlot = 0;
             else if (angle < 240f) _selectedSlot = 1;
             else _selectedSlot = 2;
+        }
+
+        protected override void OnDestroy()
+        {
+            CursorManager.Instance?.HideCursor();
+            base.OnDestroy();
         }
 
         public int GetSelectedSlot() => _selectedSlot;

@@ -30,7 +30,10 @@ namespace GameLogic
                 Log.Debug("[ProcedureBattle] 场景加载完成，初始化战斗系统");
                 InitializeBattleSystems();
                 ApplyLevelConfig();
-                Log.Debug("[ProcedureBattle] 战斗系统初始化完成，打开 BattleMainUI");
+                Log.Debug("[ProcedureBattle] 战斗系统初始化完成，隐藏系统光标");
+                CursorManager.Instance?.SetLockMode(GameCursorLockMode.Locked);
+                CursorManager.Instance?.ForceHideCursor();
+
                 await GameModule.UI.ShowUIAsyncAwait<BattleMainUI>();
                 Log.Debug("[ProcedureBattle] BattleMainUI 已打开");
                 await GameModule.UI.ShowUIAsyncAwait<DamageNumberUI>();
