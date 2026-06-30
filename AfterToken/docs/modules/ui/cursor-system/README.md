@@ -26,6 +26,7 @@
 - 支持两种锁定模式：
   - `Free`：自由光标，可见时不锁定。
   - `Locked`：隐藏光标时锁定在屏幕中心（射击模式）。
+- 解锁延迟：Windows 下从 `CursorLockMode.Locked` 切回 `None` 需要约一帧才能真正释放鼠标。`CursorManager.ApplyCursorState` 在显示光标前会先解锁，并在必要时 `UniTask.Yield()` 等待一帧，避免光标短暂锁死在屏幕中心。
 
 ### 光标资源配置
 

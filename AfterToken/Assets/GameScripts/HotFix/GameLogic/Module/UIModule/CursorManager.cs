@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TEngine;
 using UnityEngine;
 
@@ -36,6 +39,8 @@ namespace GameLogic
 
         private Texture2D _currentCursorTexture;
         private Vector2 _currentHotSpot;
+
+        private CancellationTokenSource _applyCts;
 
         public GameCursorLockMode CurrentMode => _currentMode;
         public bool IsCursorVisible => _showRefCount > 0;
@@ -124,14 +129,35 @@ namespace GameLogic
             ApplyCursorState();
         }
 
-        private void ApplyCursorState()
+        private async void ApplyCursorState()
         {
+            // 取消上一次的延迟应用，避免连续调用导致状态竞争。
+            _applyCts?.Cancel();
+            _applyCts?.Dispose();
+            _applyCts = new CancellationTokenSource();
+            var ct = _applyCts.Token;
+
             bool visible = _showRefCount > 0;
 
             if (visible)
             {
-                Cursor.visible = true;
+                // 从 Locked 切换到 None 时，Windows 需要一帧才能真正释放鼠标。
+                // 先解锁并等待一帧，再显示光标，避免光标短暂锁死在屏幕中心。
+                bool needYield = Cursor.lockState == CursorLockMode.Locked;
                 Cursor.lockState = CursorLockMode.None;
+                if (needYield)
+                {
+                    try
+                    {
+                        await UniTask.Yield(ct);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+                }
+
+                Cursor.visible = true;
 
                 var texture = _currentCursorTexture ?? _defaultCursorTexture;
                 var hotSpot = _currentCursorTexture != null ? _currentHotSpot : _defaultHotSpot;
@@ -141,9 +167,12 @@ namespace GameLogic
             {
                 Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
                 Cursor.visible = false;
-                Cursor.lockState = _currentMode == GameCursorLockMode.Locked
-                    ? CursorLockMode.Locked
-                    : CursorLockMode.None;
+                if (_currentMode == GameCursorLockMode.Locked)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                }
+                // Free 模式下保持当前 lockState（可能是 Locked），等显示时再由 visible 分支解锁并延迟一帧，
+                // 避免 Windows 在不可见时提前解锁导致显示光标时仍锁在中心。
             }
         }
     }
