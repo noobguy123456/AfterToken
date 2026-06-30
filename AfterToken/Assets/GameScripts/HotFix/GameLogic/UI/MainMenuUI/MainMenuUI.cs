@@ -8,7 +8,7 @@ namespace GameLogic
     /// <summary>
     /// 主菜单 UI。
     /// </summary>
-    [Window(UILayer.UI, location: "MainMenuUI", fullScreen: true)]
+    [Window(UILayer.UI, "MainMenuUI", true)]
     public class MainMenuUI : UIWindow
     {
         private TextMeshProUGUI _titleText;
@@ -122,6 +122,27 @@ namespace GameLogic
 #endif
                 });
             }
+
+            CreateSettingsButton();
+        }
+
+        /// <summary>
+        /// 在主菜单动态添加设置按钮，点击打开独立设置面板。
+        /// </summary>
+        private void CreateSettingsButton()
+        {
+            if (_exitButton == null) return;
+            var parent = _exitButton.transform.parent;
+            if (parent == null) return;
+
+            var settingsBtn = Object.Instantiate(_exitButton, parent, false);
+            settingsBtn.name = "m_btn_Settings";
+            var text = settingsBtn.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null) text.text = "Settings";
+
+            settingsBtn.transform.SetSiblingIndex(_exitButton.transform.GetSiblingIndex() + 1);
+            settingsBtn.onClick.RemoveAllListeners();
+            settingsBtn.onClick.AddListener(() => GameModule.UI.ShowUI<SettingsUI>());
         }
     }
 }

@@ -11,14 +11,32 @@ namespace GameLogic
     [RequireComponent(typeof(RectTransform))]
     public class CrosshairUpdater : MonoBehaviour
     {
+        public static CrosshairUpdater Instance { get; private set; }
+
         [SerializeField] private RectTransform _crosshair;
         [SerializeField] private Canvas _canvas;
         [SerializeField] private BattleMainUI _owner;
 
+        private Vector2 _currentScreenPos;
+        public Vector2 CurrentScreenPos => _currentScreenPos;
+
         private void Awake()
         {
+            Instance = this;
             if (_crosshair == null) _crosshair = transform as RectTransform;
             if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
+        private void Start()
+        {
+            // 战斗流程会锁定系统光标，Input.mousePosition 会被固定在屏幕中心，
+            // 因此用鼠标位移累加来驱动准星。
+            _currentScreenPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         }
 
         public void Initialize(BattleMainUI owner, RectTransform crosshair, Canvas canvas)
@@ -36,7 +54,8 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 更新准星位置到鼠标指针位置。
+        /// 更新准星位置。
+        /// 使用鼠标位移累加，避免 Cursor.lockState=Locked 时 Input.mousePosition 被固定。
         /// </summary>
         private void UpdatePosition()
         {
@@ -45,11 +64,14 @@ namespace GameLogic
             var parent = _crosshair.parent as RectTransform;
             if (parent == null) return;
 
-            Camera cam = _canvas != null ? _canvas.worldCamera : null;
-            Vector2 screenPos = Input.mousePosition;
+            _currentScreenPos.x += Input.GetAxis("Mouse X") * SensitivitySetting.Value;
+            _currentScreenPos.y += Input.GetAxis("Mouse Y") * SensitivitySetting.Value;
+            _currentScreenPos.x = Mathf.Clamp(_currentScreenPos.x, 0f, Screen.width);
+            _currentScreenPos.y = Mathf.Clamp(_currentScreenPos.y, 0f, Screen.height);
 
+            Camera cam = _canvas != null ? _canvas.worldCamera : null;
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parent, screenPos, cam, out Vector2 localPos))
+                parent, _currentScreenPos, cam, out Vector2 localPos))
             {
                 _crosshair.anchoredPosition = localPos;
             }

@@ -14,6 +14,7 @@ namespace GameLogic
         [SerializeField] private KeyCode _weaponWheelKey = KeyCode.Tab;
         [SerializeField] private KeyCode _reloadKey = KeyCode.R;
         [SerializeField] private KeyCode _dodgeKey = KeyCode.Space;
+        [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
         [SerializeField] private float _wheelTimeScale = 0.2f;
 
         private Camera _mainCamera;
@@ -36,6 +37,7 @@ namespace GameLogic
             HandleWeaponSwitchInput();
             HandleWeaponWheelInput();
             HandleDodgeInput();
+            HandleSettingsInput();
         }
 
         private void HandleMoveInput()
@@ -52,8 +54,13 @@ namespace GameLogic
         {
             if (_mainCamera == null) return;
 
-            Vector2 mouseScreenPos = Input.mousePosition;
-            Vector2 aimWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
+            // 使用 CrosshairUpdater 的屏幕位置作为瞄准点，确保射击方向和准星一致。
+            // 当系统光标被锁定时，Input.mousePosition 会固定在屏幕中心，不能直接使用。
+            Vector2 aimScreenPos = CrosshairUpdater.Instance != null
+                ? CrosshairUpdater.Instance.CurrentScreenPos
+                : (Vector2)Input.mousePosition;
+
+            Vector2 aimWorldPos = _mainCamera.ScreenToWorldPoint(aimScreenPos);
             GameEvent.Get<IBattleInputEvent>().OnAimInput(aimWorldPos);
         }
 
@@ -161,6 +168,21 @@ namespace GameLogic
             if (Input.GetKeyDown(_dodgeKey))
             {
                 GameEvent.Get<IBattleInputEvent>().OnDodgePressed();
+            }
+        }
+
+        private void HandleSettingsInput()
+        {
+            if (Input.GetKeyDown(_settingsKey))
+            {
+                if (GameModule.UI.HasWindow<SettingsUI>())
+                {
+                    GameModule.UI.CloseUI<SettingsUI>();
+                }
+                else
+                {
+                    GameModule.UI.ShowUI<SettingsUI>();
+                }
             }
         }
 
