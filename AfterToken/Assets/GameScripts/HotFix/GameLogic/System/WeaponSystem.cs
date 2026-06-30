@@ -229,7 +229,7 @@ namespace GameLogic
 
         private void OnReload(int ownerId)
         {
-            CurrentWeapon?.Reload();
+            CurrentWeapon?.Reload(ownerId);
         }
 
         private void OnMoveInput(Vector2 direction)

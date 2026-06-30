@@ -85,9 +85,22 @@ namespace GameLogic
             IsDead = false;
             IsDodging = false;
             _rb.bodyType = RigidbodyType2D.Dynamic;
+            _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
             _rb.linearVelocity = Vector2.zero;
             MoveDirection = Vector2.zero;
             MoveSpeed = BaseMoveSpeed;
+        }
+
+        private void Update()
+        {
+            if (IsDead) return;
+
+            // 朝向瞄准位置（渲染帧更新，保证视觉流畅）
+            Vector2 aimDir = (AimPosition - (Vector2)transform.position).normalized;
+            if (aimDir.sqrMagnitude > 0.001f)
+            {
+                transform.up = aimDir;
+            }
         }
 
         private void FixedUpdate()
@@ -100,14 +113,7 @@ namespace GameLogic
                 _rb.linearVelocity = MoveDirection * MoveSpeed;
             }
 
-            // 朝向瞄准位置
-            Vector2 aimDir = (AimPosition - (Vector2)transform.position).normalized;
-            if (aimDir.sqrMagnitude > 0.001f)
-            {
-                transform.up = aimDir;
-            }
-
-            // 广播位置变化
+            // 广播位置变化（供非视觉系统使用，相机已直接读取 Transform）
             GameEvent.Get<IPlayerEvent>().OnPlayerPositionChanged(transform.position);
         }
     }

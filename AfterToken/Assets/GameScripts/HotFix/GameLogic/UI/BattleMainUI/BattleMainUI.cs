@@ -13,6 +13,7 @@ namespace GameLogic
         Cross,
         Circle,
         TShape,
+        Reloading,
     }
 
     /// <summary>
@@ -42,12 +43,18 @@ namespace GameLogic
         [SerializeField] private int _crosshairSize = 24;
         [SerializeField] private Color _crosshairColor = new Color(0.2f, 1f, 0.2f, 0.9f);
         [SerializeField] private float _crosshairThickness = 3f;
+        [SerializeField] private float _reloadingSpinSpeed = 360f;
 
         private bool _pendingFirstFrameRefresh = true;
         private Image _crosshairImage;
         private CrosshairStyle _currentStyle;
+        private CrosshairStyle _preReloadStyle;
         private CrosshairUpdater _crosshairUpdater;
+        private bool _isReloading;
         private readonly System.Collections.Generic.Dictionary<CrosshairStyle, Sprite> _crosshairSprites = new();
+
+        public bool IsReloading => _isReloading;
+        public float ReloadingSpinSpeed => _reloadingSpinSpeed;
 
         protected override void OnCreate()
         {
@@ -65,6 +72,7 @@ namespace GameLogic
             AddUIEvent<int, int>(IPlayerEvent_Event.OnAmmoChanged, OnAmmoChanged);
             AddUIEvent<int, int, int>(IWeaponEvent_Event.OnWeaponEquipped, OnWeaponEquipped);
             AddUIEvent<int, int>(IWeaponEvent_Event.OnWeaponSwitched, OnWeaponSwitched);
+            AddUIEvent<int, bool>(IWeaponEvent_Event.OnReloadStateChanged, OnReloadStateChanged);
         }
 
         protected override void OnUpdate()
@@ -112,6 +120,8 @@ namespace GameLogic
         /// </summary>
         public void CycleCrosshairStyle()
         {
+            if (_isReloading) return;
+
             var values = (CrosshairStyle[])System.Enum.GetValues(typeof(CrosshairStyle));
             int idx = System.Array.IndexOf(values, _currentStyle);
             int next = (idx + 1) % values.Length;
@@ -141,6 +151,7 @@ namespace GameLogic
             _crosshairSprites[CrosshairStyle.Cross] = CreateCrossSprite();
             _crosshairSprites[CrosshairStyle.Circle] = CreateCircleSprite();
             _crosshairSprites[CrosshairStyle.TShape] = CreateTShapeSprite();
+            _crosshairSprites[CrosshairStyle.Reloading] = CreateReloadingSprite();
         }
 
         private Sprite CreateDotSprite()
@@ -216,6 +227,28 @@ namespace GameLogic
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
         }
 
+        /// <summary>
+        /// 创建换弹转圈准星：一个缺口的圆环，旋转时产生等待/加载视觉效果。
+        /// </summary>
+        private Sprite CreateReloadingSprite()
+        {
+            int size = _crosshairSize;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            ClearTexture(tex);
+            float radius = size * 0.5f - 2f;
+            float thickness = _crosshairThickness;
+            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
+
+            // 绘制约 270 度的圆环，留一个缺口
+            DrawArcRing(tex, center, radius, thickness, _crosshairColor, 45f, 315f);
+            tex.Apply();
+
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        }
+
         #region 纹理绘制辅助
 
         private void ClearTexture(Texture2D tex)
@@ -277,9 +310,45 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 绘制指定角度范围的圆环。
+        /// </summary>
+        private void DrawArcRing(Texture2D tex, Vector2 center, float radius, float thickness, Color color, float startAngle, float endAngle)
+        {
+            int size = tex.width;
+            float inner = Mathf.Max(0f, radius - thickness * 0.5f);
+            float outer = radius + thickness * 0.5f;
+            float inner2 = inner * inner;
+            float outer2 = outer * outer;
+
+            for (int x = 0; x < size; x++)
+            for (int y = 0; y < size; y++)
+            {
+                float dx = x + 0.5f - center.x;
+                float dy = y + 0.5f - center.y;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < inner2 || d2 > outer2) continue;
+
+                float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                angle = (angle + 360f) % 360f;
+
+                float start = (startAngle + 360f) % 360f;
+                float end = (endAngle + 360f) % 360f;
+
+                bool inArc = start <= end
+                    ? angle >= start && angle <= end
+                    : angle >= start || angle <= end;
+
+                if (inArc)
+                    tex.SetPixel(x, y, color);
+            }
+        }
+
         #endregion
 
         #endregion
+
+        #region 事件回调
 
         private void OnHpChanged(int currentHp, int maxHp)
         {
@@ -300,6 +369,26 @@ namespace GameLogic
         {
             RefreshAll();
         }
+
+        private void OnReloadStateChanged(int ownerId, bool isReloading)
+        {
+            _isReloading = isReloading;
+
+            if (isReloading)
+            {
+                if (_currentStyle != CrosshairStyle.Reloading)
+                {
+                    _preReloadStyle = _currentStyle;
+                }
+                SetCrosshairStyle(CrosshairStyle.Reloading);
+            }
+            else
+            {
+                SetCrosshairStyle(_preReloadStyle);
+            }
+        }
+
+        #endregion
 
         private void RefreshAll()
         {

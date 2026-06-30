@@ -31,6 +31,7 @@ namespace GameLogic
         private void Update()
         {
             UpdatePosition();
+            UpdateRotation();
             HandleStyleSwitch();
         }
 
@@ -51,6 +52,23 @@ namespace GameLogic
                 parent, screenPos, cam, out Vector2 localPos))
             {
                 _crosshair.anchoredPosition = localPos;
+            }
+        }
+
+        /// <summary>
+        /// 换弹期间让转圈准星持续旋转。
+        /// </summary>
+        private void UpdateRotation()
+        {
+            if (_crosshair == null || _owner == null) return;
+
+            if (_owner.IsReloading)
+            {
+                _crosshair.Rotate(0f, 0f, -_owner.ReloadingSpinSpeed * Time.deltaTime);
+            }
+            else
+            {
+                _crosshair.localRotation = Quaternion.identity;
             }
         }
 

@@ -1,9 +1,10 @@
 # Audio System 进度
 
 ## 待办
-- [ ] AudioSystem 统一管理
+- [ ] `AudioSystem` 统一管理（BGM / SFX / 音量）
 - [ ] BGM 切换与音量控制
-- [ ] SFX 事件绑定
+- [ ] SFX 事件绑定（开火、命中、换弹、爆炸、UI 点击等）
+- [ ] 音频资源分组与 YooAsset 加载
 
 ---
 

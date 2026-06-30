@@ -12,6 +12,13 @@
 
 ## 设计要点
 
-- 相机跟随玩家位置，限制在关卡边界内。
+- 相机在 `LateUpdate` 中直接读取 `PlayerSystem.Instance.GetPlayerEntity().transform.position` 进行跟随。
+- 玩家 `Rigidbody2D` 启用 `Interpolate`，确保 `transform.position` 在渲染帧经过插值。
+- 支持三种跟随模式：
+  - `Hard`：相机位置与玩家位置完全同步，零延迟，默认模式。
+  - `Exponential`：指数平滑，无最大速度上限，适合希望轻微平滑感的场景。
+  - `SmoothDamp`：传统 SmoothDamp，有明显平滑滞后感。
+- 支持 `_lookAheadFactor` 根据玩家速度加入提前量。
 - 狙击镜使用 RenderTexture 实现局部放大效果。
-- 待补充相机抖动（受击/开火）。
+- 受击/开火相机抖动已接入 `ICameraEvent.OnCameraShake`。
+- 边界限制待根据实际关卡尺寸接入。

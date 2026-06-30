@@ -26,6 +26,8 @@
 
 ## 关键目录
 
+### 代码与资源
+
 ```
 Assets/
 ├── Launcher/                       # 主包启动器代码
@@ -49,6 +51,23 @@ Assets/
 ├── Editor/BattleSetup/             # 战斗场景/资源快速创建工具
 └── Scenes/main.unity               # 启动场景（GameEntry + UIRoot）
 ```
+
+### 文档目录
+
+```
+docs/
+├── framework/          # 框架与架构总览
+├── modules/            # 按功能模块组织的详细文档与进度
+├── standards/          # 代码规范、命名规范、审查清单
+├── adr/                # 架构决策记录
+├── Proposal/           # 技术提案与架构演进方案（按模块分类）
+├── DailyRecord/        # 工作日报
+└── CONTEXT.md          # 本文档：项目上下文总览
+```
+
+- `docs/modules/` 记录各模块的当前实现与设计要点。
+- `docs/Proposal/` 记录待评审的演进方案（如弹幕扩展、性能优化方向），与 `docs/modules/` 按相同模块分类。
+- 提案落地后，应同步更新对应模块的 `README.md` / `progress.md` 并归档到 `docs/Proposal/archive/`。
 
 ## 流程架构
 
@@ -132,6 +151,8 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
 - `MainMenuUI`、`LobbyUI` 改为 Prefab 驱动，`ScriptGenerator` 绑定节点。
 - `BattleSceneSetup` 改为非破坏性更新已有 Prefab。
 - 新增/更新 ADR：`0001` ~ `0004`。
+- 新增 `docs/Proposal/` 提案目录，按功能模块分类存放技术提案。
+- 提出并记录「逻辑子弹与视觉表现分离」弹幕扩展方案（`docs/Proposal/combat/bullet-logic-visual-separation.md`），同步更新至 `docs/modules/combat/projectile-system/` 与 `docs/射击模块实现文档.md`。
 
 ## 如何继续开发
 

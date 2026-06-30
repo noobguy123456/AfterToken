@@ -13,6 +13,7 @@ namespace GameLogic
         void OnStartFire(int ownerId);
         void OnStopFire(int ownerId);
         void OnReload(int ownerId);
+        void OnReloadStateChanged(int ownerId, bool isReloading);
         void OnWeaponSwitched(int ownerId, int slot);
         void OnAimStateChanged(int ownerId, bool isAiming);
         void OnFire(Vector2 origin, Vector2 direction, int weaponConfigId, int ownerId);

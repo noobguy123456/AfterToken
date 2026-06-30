@@ -15,29 +15,29 @@
 - [x] 生成脚本切换为 JSON 输出（`cs-newtonsoft-json` + `json`）
 - [x] `ConfigSystem.cs` 改为 JSON 加载（Newtonsoft.Json）
 - [x] 创建 `AssetRaw/Configs/json/` 输出目录
+- [x] Luban 生成逻辑已跑通：本地运行 `gen_code_bin_to_project.bat` 可正常生成 `GameProto/GameConfig/` 代码与 `AssetRaw/Configs/json/` 数据
 
 ## 进行中
 
-- [ ] 本地运行生成脚本验证 JSON 输出
-
-## 待办
-
-- [ ] 运行 `gen_code_bin_to_project.bat` 验证生成流程
-- [ ] 修复 `item.xlsx` 中未定义的 Bean/Enum（`ItemExchange`、`EQuality`）
-- [ ] 在 `__tables__.xlsx` 中注册 `cfg.TbItem`
-- [ ] 补充缺失的战斗表
+- [ ] 补充缺失的战斗表数据：
   - [ ] `TbPlayer`
   - [ ] `TbEnemy`
   - [ ] `TbWave`
   - [ ] `TbDrop`
   - [ ] `TbBuff`
+- [ ] 修复 `item.xlsx` 中未定义的 Bean/Enum（`ItemExchange`、`EQuality`）并注册 `cfg.TbItem`
 - [ ] 配置 YooAsset 收集器包含 `AssetRaw/Configs/json/`
 - [ ] 替换硬编码 `WeaponConfigMgr` / `LevelConfigMgr`
 - [ ] Play Mode 验证配置加载
 
+## 待办
+
+- [ ] 玩家/武器/敌人/关卡系统接入对应 Luban 表
+- [ ] 配置表热更验证：修改 Excel 后重新导表 + SimulateBuild
+
 ## 阻塞
 
-- 当前环境 `Tools/Luban/` 仍缺少运行时文件；需在本地确保完整 Luban 工具链后运行生成脚本。
+- 需用户后续补充 `player`、`enemy`、`wave`、`drop`、`buff` 等 Excel 表数据；生成逻辑本身已无阻塞。
 
 ---
 

@@ -193,6 +193,7 @@ namespace GameLogic.Editor
                 var rb = go.EnsureComponent<Rigidbody2D>();
                 rb.gravityScale = 0;
                 rb.freezeRotation = true;
+                rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
                 var col = go.EnsureComponent<CircleCollider2D>();
                 col.radius = 0.3f;
@@ -248,7 +249,36 @@ namespace GameLogic.Editor
                 sr.sortingOrder = 5;
 
                 go.EnsureComponent<EnemyEntity>();
+
+                // 敌人头顶血条
+                CreateEnemyHealthBar(go);
             });
+        }
+
+        private static void CreateEnemyHealthBar(GameObject enemyGo)
+        {
+            var healthBarRoot = EnsureChild(enemyGo, "HealthBarRoot");
+            healthBarRoot.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+
+            var whiteSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+            if (whiteSprite == null)
+            {
+                whiteSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            }
+
+            var background = EnsureChild(healthBarRoot, "Background");
+            var bgSr = background.EnsureComponent<SpriteRenderer>();
+            bgSr.sprite = whiteSprite;
+            bgSr.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            bgSr.sortingOrder = 10;
+            background.transform.localScale = new Vector3(1f, 0.12f, 1f);
+
+            var fill = EnsureChild(healthBarRoot, "Fill");
+            var fillSr = fill.EnsureComponent<SpriteRenderer>();
+            fillSr.sprite = whiteSprite;
+            fillSr.color = Color.green;
+            fillSr.sortingOrder = 11;
+            fill.transform.localScale = new Vector3(1f, 0.08f, 1f);
         }
 
         #endregion

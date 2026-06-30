@@ -49,7 +49,7 @@
 | 玩家系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM，待接入 `TbPlayer` |
 | 武器系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/weapon-system/` | 武器槽、开火、换弹、辅助瞄准，待 `TbWeapon/TbBullet` |
 | 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线 |
-| 飞行物系统 | ✅ | - | - | `docs/modules/combat/projectile-system/` | 生成、飞行、命中、回收 |
+| 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、狙击镜，待抖动 |
 | 敌人系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成，待 AI/FSM |
@@ -96,7 +96,7 @@
 |------|------|--------|-----------|----------|------|
 | 资源管线 | ✅ | - | - | `docs/modules/pipeline/asset-pipeline/` | YooAsset 收集器、SimulateBuild |
 | 热更管线 | 🟡 | P1 | - | `docs/modules/pipeline/hotfix-pipeline/` | HybridCLR 环境、DLL 加载，待 AOT 元数据补充验证 |
-| **Luban 配置表系统** | 🟡 | **P0** | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON，`weapon`/`level` 已定义，生成脚本待验证 |
+| **Luban 配置表系统** | 🟡 | **P0** | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON，`weapon`/`level` 已定义，**生成逻辑已跑通，缺数据补充** |
 | 编辑器工具 | ✅ | - | - | `docs/modules/pipeline/editor-tools/` | BattleSceneSetup、Force Recompile、TMP Migration |
 
 ### 全局与支撑系统
@@ -113,14 +113,18 @@
 ## 三、关键阻塞链
 
 ```
-Luban 配置表系统
-    ├── 阻塞 → 玩家系统、武器系统、敌人系统、关卡系统
+Luban 配置表数据补充
+    ├── 阻塞 → 玩家系统（TbPlayer）、武器系统（TbWeapon）、敌人系统（TbEnemy）、关卡系统（TbWave）
     └── 间接阻塞 → 战斗闭环验证
 
 事件系统完善（ILevelEvent / IBattleResultEvent / 共享事件）
     ├── 阻塞 → 战斗系统结果事件
     ├── 阻塞 → 关卡系统波次/胜负
     └── 阻塞 → 奖励系统、跨玩法联动
+
+敌人 AI / FSM 缺失
+    ├── 阻塞 → 关卡波次/胜负判定
+    └── 阻塞 → 掉落/拾取系统
 
 共享系统（Currency / Inventory / PlayerProfile）
     ├── 阻塞 → 奖励系统
@@ -132,11 +136,12 @@ Luban 配置表系统
 
 ## 四、本周聚焦（M1 第一阶段）
 
-1. **验证 Luban JSON 生成**：运行 `Configs/GameConfig/gen_code_bin_to_project.bat`，确认 `GameProto/GameConfig/` 代码和 `AssetRaw/Configs/json/` 数据正常生成。
-2. **运行 Luban 生成并补全战斗表**：`weapon`/`level` 已可生成；修复 `item` 表 Bean/Enum 定义；补充 `TbPlayer`/`TbEnemy`/`TbWave`/`TbDrop`/`TbBuff`。
-3. **替换硬编码配置**：`WeaponConfigMgr` → `TbWeapon`，`LevelConfigMgr` → `TbLevel`。
-4. **补齐事件接口**：`ILevelEvent`、`IBattleResultEvent`、共享层事件接口。
-5. **Play Mode 验证**：`MainMenu → Lobby → Battle` 跑通，无明显报错。
+1. **补充 Luban 战斗表数据**：`TbPlayer`/`TbEnemy`/`TbWave`/`TbDrop`/`TbBuff`；修复 `item.xlsx` 中 `ItemExchange`/`EQuality` 定义并注册 `cfg.TbItem`。
+2. **替换硬编码配置**：`WeaponConfigMgr` → `TbWeapon`，`LevelConfigMgr` → `TbLevel`。
+3. **补齐事件接口**：`ILevelEvent`、`IBattleResultEvent`、共享层事件接口。
+4. **实现敌人 AI / FSM**：Idle / Chase / Attack / Dead，接入 `TbEnemy`。
+5. **实现关卡波次与胜负判定**：接入 `TbWave`，触发 `IBattleResultEvent`。
+6. **Play Mode 验证**：`MainMenu → Lobby → Battle` 跑通，无明显报错。
 
 ---
 
@@ -157,3 +162,8 @@ Luban 配置表系统
 |------|----------|
 | 2026-06-21 | 按项目架构方案与系统分类整理模块 TodoList |
 | 2026-06-28 | 重写：增加里程碑、优先级、阻塞链、本周聚焦；配置表方案改为 Luban；拆分共享数据层、新增存档/设置/掉落/性能优化/GM 模块 |
+| 2026-06-30 | 全面盘点项目进度；更新 Luban 配置表系统状态为「生成逻辑已跑通，缺数据补充」；同步更新各模块 progress.md 与日报 |
+| 2026-06-30 | 整理 `docs/Proposal/` 目录结构（按模块分类）；提出并记录「逻辑子弹与视觉表现分离」弹幕扩展方案；同步更新 `projectile-system` 模块文档、`射击模块实现文档.md`、`CONTEXT.md` |
+| 2026-06-30 | 实现敌人头顶血条；更新 `EnemyEntity.cs`、`BattleSceneSetup.cs`；同步更新 `enemy-system` 模块文档与 `射击模块实现文档.md` |
+| 2026-06-30 | 实现自动换弹与换弹转圈准星；更新 `WeaponInstance.cs`、`WeaponSystem.cs`、`IWeaponEvent.cs`、`BattleMainUI.cs`、`CrosshairUpdater.cs`；同步更新 `weapon-system` 模块文档与 `射击模块实现文档.md` |
+| 2026-06-30 | 修复镜头跟随卡顿；`CameraSystem` 改在 `LateUpdate` 直接读取玩家 `Transform`；玩家 `Rigidbody2D` 启用 `Interpolate`；新增 `CameraFollowMode`（Hard/Exponential/SmoothDamp）；同步更新 `camera-system` 模块文档与 `射击模块实现文档.md` |

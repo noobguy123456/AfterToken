@@ -51,21 +51,29 @@ namespace GameLogic
             GameEvent.Get<IWeaponEvent>().OnFire(origin, direction, Config.id, ownerId);
             GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
 
+            // 弹匣打空后自动换弹
+            if (CurrentAmmo <= 0)
+            {
+                Reload(ownerId);
+            }
+
             // TODO: 播放射击音效
             // GameModule.Audio.Play(AudioType.Sound, Config.fireSound);
         }
 
-        public void Reload()
+        public void Reload(int ownerId)
         {
             if (IsReloading || CurrentAmmo >= Config.clipSize) return;
 
             IsReloading = true;
+            GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, true);
 
             GameModule.Timer.AddTimer((args) =>
             {
                 CurrentAmmo = Config.clipSize;
                 IsReloading = false;
                 GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
+                GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, false);
 
                 // TODO: 播放换弹完成音效
             }, Config.reloadTime);

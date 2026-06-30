@@ -4,6 +4,27 @@ using TEngine;
 namespace GameLogic
 {
     /// <summary>
+    /// 相机跟随模式。
+    /// </summary>
+    public enum CameraFollowMode
+    {
+        /// <summary>
+        /// 硬跟随：相机位置与玩家位置完全同步，无延迟。
+        /// </summary>
+        Hard,
+
+        /// <summary>
+        /// 指数平滑：使用无最大速度上限的指数衰减平滑。
+        /// </summary>
+        Exponential,
+
+        /// <summary>
+        /// 平滑阻尼：使用 SmoothDamp，适合希望明显平滑感的场景。
+        /// </summary>
+        SmoothDamp,
+    }
+
+    /// <summary>
     /// 相机系统。
     /// 负责平滑跟随玩家、FOV、震动、狙击镜相机、伤害方向数据。
     /// </summary>
@@ -12,7 +33,9 @@ namespace GameLogic
         public static CameraSystem Instance { get; private set; }
 
         [Header("跟随")]
-        [SerializeField] private float _smoothTime = 0.15f;
+        [SerializeField] private CameraFollowMode _followMode = CameraFollowMode.Hard;
+        [SerializeField] private float _smoothTime = 0.08f;
+        [SerializeField] private float _lookAheadFactor = 0f;
         [SerializeField] private Vector3 _offset = new Vector3(0, 0, -10f);
 
         [Header("瞄准 FOV")]
@@ -32,9 +55,7 @@ namespace GameLogic
         private Camera _scopeCamera;
         private RenderTexture _scopeRenderTexture;
 
-        private Vector3 _targetPosition;
         private Vector3 _velocity;
-        private bool _hasTarget;
 
         private float _targetFov;
         private float _currentFovVelocity;
@@ -104,8 +125,7 @@ namespace GameLogic
 
         private void OnPlayerPositionChanged(Vector3 position)
         {
-            _targetPosition = position + _offset;
-            _hasTarget = true;
+            // 位置事件保留给其他系统使用，相机跟随直接在 LateUpdate 读取玩家 Transform。
         }
 
         private void OnCameraShake(float magnitude, float duration)
@@ -181,7 +201,17 @@ namespace GameLogic
 
         private void LateUpdate()
         {
-            if (!_hasTarget) return;
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            if (player == null) return;
+
+            Vector3 playerPos = player.transform.position;
+            Vector3 targetPosition = playerPos + _offset;
+
+            // 可选：根据玩家速度加入提前量，让相机略微超前于玩家移动方向
+            if (_lookAheadFactor > 0f && player.TryGetComponent<Rigidbody2D>(out var playerRb))
+            {
+                targetPosition += (Vector3)playerRb.linearVelocity * _lookAheadFactor;
+            }
 
             Vector3 shakeOffset = Vector3.zero;
             if (_shakeMagnitude > 0.001f)
@@ -190,11 +220,19 @@ namespace GameLogic
                 shakeOffset.z = 0;
             }
 
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                _targetPosition,
-                ref _velocity,
-                _smoothTime) + shakeOffset;
+            Vector3 nextPosition = _followMode switch
+            {
+                CameraFollowMode.Hard => targetPosition,
+                CameraFollowMode.Exponential => ExponentialFollow(transform.position, targetPosition, _smoothTime),
+                CameraFollowMode.SmoothDamp => Vector3.SmoothDamp(
+                    transform.position,
+                    targetPosition,
+                    ref _velocity,
+                    _smoothTime),
+                _ => targetPosition
+            };
+
+            transform.position = nextPosition + shakeOffset;
 
             // 狙击镜相机跟随主相机位置与朝向
             if (_scopeCamera != null && _scopeCamera.enabled)
@@ -202,6 +240,16 @@ namespace GameLogic
                 _scopeCamera.transform.position = transform.position;
                 _scopeCamera.transform.rotation = transform.rotation;
             }
+        }
+
+        /// <summary>
+        /// 指数平滑跟随：无最大速度上限，快速移动时更跟手。
+        /// </summary>
+        private Vector3 ExponentialFollow(Vector3 current, Vector3 target, float smoothTime)
+        {
+            if (smoothTime <= 0f) return target;
+            float t = 1f - Mathf.Exp(-Time.deltaTime / smoothTime);
+            return Vector3.Lerp(current, target, t);
         }
     }
 }
