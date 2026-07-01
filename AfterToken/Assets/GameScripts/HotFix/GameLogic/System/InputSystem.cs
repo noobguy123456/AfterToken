@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using TEngine;
 
@@ -21,6 +22,20 @@ namespace GameLogic
         private bool _isAimPressed;
         private bool _isWheelOpen;
         private WeaponWheelUI _weaponWheelUI;
+        private IBattleInputEvent _battleInputEvent;
+
+        private IBattleInputEvent BattleInputEvent
+        {
+            get
+            {
+                if (_battleInputEvent == null)
+                {
+                    _battleInputEvent = GameEvent.Get<IBattleInputEvent>();
+                }
+
+                return _battleInputEvent;
+            }
+        }
 
         private void Start()
         {
@@ -29,6 +44,15 @@ namespace GameLogic
 
         private void Update()
         {
+            // 设置面板等暂停 UI 打开时，Time.timeScale 为 0。
+            // 此时只处理全局输入（如关闭设置面板），避免战斗输入穿透到游戏场景导致相机/角色抖动。
+            HandleSettingsInput();
+
+            if (Time.timeScale <= Mathf.Epsilon)
+            {
+                return;
+            }
+
             HandleMoveInput();
             HandleAimInput();
             HandleFireInput();
@@ -37,7 +61,7 @@ namespace GameLogic
             HandleWeaponSwitchInput();
             HandleWeaponWheelInput();
             HandleDodgeInput();
-            HandleSettingsInput();
+            HandleCrosshairStyleInput();
         }
 
         private void HandleMoveInput()
@@ -47,7 +71,7 @@ namespace GameLogic
                 Input.GetAxisRaw("Vertical")
             ).normalized;
 
-            GameEvent.Get<IBattleInputEvent>().OnMoveInput(dir);
+            BattleInputEvent?.OnMoveInput(dir);
         }
 
         private void HandleAimInput()
@@ -61,19 +85,19 @@ namespace GameLogic
                 : (Vector2)Input.mousePosition;
 
             Vector2 aimWorldPos = _mainCamera.ScreenToWorldPoint(aimScreenPos);
-            GameEvent.Get<IBattleInputEvent>().OnAimInput(aimWorldPos);
+            BattleInputEvent?.OnAimInput(aimWorldPos);
         }
 
         private void HandleFireInput()
         {
             if (Input.GetMouseButtonDown(0))
             {
-                GameEvent.Get<IBattleInputEvent>().OnFirePressed();
+                BattleInputEvent?.OnFirePressed();
             }
 
             if (Input.GetMouseButtonUp(0))
             {
-                GameEvent.Get<IBattleInputEvent>().OnFireReleased();
+                BattleInputEvent?.OnFireReleased();
             }
         }
 
@@ -84,13 +108,13 @@ namespace GameLogic
             if (Input.GetKeyDown(_aimKey))
             {
                 _isAimPressed = true;
-                GameEvent.Get<IBattleInputEvent>().OnAimPressed();
+                BattleInputEvent?.OnAimPressed();
             }
 
             if (Input.GetKeyUp(_aimKey))
             {
                 _isAimPressed = false;
-                GameEvent.Get<IBattleInputEvent>().OnAimReleased();
+                BattleInputEvent?.OnAimReleased();
             }
         }
 
@@ -98,7 +122,7 @@ namespace GameLogic
         {
             if (Input.GetKeyDown(_reloadKey))
             {
-                GameEvent.Get<IBattleInputEvent>().OnReloadPressed();
+                BattleInputEvent?.OnReloadPressed();
             }
         }
 
@@ -109,11 +133,11 @@ namespace GameLogic
             float scroll = Input.GetAxisRaw("Mouse ScrollWheel");
             if (scroll > 0)
             {
-                GameEvent.Get<IBattleInputEvent>().OnWeaponSwitch(1);
+                BattleInputEvent?.OnWeaponSwitch(1);
             }
             else if (scroll < 0)
             {
-                GameEvent.Get<IBattleInputEvent>().OnWeaponSwitch(-1);
+                BattleInputEvent?.OnWeaponSwitch(-1);
             }
         }
 
@@ -122,31 +146,31 @@ namespace GameLogic
             if (Input.GetKeyDown(_weaponWheelKey))
             {
                 _isWheelOpen = true;
-                Time.timeScale = _wheelTimeScale;
-                GameModule.UI.ShowUIAsync<WeaponWheelUI>();
-                GameEvent.Get<IBattleInputEvent>().OnWeaponWheelToggled(true);
+                // 武器轮盘属于输入层触发的全局时间缩放效果，通过 GamePauseManager 统一控制。
+                GamePauseManager.PushTimeScale(_wheelTimeScale);
+                ShowWeaponWheelAsync().Forget();
+                BattleInputEvent?.OnWeaponWheelToggled(true);
             }
 
             if (Input.GetKeyUp(_weaponWheelKey))
             {
                 _isWheelOpen = false;
-                Time.timeScale = 1f;
+                GamePauseManager.PopTimeScale();
 
-                int selectedSlot = 0;
-                if (_weaponWheelUI != null)
-                {
-                    selectedSlot = _weaponWheelUI.GetSelectedSlot();
-                }
-                else
-                {
-                    selectedSlot = CalculateWheelSlot();
-                }
+                int selectedSlot = _weaponWheelUI != null
+                    ? _weaponWheelUI.GetSelectedSlot()
+                    : CalculateWheelSlot();
 
-                GameEvent.Get<IBattleInputEvent>().OnWeaponSelected(selectedSlot);
-                GameEvent.Get<IBattleInputEvent>().OnWeaponWheelToggled(false);
+                BattleInputEvent?.OnWeaponSelected(selectedSlot);
+                BattleInputEvent?.OnWeaponWheelToggled(false);
                 GameModule.UI.CloseUI<WeaponWheelUI>();
                 _weaponWheelUI = null;
             }
+        }
+
+        private async UniTaskVoid ShowWeaponWheelAsync()
+        {
+            _weaponWheelUI = await GameModule.UI.ShowUIAsyncAwait<WeaponWheelUI>();
         }
 
         private int CalculateWheelSlot()
@@ -167,7 +191,7 @@ namespace GameLogic
         {
             if (Input.GetKeyDown(_dodgeKey))
             {
-                GameEvent.Get<IBattleInputEvent>().OnDodgePressed();
+                BattleInputEvent?.OnDodgePressed();
             }
         }
 
@@ -183,6 +207,14 @@ namespace GameLogic
                 {
                     GameModule.UI.ShowUI<SettingsUI>();
                 }
+            }
+        }
+
+        private void HandleCrosshairStyleInput()
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                BattleInputEvent?.OnCycleCrosshairStyle();
             }
         }
 

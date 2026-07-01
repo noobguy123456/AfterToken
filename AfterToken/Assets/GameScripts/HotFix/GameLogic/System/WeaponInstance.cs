@@ -15,6 +15,8 @@ namespace GameLogic
         public bool IsReloading { get; private set; }
         public bool IsFiring { get; set; }
 
+        private int _reloadTimerId;
+
         public WeaponInstance(WeaponConfig config)
         {
             Config = config;
@@ -68,10 +70,11 @@ namespace GameLogic
             IsReloading = true;
             GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, true);
 
-            GameModule.Timer.AddTimer((args) =>
+            _reloadTimerId = GameModule.Timer.AddTimer((args) =>
             {
                 CurrentAmmo = Config.clipSize;
                 IsReloading = false;
+                _reloadTimerId = 0;
                 GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
                 GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, false);
 
@@ -79,6 +82,23 @@ namespace GameLogic
             }, Config.reloadTime);
 
             // TODO: 播放换弹音效
+        }
+
+        /// <summary>
+        /// 取消当前换弹。用于切换武器等需要中断换弹的场景。
+        /// </summary>
+        public void CancelReload(int ownerId)
+        {
+            if (!IsReloading) return;
+
+            if (_reloadTimerId != 0)
+            {
+                GameModule.Timer.RemoveTimer(_reloadTimerId);
+                _reloadTimerId = 0;
+            }
+
+            IsReloading = false;
+            GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, false);
         }
 
         public float CalculateSpread(bool isMoving, bool isAiming)

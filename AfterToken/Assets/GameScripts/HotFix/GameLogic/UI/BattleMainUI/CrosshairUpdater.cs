@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TEngine;
 
 namespace GameLogic
 {
@@ -25,11 +26,14 @@ namespace GameLogic
             Instance = this;
             if (_crosshair == null) _crosshair = transform as RectTransform;
             if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
+
+            GameEvent.AddEventListener(IBattleInputEvent_Event.OnCycleCrosshairStyle, OnCycleCrosshairStyle);
         }
 
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
+            GameEvent.RemoveEventListener(IBattleInputEvent_Event.OnCycleCrosshairStyle, OnCycleCrosshairStyle);
         }
 
         private void Start()
@@ -48,9 +52,15 @@ namespace GameLogic
 
         private void Update()
         {
+            // 游戏暂停（Time.timeScale = 0）时，鼠标位移不应再驱动准星，
+            // 避免在设置面板等 UI 上移动鼠标时场景准星跟随。
+            if (Time.timeScale <= Mathf.Epsilon)
+            {
+                return;
+            }
+
             UpdatePosition();
             UpdateRotation();
-            HandleStyleSwitch();
         }
 
         /// <summary>
@@ -94,15 +104,9 @@ namespace GameLogic
             }
         }
 
-        /// <summary>
-        /// 按 C 键循环切换准星样式。
-        /// </summary>
-        private void HandleStyleSwitch()
+        private void OnCycleCrosshairStyle()
         {
-            if (Input.GetKeyDown(KeyCode.C))
-            {
-                _owner?.CycleCrosshairStyle();
-            }
+            _owner?.CycleCrosshairStyle();
         }
     }
 }

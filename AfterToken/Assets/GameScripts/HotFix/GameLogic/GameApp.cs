@@ -97,6 +97,7 @@ public partial class GameApp
     
     private static void Release()
     {
+        CursorManager.Release();
         SingletonSystem.Release();
         Log.Warning("======= Release GameApp =======");
     }

@@ -86,6 +86,15 @@ namespace GameLogic
         public AimMode CurrentAimMode => _aimMode;
 
         /// <summary>
+        /// 获取指定武器槽位中的武器实例。
+        /// </summary>
+        public WeaponInstance GetWeaponInSlot(int slot)
+        {
+            if (slot < 0 || slot >= MAX_WEAPON_SLOTS) return null;
+            return _slots[slot];
+        }
+
+        /// <summary>
         /// 设置默认武器（需在 Start 前调用）。
         /// </summary>
         public void SetDefaultWeapons(int[] weaponIds)
@@ -139,6 +148,12 @@ namespace GameLogic
 
         private void SwitchToSlot(int slot)
         {
+            var prevWeapon = CurrentWeapon;
+            if (prevWeapon != null && prevWeapon.IsReloading)
+            {
+                prevWeapon.CancelReload(_ownerId);
+            }
+
             _currentSlot = slot;
             _lastSwitchTime = Time.time;
             _isFiring = false;
@@ -270,9 +285,10 @@ namespace GameLogic
                 _firePending = false;
             }
 
-            // 射击后相机抖动
-            float shakeMag = weapon.Config.recoilIntensity * 0.1f;
-            GameEvent.Get<ICameraEvent>().OnCameraShake(shakeMag, 0.05f);
+            // 射击后相机抖动：根据武器后坐力强度计算，未配置时给予基础抖动。
+            float recoil = weapon.Config.recoilIntensity > 0f ? weapon.Config.recoilIntensity : 2f;
+            float shakeMag = recoil * 0.25f;
+            GameEvent.Get<ICameraEvent>()?.OnCameraShake(shakeMag, 0.1f);
         }
 
         private Vector2 ApplySpread(Vector2 direction, float spread)

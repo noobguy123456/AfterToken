@@ -57,7 +57,7 @@ namespace GameLogic
         private void RefreshSlot(int slot)
         {
             if (slot < 0 || slot >= WeaponSystem.MAX_WEAPON_SLOTS) return;
-            var weapon = WeaponSystem.Instance?._slots[slot];
+            var weapon = WeaponSystem.Instance?.GetWeaponInSlot(slot);
             if (_slotLabels[slot] != null)
             {
                 _slotLabels[slot].text = weapon != null ? weapon.Config.name : "Empty";

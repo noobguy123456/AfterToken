@@ -29,7 +29,19 @@ namespace GameLogic
     public class CursorManager
     {
         private static CursorManager _instance;
-        public static CursorManager Instance => _instance ??= new CursorManager();
+        public static CursorManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new CursorManager();
+                    Application.focusChanged += _instance.OnApplicationFocusChanged;
+                }
+
+                return _instance;
+            }
+        }
 
         private int _showRefCount;
         private GameCursorLockMode _currentMode = GameCursorLockMode.Free;
@@ -44,6 +56,21 @@ namespace GameLogic
 
         public GameCursorLockMode CurrentMode => _currentMode;
         public bool IsCursorVisible => _showRefCount > 0;
+
+        /// <summary>
+        /// 释放光标管理器占用的资源。应在游戏退出时调用。
+        /// </summary>
+        public static void Release()
+        {
+            if (_instance != null)
+            {
+                Application.focusChanged -= _instance.OnApplicationFocusChanged;
+                _instance._applyCts?.Cancel();
+                _instance._applyCts?.Dispose();
+            }
+
+            _instance = null;
+        }
 
         /// <summary>
         /// 设置默认光标纹理与热点（左上角为原点）。
@@ -129,6 +156,18 @@ namespace GameLogic
             ApplyCursorState();
         }
 
+        /// <summary>
+        /// 当游戏窗口重新获得焦点时，若当前应处于战斗状态（隐藏 + 锁定），
+        /// 重新应用光标状态，解决从 UI 返回战斗后光标未立即隐藏的问题。
+        /// </summary>
+        private void OnApplicationFocusChanged(bool focused)
+        {
+            if (focused && _showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
+            {
+                ApplyCursorState();
+            }
+        }
+
         private async void ApplyCursorState()
         {
             // 取消上一次的延迟应用，避免连续调用导致状态竞争。
@@ -173,6 +212,24 @@ namespace GameLogic
                 }
                 // Free 模式下保持当前 lockState（可能是 Locked），等显示时再由 visible 分支解锁并延迟一帧，
                 // 避免 Windows 在不可见时提前解锁导致显示光标时仍锁在中心。
+
+                // 延迟一帧再次确认，解决 Windows 下从 UI 返回战斗时光标未立即隐藏/锁定的问题。
+                // 当游戏窗口尚未获得焦点或鼠标不在窗口内时，首次设置可能不生效；
+                // 窗口重新激活后会由 Application.focusChanged 再次触发 ApplyCursorState。
+                try
+                {
+                    await UniTask.Yield(ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
+                {
+                    Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.Locked;
+                }
             }
         }
     }

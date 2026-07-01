@@ -70,3 +70,57 @@ CursorManager.Instance?.SetDefaultCursor(texture, hotSpot);
 - `DamageNumberUI`
 - `HitFeedbackUI`
 - `LoadingUI`
+
+## 从 UI 返回战斗后的光标隐藏
+
+### 问题背景
+
+Windows 下从菜单/设置等 UI 返回战斗时，即使代码设置了 `Cursor.visible = false` 与 `Cursor.lockState = Locked`，光标仍可能保持可见，需要玩家点击游戏画面后才会被隐藏并锁定。这是因为：
+
+1. UI 打开时光标被解锁（`CursorLockMode.None`）并显示。
+2. 关闭 UI 后重新设置 `Cursor.lockState = Locked` 时，若游戏窗口尚未获得焦点或鼠标不在窗口内，Windows 可能不会立即捕获光标。
+
+### 解决方案
+
+`CursorManager` 采用两层保障：
+
+1. **延迟确认**：在 `ApplyCursorState` 隐藏分支中，设置隐藏/锁定后延迟一帧再次强制设置 `Cursor.visible = false` 与 `Cursor.lockState = Locked`，给 Unity/Windows 一个状态同步的机会。
+2. **焦点补偿**：订阅 `Application.focusChanged` 事件，当窗口重新获得焦点且当前应处于战斗状态（`Locked` 模式 + 无 UI 请求显示光标）时，再次调用 `ApplyCursorState()`。
+
+### 代码要点
+
+```csharp
+private async void ApplyCursorState()
+{
+    // ... 取消上一次延迟应用 ...
+
+    bool visible = _showRefCount > 0;
+    if (visible)
+    {
+        // 先解锁，必要时等待一帧，再显示光标
+        // ...
+    }
+    else
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        Cursor.visible = false;
+        if (_currentMode == GameCursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+
+        // 延迟一帧再次确认
+        try { await UniTask.Yield(ct); }
+        catch (OperationCanceledException) { return; }
+
+        if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+    }
+}
+```
+
+> 注意：若关闭 UI 后游戏窗口本身未处于焦点（例如玩家点击了其他窗口），光标仍要等到窗口重新获得焦点才会隐藏。这是 Windows 的安全限制，应用无法强制无焦点的窗口捕获光标。
+

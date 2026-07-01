@@ -8,10 +8,10 @@ namespace GameLogic
     /// </summary>
     public static class SensitivitySetting
     {
-        private const string Key = "CrosshairSensitivity";
-        private const float DefaultValue = 1f;
-        private const float MinValue = 0.1f;
-        private const float MaxValue = 15f;
+        private const string KEY = "CrosshairSensitivity";
+        private const float DEFAULT_VALUE = 1f;
+        private const float MIN_VALUE = 0.01f;
+        private const float MAX_VALUE = 100f;
 
         private static float? _cachedValue;
 
@@ -21,20 +21,27 @@ namespace GameLogic
             {
                 if (!_cachedValue.HasValue)
                 {
-                    _cachedValue = PlayerPrefs.GetFloat(Key, DefaultValue);
+                    _cachedValue = PlayerPrefs.GetFloat(KEY, DEFAULT_VALUE);
                 }
-                return Mathf.Clamp(_cachedValue.Value, MinValue, MaxValue);
+                return Mathf.Clamp(_cachedValue.Value, MIN_VALUE, MAX_VALUE);
             }
             set
             {
-                _cachedValue = Mathf.Clamp(value, MinValue, MaxValue);
-                PlayerPrefs.SetFloat(Key, _cachedValue.Value);
-                PlayerPrefs.Save();
+                _cachedValue = Mathf.Clamp(value, MIN_VALUE, MAX_VALUE);
+                PlayerPrefs.SetFloat(KEY, _cachedValue.Value);
             }
         }
 
-        public static float Min => MinValue;
-        public static float Max => MaxValue;
-        public static float Default => DefaultValue;
+        public static float Min => MIN_VALUE;
+        public static float Max => MAX_VALUE;
+        public static float Default => DEFAULT_VALUE;
+
+        /// <summary>
+        /// 将当前设置写入磁盘。建议在设置面板关闭时调用一次，避免频繁写盘。
+        /// </summary>
+        public static void Save()
+        {
+            PlayerPrefs.Save();
+        }
     }
 }

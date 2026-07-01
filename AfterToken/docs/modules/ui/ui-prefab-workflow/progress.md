@@ -11,3 +11,7 @@
 > 状态说明：
 > - 当前总状态：✅
 > - 每次更新后同步 `docs/TODO.md`
+## 更新记录
+
+- 2026-06-30：新增 `UIWindowTimeScale` Inspector 配置与 `GamePauseManager` 时间缩放栈，支持 UI 面板打开时暂停/慢动作游戏进程而不影响声音。
+

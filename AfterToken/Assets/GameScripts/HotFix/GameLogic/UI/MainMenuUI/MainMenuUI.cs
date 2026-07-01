@@ -11,9 +11,16 @@ namespace GameLogic
     [Window(UILayer.UI, "MainMenuUI", true)]
     public class MainMenuUI : UIWindow
     {
+        /// <summary>
+        /// 主菜单打开时暂停游戏进程（不影响声音）。
+        /// 若 UI Prefab 上挂了 UIWindowTimeScale，Inspector 值可覆盖此处默认值。
+        /// </summary>
+        public override float TimeScaleWhenVisible => InspectorTimeScale ?? 0f;
+
         private TextMeshProUGUI _titleText;
         private Button _startButton;
         private Button _exitButton;
+        private Button _settingsButton;
 
         #region 脚本工具生成的代码
         protected override void ScriptGenerator()
@@ -21,6 +28,7 @@ namespace GameLogic
             _titleText = FindChildComponent<TextMeshProUGUI>("m_text_Title");
             _startButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Start");
             _exitButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Exit");
+            _settingsButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Settings");
         }
         #endregion
 
@@ -30,7 +38,7 @@ namespace GameLogic
             FixFullScreenCanvas();
             SetupDefaultCursor();
             CursorManager.Instance?.ShowCursor();
-            Log.Debug($"[MainMenuUI] 节点绑定: Title={_titleText != null}, Start={_startButton != null}, Exit={_exitButton != null}");
+            Log.Debug($"[MainMenuUI] 节点绑定: Title={_titleText != null}, Start={_startButton != null}, Exit={_exitButton != null}, Settings={_settingsButton != null}");
             BindEvents();
         }
 
@@ -123,26 +131,11 @@ namespace GameLogic
                 });
             }
 
-            CreateSettingsButton();
-        }
-
-        /// <summary>
-        /// 在主菜单动态添加设置按钮，点击打开独立设置面板。
-        /// </summary>
-        private void CreateSettingsButton()
-        {
-            if (_exitButton == null) return;
-            var parent = _exitButton.transform.parent;
-            if (parent == null) return;
-
-            var settingsBtn = Object.Instantiate(_exitButton, parent, false);
-            settingsBtn.name = "m_btn_Settings";
-            var text = settingsBtn.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null) text.text = "Settings";
-
-            settingsBtn.transform.SetSiblingIndex(_exitButton.transform.GetSiblingIndex() + 1);
-            settingsBtn.onClick.RemoveAllListeners();
-            settingsBtn.onClick.AddListener(() => GameModule.UI.ShowUI<SettingsUI>());
+            if (_settingsButton != null)
+            {
+                _settingsButton.onClick.RemoveAllListeners();
+                _settingsButton.onClick.AddListener(() => GameModule.UI.ShowUI<SettingsUI>());
+            }
         }
     }
 }

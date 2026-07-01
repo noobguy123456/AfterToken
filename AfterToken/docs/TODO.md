@@ -171,4 +171,5 @@ Luban 配置表数据补充
 | 2026-06-30 | 新增光标管理系统；`CursorManager` 管理光标显示/隐藏与锁定模式；`MainMenuUI`/`LobbyUI`/`WeaponWheelUI` 按需显示；流程切换时强制设置；新增 `cursor-system` 模块文档；同步更新 `射击模块实现文档.md` |
 | 2026-06-30 | 光标资源可配置化；`CursorManager` 支持 `SetDefaultCursor`/`SetCursor` 自定义 `Texture2D` 光标纹理；`MainMenuUI.SetupDefaultCursor()` 生成默认箭头光标并支持后续替换为美术资源；更新 `cursor-system` 模块文档与 `射击模块实现文档.md` |
 | 2026-06-30 | 修复 Console 编译报错：将自定义枚举 `CursorLockMode` 重命名为 `GameCursorLockMode`，避免与 `UnityEngine.CursorLockMode` 冲突；查看 `Editor.log` 确认编译通过 |
-| 2026-06-30 | 修复光标锁死在屏幕中心：`CursorManager.ApplyCursorState` 在 Free 模式不可见时不再提前解锁，显示光标时根据当前 `lockState` 决定是否 `UniTask.Yield()` 等待一帧；注释 `ProcedureMainMenu` 编辑器自动跳转战斗调试代码；更新 `cursor-system` 模块文档与日报 |
+| 2026-06-30 | 修复光标锁死在屏幕中心：`CursorManager.ApplyCursorState` 在 Free 模式不可见时不再提前解锁，显示光标时根据当前 `lockState` 决定是否 `UniTask.Yield()` 等待一帧；注释 `ProcedureMainMenu` 编辑器自动跳转战斗调试代码；补充 `using System;` 解决 `OperationCanceledException` 编译错误；更新 `cursor-system` 模块文档与日报 |
+| 2026-06-30 | 代码审查与问题整改：`WeaponSystem.GetWeaponInSlot` 替代直接访问私有字段；修复 `InputSystem._weaponWheelUI` 未赋值；迁移 `KeyCode.C` 到 `IBattleInputEvent.OnCycleCrosshairStyle`；`SensitivitySetting` 常量命名与 `PlayerPrefs.Save` 优化；`SettingsUI` 设置字体、`RemoveAllListeners`、移除手动 Layer 切换；`CursorManager.Release()` 释放 CTS；补充 `InputSystem` 缺少的 `using Cysharp.Threading.Tasks`；更新日报 |

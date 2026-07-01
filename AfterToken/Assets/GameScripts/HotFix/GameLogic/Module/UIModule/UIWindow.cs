@@ -70,6 +70,19 @@ namespace GameLogic
         public virtual bool FullScreen { private set; get; } = false;
 
         /// <summary>
+        /// 由 UI Prefab 上的 <see cref="UIWindowTimeScale"/> 组件提供的 Inspector 配置值。
+        /// 子类可通过 <see cref="TimeScaleWhenVisible"/> 提供代码默认值。
+        /// </summary>
+        protected float? InspectorTimeScale { get; private set; }
+
+        /// <summary>
+        /// 窗口显示时希望的时间缩放。
+        /// 返回 0 表示暂停游戏进程，返回 0.2 表示像武器轮盘一样的慢动作，返回 1 表示不影响时间。
+        /// 子类可重写；若 UI Prefab 上挂了 <see cref="UIWindowTimeScale"/>，则 Inspector 值会覆盖子类默认值。
+        /// </summary>
+        public virtual float TimeScaleWhenVisible => InspectorTimeScale ?? 1f;
+
+        /// <summary>
         /// 是内部资源无需AB加载。
         /// </summary>
         public bool FromResources { private set; get; }
@@ -426,6 +439,12 @@ namespace GameLogic
 
         internal void InternalDestroy(bool isShutDown = false)
         {
+            // 销毁前若窗口仍可见，先触发 OnSetVisible(false) 以释放 PauseGameWhenVisible 等副作用。
+            if (Visible)
+            {
+                OnSetVisible(false);
+            }
+
             _isCreate = false;
 
             RemoveAllUIEvent();
@@ -479,6 +498,13 @@ namespace GameLogic
             panel.name = GetType().Name;
             _panel = panel;
             _panel.transform.localPosition = Vector3.zero;
+
+            // 读取 UI Prefab 上的时间缩放配置（Inspector 接口）。
+            var timeScaleComp = _panel.GetComponent<UIWindowTimeScale>();
+            if (timeScaleComp != null)
+            {
+                InspectorTimeScale = timeScaleComp.TimeScaleWhenVisible;
+            }
 
             // 获取组件
             _canvas = _panel.GetComponent<Canvas>();
@@ -536,6 +562,28 @@ namespace GameLogic
         protected virtual void Close()
         {
             UIModule.Instance.CloseUI(this.GetType());
+        }
+
+        /// <summary>
+        /// 窗口可见性变化时触发。
+        /// 若 <see cref="TimeScaleWhenVisible"/> 小于 1，则通过 GamePauseManager 控制 Time.timeScale。
+        /// </summary>
+        protected override void OnSetVisible(bool visible)
+        {
+            base.OnSetVisible(visible);
+
+            float scale = TimeScaleWhenVisible;
+            if (scale < 1f - Mathf.Epsilon)
+            {
+                if (visible)
+                {
+                    GamePauseManager.PushTimeScale(scale);
+                }
+                else
+                {
+                    GamePauseManager.PopTimeScale();
+                }
+            }
         }
         
         internal void CancelHideToCloseTimer()

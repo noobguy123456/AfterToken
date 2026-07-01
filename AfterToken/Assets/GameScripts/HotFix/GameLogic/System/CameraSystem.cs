@@ -46,7 +46,7 @@ namespace GameLogic
         private float _currentOrthographicSizeVelocity;
 
         [Header("震动")]
-        [SerializeField] private float _shakeDamping = 5f;
+        [SerializeField] private float _shakeDamping = 2.5f;
 
         [Header("狙击镜")]
         [SerializeField] private int _scopeRenderSize = 512;
@@ -181,7 +181,7 @@ namespace GameLogic
             if (_shakeDuration > 0)
             {
                 _shakeDuration -= Time.deltaTime;
-                _shakeMagnitude = Mathf.Max(0, _shakeMagnitude - _shakeDamping * Time.deltaTime);
+                _shakeMagnitude = Mathf.Lerp(_shakeMagnitude, 0f, _shakeDamping * Time.deltaTime);
             }
             else
             {
@@ -216,8 +216,11 @@ namespace GameLogic
             Vector3 shakeOffset = Vector3.zero;
             if (_shakeMagnitude > 0.001f)
             {
-                shakeOffset = Random.insideUnitSphere * _shakeMagnitude;
-                shakeOffset.z = 0;
+                // 以后坐力上跳为主，加上少量横向随机，模拟真实开枪抖动。
+                shakeOffset = new Vector3(
+                    Random.Range(-0.3f, 0.3f),
+                    1f + Random.Range(-0.2f, 0.1f),
+                    0f) * _shakeMagnitude;
             }
 
             Vector3 nextPosition = _followMode switch

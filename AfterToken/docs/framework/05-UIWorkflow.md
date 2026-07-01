@@ -332,3 +332,73 @@ if (!IsPrepare || !Visible)
 - AI 负责：生成 C# 脚本骨架、生成基础 Prefab 结构、按需求更新节点绑定。
 - 人类负责：在 Prefab Mode 调整布局、颜色、图片、提出逻辑需求。
 - 人类**不直接修改** `ScriptGenerator()` 里的节点路径；改路径需重新提需求给 AI。
+
+## UI 时间缩放
+
+游戏中部分 UI 打开时需要暂停或减缓后台游戏进程（如设置面板、主菜单、武器轮盘），同时保持声音继续播放。统一通过 `Time.timeScale` 实现，由 `GamePauseManager` 管理。
+
+### 核心类
+
+| 类/文件 | 路径 | 说明 |
+|---|---|---|
+| `GamePauseManager` | `Assets/GameScripts/HotFix/GameLogic/System/GamePauseManager.cs` | 全局时间缩放请求栈 |
+| `UIWindowTimeScale` | `Assets/GameScripts/HotFix/GameLogic/UI/UIWindowTimeScale.cs` | 挂在 UI Prefab 上的 Inspector 配置组件 |
+
+### GamePauseManager
+
+使用栈管理多个时间缩放请求，最终生效值为栈中**最小值**（最慢的时间缩放优先）。
+
+```csharp
+// 打开一个需要暂停的 UI
+GamePauseManager.PushTimeScale(0f);
+
+// 关闭该 UI
+GamePauseManager.PopTimeScale();
+```
+
+常见场景：
+- 设置面板/主菜单：`PushTimeScale(0f)`，完全暂停游戏逻辑。
+- 武器轮盘：`PushTimeScale(0.2f)`，进入慢动作，保留一定操作反馈。
+- 多个 UI 同时打开：取最小值。例如武器轮盘（0.2）之上再开设置面板（0），最终 `Time.timeScale = 0`。
+
+> `Time.timeScale = 0` 只影响基于 `Time.deltaTime` / `Time.fixedDeltaTime` 的逻辑、动画与物理更新，**不会暂停 `AudioSource` 播放**，满足"暂停游戏进程但不暂停声音"的需求。
+
+### UIWindow 时间缩放配置
+
+`UIWindow` 提供两种方式配置打开时的时间缩放：
+
+#### 方式一：代码默认值（适合动态创建的 UI）
+
+子类重写 `TimeScaleWhenVisible`：
+
+```csharp
+public class SettingsUI : UIWindow
+{
+    public override float TimeScaleWhenVisible => InspectorTimeScale ?? 0f;
+}
+```
+
+#### 方式二：Inspector 配置（适合有 Prefab 的 UI）
+
+1. 在 UI Prefab 根节点上 Add Component → `UIWindowTimeScale`。
+2. 在 Inspector 中调整 `Time Scale When Visible`（0 ~ 1）。
+3. `UIWindow.Handle_Completed` 会自动读取该值并覆盖子类代码默认值。
+
+```csharp
+// UIWindowTimeScale 组件 Inspector 字段
+[Range(0f, 1f)] [SerializeField]
+private float _timeScaleWhenVisible = 1f;
+```
+
+### 生命周期保证
+
+`UIWindow.InternalDestroy` 在销毁前会检查窗口是否仍可见；若可见，先触发 `OnSetVisible(false)`，确保 `GamePauseManager.PopTimeScale()` 被调用，避免 `CloseUI()` 导致时间缩放计数泄漏。
+
+### 当前已配置时间缩放的 UI
+
+| UI | 配置方式 | 时间缩放 | 说明 |
+|---|---|---|---|
+| `MainMenuUI` | 代码默认值 | 0 | 完全暂停 |
+| `SettingsUI` | 代码默认值 | 0 | 完全暂停 |
+| `WeaponWheelUI` | `InputSystem` 调用 | 0.2 | 慢动作，由 `_wheelTimeScale` 字段配置 |
+

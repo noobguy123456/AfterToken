@@ -1,5 +1,5 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using TEngine;
 
@@ -9,9 +9,19 @@ namespace GameLogic
     /// 设置面板。
     /// 提供准星灵敏度等游戏内可调选项。
     /// </summary>
+    /// <remarks>
+    /// 当前为代码动态创建子节点的临时实现，后续应按 UI Prefab 工作流
+    /// 在 Prefab Mode 中配置背景、标题、滑块、按钮等节点，并在 ScriptGenerator 中绑定。
+    /// </remarks>
     [Window(UILayer.Top, "SettingsUI", false)]
     public class SettingsUI : UIWindow
     {
+        /// <summary>
+        /// 设置面板打开时暂停游戏进程（不影响声音）。
+        /// 若 UI Prefab 上挂了 UIWindowTimeScale，Inspector 值可覆盖此处默认值。
+        /// </summary>
+        public override float TimeScaleWhenVisible => InspectorTimeScale ?? 0f;
+
         private RectTransform _contentRoot;
         private TextMeshProUGUI _sensitivityValueText;
         private Slider _sensitivitySlider;
@@ -31,27 +41,11 @@ namespace GameLogic
             Log.Debug("[SettingsUI] 设置面板已打开");
         }
 
-        protected override void OnSetVisible(bool visible)
-        {
-            base.OnSetVisible(visible);
-            // TEngine 的 Visible 只切换 Canvas 所在层，动态创建的非 Canvas 子节点需要同步。
-            int layer = visible ? UIModule.WINDOW_SHOW_LAYER : UIModule.WINDOW_HIDE_LAYER;
-            SetLayerRecursive(gameObject, layer);
-        }
-
         protected override void OnDestroy()
         {
             CursorManager.Instance?.HideCursor();
+            SensitivitySetting.Save();
             base.OnDestroy();
-        }
-
-        private void SetLayerRecursive(GameObject go, int layer)
-        {
-            go.layer = layer;
-            foreach (Transform child in go.transform)
-            {
-                SetLayerRecursive(child.gameObject, layer);
-            }
         }
 
         private void EnsureContentRoot()
@@ -109,6 +103,7 @@ namespace GameLogic
             text.text = content;
             text.fontSize = fontSize;
             text.alignment = TextAlignmentOptions.Center;
+            text.font = TMPFontProvider.DefaultFont;
             var rect = go.GetComponent<RectTransform>();
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;
@@ -135,6 +130,7 @@ namespace GameLogic
             _sensitivitySlider.value = SensitivitySetting.Value;
             _sensitivitySlider.wholeNumbers = false;
 
+            _sensitivitySlider.onValueChanged.RemoveAllListeners();
             _sensitivitySlider.onValueChanged.AddListener(OnSensitivityChanged);
         }
 
@@ -212,12 +208,14 @@ namespace GameLogic
             text.text = "Close";
             text.fontSize = 24;
             text.alignment = TextAlignmentOptions.Center;
+            text.font = TMPFontProvider.DefaultFont;
             var textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.offsetMin = Vector2.zero;
             textRect.offsetMax = Vector2.zero;
 
+            btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => GameModule.UI.CloseUI<SettingsUI>());
         }
 
