@@ -3,46 +3,35 @@ using TEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 玩家翻滚状态。
+    /// 玩家翻滚/闪避状态。
     /// </summary>
     public class PlayerDodgeState : PlayerStateBase
     {
         public override string StateName => "Dodge";
 
-        protected override void OnEnter(IFsm<PlayerEntity> fsm)
+        private float _elapsed;
+
+        protected override void OnEnterState(IFsm<PlayerEntity> fsm)
         {
-            base.OnEnter(fsm);
-
-            var owner = fsm.Owner;
-            owner.StartDodge();
-
-            int timerId = GameModule.Timer.AddTimer(
-                (args) =>
-                {
-                    if (fsm.IsRunning)
-                    {
-                        ChangeState<PlayerIdleState>(fsm);
-                    }
-                },
-                time: owner.DodgeDuration
-            );
-
-            fsm.SetData("DodgeTimerId", timerId);
+            _elapsed = 0f;
+            Owner.StartDodge();
+            Context.IsDodging = true;
+            PlayerSystem.Instance?.ConsumeStamina(PlayerSystem.Instance.GetDodgeStaminaCost());
         }
 
-        protected override void OnLeave(IFsm<PlayerEntity> fsm, bool isShutdown)
+        protected override void OnUpdateState(IFsm<PlayerEntity> fsm, float elapse, float real)
         {
-            base.OnLeave(fsm, isShutdown);
-
-            var owner = fsm.Owner;
-            owner.EndDodge();
-
-            int timerId = fsm.GetData<int>("DodgeTimerId");
-            if (timerId != 0)
+            _elapsed += elapse;
+            if (_elapsed >= Owner.DodgeDuration)
             {
-                GameModule.Timer.RemoveTimer(timerId);
-                fsm.SetData("DodgeTimerId", 0);
+                RequestState<PlayerIdleState>();
             }
+        }
+
+        protected override void OnLeaveState(IFsm<PlayerEntity> fsm, bool isShutdown)
+        {
+            Owner.EndDodge();
+            Context.IsDodging = false;
         }
     }
 }

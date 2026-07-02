@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using GameConfig;
 using TEngine;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace GameLogic
         public static PlayerSystem Instance { get; private set; }
 
         [SerializeField] private Transform _spawnPoint;
+        [SerializeField] private int _playerConfigId = 1;
 
         private PlayerEntity _playerEntity;
         private IFsm<PlayerEntity> _playerFsm;
@@ -24,6 +26,16 @@ namespace GameLogic
         public int CurrentHp => _currentHp;
         public int MaxHp => _maxHp;
 
+        private int _maxStamina = 100;
+        private int _currentStamina = 100;
+        private int _dodgeStaminaCost = 25;
+        private float _staminaRecoveryRate = 30f; // 每秒恢复体力
+
+        public int CurrentStamina => _currentStamina;
+        public int MaxStamina => _maxStamina;
+
+        private GameConfig.cfg.Player _playerConfig;
+
         /// <summary>
         /// 设置玩家最大血量（需在创建玩家前调用）。
         /// </summary>
@@ -31,6 +43,15 @@ namespace GameLogic
         {
             _maxHp = maxHp;
             _currentHp = maxHp;
+        }
+
+        /// <summary>
+        /// 设置玩家最大体力（需在创建玩家前调用）。
+        /// </summary>
+        public void SetMaxStamina(int maxStamina)
+        {
+            _maxStamina = maxStamina;
+            _currentStamina = maxStamina;
         }
 
         private void Awake()
@@ -74,7 +95,11 @@ namespace GameLogic
                 _playerEntity = go.AddComponent<PlayerEntity>();
             }
 
+            LoadPlayerConfig();
+            ApplyPlayerConfig(_playerEntity);
+
             _playerEntity.ResetEntity();
+            _playerEntity.Context = new PlayerStateContext();
 
             _playerFsm = GameModule.Fsm.CreateFsm<PlayerEntity>(
                 "PlayerFsm",
@@ -90,52 +115,68 @@ namespace GameLogic
 
             GameEvent.Get<IPlayerEvent>().OnPlayerCreated(go.transform.position);
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
+            GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
         }
 
         private void OnMoveInput(Vector2 direction)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
             _playerEntity.SetMoveDirection(direction);
+            if (_playerEntity.Context != null)
+            {
+                _playerEntity.Context.MoveInput = direction;
+            }
         }
 
         private void OnAimInput(Vector2 worldPosition)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
             _playerEntity.SetAimPosition(worldPosition);
+            if (_playerEntity.Context != null)
+            {
+                _playerEntity.Context.AimInput = worldPosition;
+            }
         }
 
         private void OnReloadPressed()
         {
-            if (_playerEntity == null || _playerEntity.IsDead) return;
-            if (!CanSwitchFromCurrentState()) return;
-
-            _playerFsm?.SetData("NextState", "Reload");
+            if (_playerEntity?.Context == null) return;
+            _playerEntity.Context.ReloadPressed = true;
         }
 
         private void OnDodgePressed()
         {
-            if (_playerEntity == null || _playerEntity.IsDead) return;
-            if (!CanSwitchFromCurrentState()) return;
-
-            _playerFsm?.SetData("NextState", "Dodge");
+            if (_playerEntity?.Context == null) return;
+            _playerEntity.Context.DodgePressed = true;
         }
 
         private void Update()
         {
-            if (_playerEntity == null || _playerEntity.IsDead) return;
-            if (_playerFsm?.CurrentState is PlayerDodgeState) return;
+            if (_playerEntity?.Context == null) return;
 
-            float multiplier = WeaponSystem.Instance?.GetCurrentMoveSpeedMultiplier() ?? 1f;
-            _playerEntity.MoveSpeed = _playerEntity.BaseMoveSpeed * multiplier;
-        }
+            // 同步当前武器引用到黑板
+            _playerEntity.Context.CurrentWeapon = WeaponSystem.Instance?.CurrentWeapon;
 
-        private bool CanSwitchFromCurrentState()
-        {
-            if (_playerFsm == null) return false;
-            var current = _playerFsm.CurrentState;
-            return current is not PlayerDodgeState &&
-                   current is not PlayerReloadState &&
-                   current is not PlayerDeadState;
+            // 更新黑板意图（由 Driver 根据输入和当前状态计算）
+            PlayerStateMachineDriver.Instance.UpdateContext(_playerEntity.Context);
+
+            // 体力恢复：未死亡且未闪避时恢复
+            if (!_playerEntity.IsDead && !_playerEntity.IsDodging && _currentStamina < _maxStamina)
+            {
+                _currentStamina += Mathf.RoundToInt(_staminaRecoveryRate * Time.deltaTime);
+                if (_currentStamina > _maxStamina) _currentStamina = _maxStamina;
+                GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+            }
+
+            // 同步能否闪避到黑板
+            _playerEntity.Context.CanDodge = _currentStamina >= _dodgeStaminaCost && _playerEntity.Context.CanMove;
+
+            // 更新移动速度
+            if (!_playerEntity.IsDead && _playerFsm?.CurrentState is not PlayerDodgeState)
+            {
+                float multiplier = WeaponSystem.Instance?.GetCurrentMoveSpeedMultiplier() ?? 1f;
+                _playerEntity.MoveSpeed = _playerEntity.BaseMoveSpeed * multiplier;
+            }
         }
 
         /// <summary>
@@ -159,10 +200,75 @@ namespace GameLogic
             GameEvent.Get<IHitFeedbackEvent>().OnDamageIndicator(relativeAngle, 1f);
             GameEvent.Get<ICameraEvent>().OnCameraShake(0.2f, 0.1f);
 
-            if (_currentHp <= 0)
+            if (_currentHp <= 0 && _playerEntity?.Context != null)
             {
-                _playerFsm?.SetData("NextState", "Dead");
+                _playerEntity.Context.IsDead = true;
             }
+        }
+
+        /// <summary>
+        /// 消耗体力。
+        /// </summary>
+        public void ConsumeStamina(int amount)
+        {
+            if (amount <= 0) return;
+            _currentStamina -= amount;
+            if (_currentStamina < 0) _currentStamina = 0;
+            GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+        }
+
+        /// <summary>
+        /// 获取闪避所需体力。
+        /// </summary>
+        public int GetDodgeStaminaCost() => _dodgeStaminaCost;
+
+        /// <summary>
+        /// 加载玩家配置。
+        /// </summary>
+        private void LoadPlayerConfig()
+        {
+            try
+            {
+                _playerConfig = ConfigSystem.Instance.Tables.TbPlayer.Get(_playerConfigId);
+            }
+            catch (System.Exception e)
+            {
+                Log.Warning($"[PlayerSystem] 读取玩家配置 {_playerConfigId} 失败，使用默认值: {e.Message}");
+                _playerConfig = null;
+            }
+
+            // 关卡可能覆盖血量
+            var levelConfig = LevelConfigMgr.Instance.Get(BattleContext.CurrentLevelId);
+            int levelMaxHp = levelConfig?.playerMaxHp ?? 0;
+
+            if (_playerConfig != null)
+            {
+                _maxHp = levelMaxHp > 0 ? levelMaxHp : _playerConfig.MaxHp;
+                _maxStamina = _playerConfig.MaxStamina;
+                _dodgeStaminaCost = _playerConfig.DodgeStaminaCost;
+                _staminaRecoveryRate = _playerConfig.StaminaRecoveryRate;
+            }
+            else
+            {
+                _maxHp = levelMaxHp > 0 ? levelMaxHp : _maxHp;
+            }
+
+            _currentHp = _maxHp;
+            _currentStamina = _maxStamina;
+        }
+
+        /// <summary>
+        /// 将配置应用到玩家实体。
+        /// </summary>
+        private void ApplyPlayerConfig(PlayerEntity entity)
+        {
+            if (entity == null) return;
+            if (_playerConfig == null) return;
+
+            entity.BaseMoveSpeed = _playerConfig.MoveSpeed;
+            entity.MoveSpeed = _playerConfig.MoveSpeed;
+            entity.DodgeSpeed = _playerConfig.DodgeSpeed;
+            entity.DodgeDuration = _playerConfig.DodgeDuration;
         }
 
         /// <summary>
@@ -188,6 +294,25 @@ namespace GameLogic
             _maxHp = Mathf.Max(1, maxHp);
             _currentHp = _maxHp;
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
+        }
+
+        /// <summary>
+        /// GM：设置当前体力。
+        /// </summary>
+        public void GM_SetStamina(int stamina)
+        {
+            _currentStamina = Mathf.Clamp(stamina, 0, _maxStamina);
+            GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+        }
+
+        /// <summary>
+        /// GM：设置最大体力并回满。
+        /// </summary>
+        public void GM_SetMaxStamina(int maxStamina)
+        {
+            _maxStamina = Mathf.Max(1, maxStamina);
+            _currentStamina = _maxStamina;
+            GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
         }
 #endif
 

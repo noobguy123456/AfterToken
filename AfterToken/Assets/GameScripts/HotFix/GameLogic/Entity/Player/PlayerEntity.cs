@@ -24,6 +24,11 @@ namespace GameLogic
         public bool IsDead { get; private set; }
         public bool IsDodging { get; private set; }
 
+        /// <summary>
+        /// 玩家状态机黑板。
+        /// </summary>
+        public PlayerStateContext Context { get; set; }
+
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();

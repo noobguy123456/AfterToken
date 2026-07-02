@@ -1,1 +1,2 @@
-- 使用 [CLAUDE.md](./CLAUDE.md) 
+- 使用 [CLAUDE.md](./CLAUDE.md)
+- 注意：涉及实际游戏运行状态（Play Mode 验证、模拟输入、触发战斗结果、场景切换等）受 MCP 限制，应通知用户由其完成，不要强行绕过。

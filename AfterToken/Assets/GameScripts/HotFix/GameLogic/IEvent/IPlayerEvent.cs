@@ -13,6 +13,7 @@ namespace GameLogic
         void OnPlayerPositionChanged(Vector3 position);
         void OnPlayerStateChanged(string stateName, string prevStateName);
         void OnHpChanged(int currentHp, int maxHp);
+        void OnStaminaChanged(int currentStamina, int maxStamina);
         void OnAmmoChanged(int currentAmmo, int maxAmmo);
         void OnPlayerDamaged(int damage, Vector2 hitDirection);
         void OnPlayerDied();

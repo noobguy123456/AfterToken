@@ -27,13 +27,20 @@ namespace GameLogic
         private Text _textHp;
         private Text _textAmmo;
         private Text _textWeapon;
+        private Slider _sliderHp;
+        private Slider _sliderStamina;
         private RectTransform _rectCrosshair;
+
+        // [DEBUG] 调试状态文字，后续删除
+        private Text _textState;
 
         protected override void ScriptGenerator()
         {
             _textHp = FindChildComponent<Text>("m_rect_HudRoot/m_text_Hp");
             _textAmmo = FindChildComponent<Text>("m_rect_HudRoot/m_text_Ammo");
             _textWeapon = FindChildComponent<Text>("m_rect_HudRoot/m_text_Weapon");
+            _sliderHp = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Hp");
+            _sliderStamina = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Stamina");
             _rectCrosshair = FindChildComponent<RectTransform>("m_rect_Crosshair");
         }
         #endregion
@@ -61,6 +68,8 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             InitializeCrosshair();
+            EnsureBarSliders();
+            CreateDebugStateText();
             RefreshAll();
             Log.Debug($"[BattleMainUI] 节点绑定: Hp={_textHp != null}, Ammo={_textAmmo != null}, Weapon={_textWeapon != null}, Crosshair={_rectCrosshair != null}");
         }
@@ -73,6 +82,8 @@ namespace GameLogic
             AddUIEvent<int, int, int>(IWeaponEvent_Event.OnWeaponEquipped, OnWeaponEquipped);
             AddUIEvent<int, int>(IWeaponEvent_Event.OnWeaponSwitched, OnWeaponSwitched);
             AddUIEvent<int, bool>(IWeaponEvent_Event.OnReloadStateChanged, OnReloadStateChanged);
+            AddUIEvent<int, int>(IPlayerEvent_Event.OnStaminaChanged, OnStaminaChanged);
+            AddUIEvent<string, string>(IPlayerEvent_Event.OnPlayerStateChanged, OnPlayerStateChanged);
         }
 
         protected override void OnUpdate()
@@ -353,6 +364,14 @@ namespace GameLogic
         private void OnHpChanged(int currentHp, int maxHp)
         {
             if (_textHp != null) _textHp.text = $"HP: {currentHp}/{maxHp}";
+            if (_sliderHp != null)
+                _sliderHp.value = maxHp > 0 ? (float)currentHp / maxHp : 0f;
+        }
+
+        private void OnStaminaChanged(int currentStamina, int maxStamina)
+        {
+            if (_sliderStamina != null)
+                _sliderStamina.value = maxStamina > 0 ? (float)currentStamina / maxStamina : 0f;
         }
 
         private void OnAmmoChanged(int currentAmmo, int maxAmmo)
@@ -388,18 +407,134 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// [DEBUG] 玩家状态变化时刷新调试文字。
+        /// TODO: 后续删除该调试 UI。
+        /// </summary>
+        private void OnPlayerStateChanged(string currentState, string prevState)
+        {
+            if (_textState != null)
+            {
+                _textState.text = $"State: {currentState}";
+            }
+        }
+
+        /// <summary>
+        /// [DEBUG] 创建当前状态调试文字。
+        /// TODO: 后续删除该调试 UI。
+        /// </summary>
+        private void CreateDebugStateText()
+        {
+            var hudRoot = FindChildComponent<RectTransform>("m_rect_HudRoot");
+            if (hudRoot == null) return;
+
+            var go = new GameObject("m_text_State_Debug", typeof(RectTransform));
+            go.transform.SetParent(hudRoot, false);
+
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.zero;
+            rect.pivot = Vector2.zero;
+            rect.anchoredPosition = new Vector2(10f, 80f);
+            rect.sizeDelta = new Vector2(300f, 30f);
+
+            _textState = go.AddComponent<Text>();
+            _textState.font = _textHp?.font;
+            _textState.fontSize = 20;
+            _textState.color = Color.yellow;
+            _textState.text = "State: Idle";
+        }
+
         #endregion
+
+        /// <summary>
+        /// 确保血条与体力条 Slider 存在；若 Prefab 中未配置则运行时动态创建。
+        /// </summary>
+        private void EnsureBarSliders()
+        {
+            var hudRoot = FindChildComponent<RectTransform>("m_rect_HudRoot");
+            if (hudRoot == null) return;
+
+            if (_sliderHp == null)
+            {
+                _sliderHp = CreateBarSlider(hudRoot, "m_slider_Hp", new Color(0.85f, 0.2f, 0.2f));
+                _sliderHp.transform.SetSiblingIndex(0);
+            }
+
+            if (_sliderStamina == null)
+            {
+                _sliderStamina = CreateBarSlider(hudRoot, "m_slider_Stamina", new Color(0.2f, 0.75f, 0.25f));
+                _sliderStamina.transform.SetSiblingIndex(1);
+            }
+        }
+
+        /// <summary>
+        /// 创建一个简单的水平进度条 Slider。
+        /// </summary>
+        private Slider CreateBarSlider(RectTransform parent, string name, Color fillColor)
+        {
+            var sliderGo = new GameObject(name, typeof(RectTransform));
+            var sliderRect = sliderGo.GetComponent<RectTransform>();
+            sliderRect.SetParent(parent, false);
+            sliderRect.sizeDelta = new Vector2(200f, 16f);
+            sliderRect.anchoredPosition = new Vector2(10f, name == "m_slider_Hp" ? -40f : -60f);
+
+            var slider = sliderGo.AddComponent<Slider>();
+            slider.transition = Selectable.Transition.None;
+            slider.interactable = false;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 1f;
+            slider.direction = Slider.Direction.LeftToRight;
+
+            // Background
+            var bgGo = new GameObject("Background", typeof(RectTransform));
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.SetParent(sliderRect, false);
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.sizeDelta = Vector2.zero;
+            var bgImage = bgGo.AddComponent<Image>();
+            bgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
+
+            // Fill Area
+            var fillAreaGo = new GameObject("Fill Area", typeof(RectTransform));
+            var fillAreaRect = fillAreaGo.GetComponent<RectTransform>();
+            fillAreaRect.SetParent(sliderRect, false);
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.sizeDelta = Vector2.zero;
+
+            // Fill
+            var fillGo = new GameObject("Fill", typeof(RectTransform));
+            var fillRect = fillGo.GetComponent<RectTransform>();
+            fillRect.SetParent(fillAreaRect, false);
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.sizeDelta = Vector2.zero;
+            var fillImage = fillGo.AddComponent<Image>();
+            fillImage.color = fillColor;
+
+            slider.fillRect = fillRect;
+            slider.targetGraphic = fillImage;
+
+            return slider;
+        }
 
         private void RefreshAll()
         {
             var playerSystem = PlayerSystem.Instance;
-            if (playerSystem != null && _textHp != null)
+            if (playerSystem != null)
             {
-                _textHp.text = $"HP: {playerSystem.CurrentHp}/{playerSystem.MaxHp}";
+                if (_textHp != null) _textHp.text = $"HP: {playerSystem.CurrentHp}/{playerSystem.MaxHp}";
+                if (_sliderHp != null) _sliderHp.value = playerSystem.MaxHp > 0 ? (float)playerSystem.CurrentHp / playerSystem.MaxHp : 0f;
+                if (_sliderStamina != null) _sliderStamina.value = playerSystem.MaxStamina > 0 ? (float)playerSystem.CurrentStamina / playerSystem.MaxStamina : 0f;
             }
             else
             {
                 if (_textHp != null) _textHp.text = "HP: -/-";
+                if (_sliderHp != null) _sliderHp.value = 0f;
+                if (_sliderStamina != null) _sliderStamina.value = 0f;
             }
 
             var weapon = WeaponSystem.Instance?.CurrentWeapon;

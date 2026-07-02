@@ -9,12 +9,9 @@ namespace GameLogic
     {
         public override string StateName => "Dead";
 
-        protected override void OnEnter(IFsm<PlayerEntity> fsm)
+        protected override void OnEnterState(IFsm<PlayerEntity> fsm)
         {
-            base.OnEnter(fsm);
-
-            var owner = fsm.Owner;
-            owner.SetDead();
+            Owner.SetDead();
             GameEvent.Get<IPlayerEvent>().OnPlayerDied();
         }
     }

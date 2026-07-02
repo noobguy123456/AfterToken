@@ -9,14 +9,11 @@ namespace GameLogic
     {
         public override string StateName => "Idle";
 
-        protected override void OnUpdate(IFsm<PlayerEntity> fsm, float elapse, float real)
+        protected override void OnUpdateState(IFsm<PlayerEntity> fsm, float elapse, float real)
         {
-            base.OnUpdate(fsm, elapse, real);
-
-            var owner = fsm.Owner;
-            if (owner.MoveDirection.sqrMagnitude > 0.001f)
+            if (Context.MoveInput.sqrMagnitude > 0.001f)
             {
-                ChangeState<PlayerMoveState>(fsm);
+                RequestState<PlayerMoveState>();
             }
         }
     }

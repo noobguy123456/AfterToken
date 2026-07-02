@@ -4,6 +4,7 @@ namespace GameLogic
 {
     /// <summary>
     /// 玩家换弹状态。
+    /// 由武器实例自身管理换弹计时，状态机监听换弹完成/取消事件后切回 Idle。
     /// </summary>
     public class PlayerReloadState : PlayerStateBase
     {
@@ -11,57 +12,37 @@ namespace GameLogic
 
         private IFsm<PlayerEntity> _fsm;
 
-        protected override void OnEnter(IFsm<PlayerEntity> fsm)
+        protected override void OnEnterState(IFsm<PlayerEntity> fsm)
         {
-            base.OnEnter(fsm);
-
             _fsm = fsm;
-            GameEvent.AddEventListener<int, int>(IWeaponEvent_Event.OnWeaponSwitched, OnWeaponSwitched);
 
-            var owner = fsm.Owner;
-            GameEvent.Get<IWeaponEvent>().OnReload(owner.GetInstanceID());
+            GameEvent.AddEventListener<int, bool>(IWeaponEvent_Event.OnReloadStateChanged, OnReloadStateChanged);
 
-            // 从当前武器配置读取换弹时间
-            float reloadTime = WeaponSystem.Instance?.CurrentWeapon?.Config.reloadTime ?? 1.5f;
-
-            int timerId = GameModule.Timer.AddTimer(
-                (args) =>
-                {
-                    if (fsm.IsRunning)
-                    {
-                        ChangeState<PlayerIdleState>(fsm);
-                    }
-                },
-                time: reloadTime
-            );
-
-            fsm.SetData("ReloadTimerId", timerId);
+            Context.IsReloading = true;
+            Context.CurrentWeapon?.Reload(Owner.GetInstanceID());
         }
 
-        protected override void OnLeave(IFsm<PlayerEntity> fsm, bool isShutdown)
+        protected override void OnUpdateState(IFsm<PlayerEntity> fsm, float elapse, float real)
         {
-            base.OnLeave(fsm, isShutdown);
+            // 武器实例负责计时，状态机只等待完成事件
+        }
 
-            GameEvent.RemoveEventListener<int, int>(IWeaponEvent_Event.OnWeaponSwitched, OnWeaponSwitched);
+        protected override void OnLeaveState(IFsm<PlayerEntity> fsm, bool isShutdown)
+        {
+            GameEvent.RemoveEventListener<int, bool>(IWeaponEvent_Event.OnReloadStateChanged, OnReloadStateChanged);
             _fsm = null;
-
-            int timerId = fsm.GetData<int>("ReloadTimerId");
-            if (timerId != 0)
-            {
-                GameModule.Timer.RemoveTimer(timerId);
-                fsm.SetData("ReloadTimerId", 0);
-            }
+            Context.IsReloading = false;
         }
 
         /// <summary>
-        /// 换弹过程中切换武器时，立即中断换弹并回到 Idle。
-        /// 武器的 CancelReload 由 WeaponSystem.SwitchToSlot 负责调用。
+        /// 换弹完成或被取消时切回 Idle。
         /// </summary>
-        private void OnWeaponSwitched(int ownerId, int slot)
+        private void OnReloadStateChanged(int ownerId, bool isReloading)
         {
+            if (isReloading) return;
             if (_fsm != null && _fsm.IsRunning && _fsm.CurrentState == this)
             {
-                ChangeState<PlayerIdleState>(_fsm);
+                RequestState<PlayerIdleState>();
             }
         }
     }

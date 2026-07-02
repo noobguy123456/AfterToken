@@ -47,7 +47,7 @@
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
 | 输入系统 | ✅ | - | - | `docs/modules/combat/input-system/` | 移动、瞄准、开火、换弹、切枪、闪避、武器轮盘 |
-| 玩家系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM，待接入 `TbPlayer` |
+| 玩家系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM + 体力系统 + HP/体力条 HUD；`TbPlayer` 已接入；Play Mode 基础切换已初步确认，待后续新状态调试 |
 | 武器系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/weapon-system/` | 武器槽、开火、换弹、辅助瞄准，待 `TbWeapon/TbBullet` |
 | 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线 |
 | 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
