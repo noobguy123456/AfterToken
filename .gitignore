@@ -4,11 +4,6 @@
 # macOS
 .DS_Store
 
-# Luban 工具与生成缓存
-Tools/Luban/
-Tools/Luban.ClientServer/
-Configs/.cache.meta
-GenerateDatas/
 
 # FileServer 运行时资源目录
 Tools/FileServer/AssetRoot
