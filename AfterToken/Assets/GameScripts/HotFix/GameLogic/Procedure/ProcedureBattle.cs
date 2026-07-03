@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using TEngine;
 using UnityEngine;
+using GameLogic.Navigation;
 
 namespace GameLogic
 {
@@ -64,6 +65,7 @@ namespace GameLogic
             _battleRoot.AddComponent<EnemySpawnSystem>();
             _battleRoot.AddComponent<HitFeedbackSystem>();
             _battleRoot.AddComponent<PoolSystem>();
+            _battleRoot.AddComponent<NavigationSystem>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _battleRoot.AddComponent<GameLogic.GM.GMController>();
@@ -109,6 +111,9 @@ namespace GameLogic
             {
                 weaponSystem.SetDefaultWeapons(_levelConfig.defaultWeaponIds);
             }
+
+            var navSystem = _battleRoot.GetComponent<NavigationSystem>();
+            navSystem?.Initialize(_levelConfig.enemySpawnRadius);
         }
 
         private void CleanupBattleSystems()

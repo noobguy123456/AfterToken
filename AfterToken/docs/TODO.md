@@ -53,7 +53,7 @@
 | 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、狙击镜，待抖动 |
-| 敌人系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成，待 AI/FSM |
+| 敌人系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、FSM（Idle/Chase/Attack/Dead）已跑通；自研 A* 寻路系统框架已完成并接入 `EnemyChaseState`；待 Play Mode 验证与 `TbEnemy` 配置接入 |
 | 掉落与拾取系统 | ⏳ | P1 | 敌人系统、共享层 | `docs/modules/combat/pickup-system/`（新增） | 敌人死亡掉落、PickupEntity、拾取（从敌人系统拆分） |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P0 | 配置表系统、事件系统 | `docs/modules/combat/level-system/` | 硬编码表，待波次/胜负/配置化 |
@@ -97,7 +97,7 @@
 |------|------|--------|-----------|----------|------|
 | 资源管线 | ✅ | - | - | `docs/modules/pipeline/asset-pipeline/` | YooAsset 收集器、SimulateBuild |
 | 热更管线 | 🟡 | P1 | - | `docs/modules/pipeline/hotfix-pipeline/` | HybridCLR 环境、DLL 加载，待 AOT 元数据补充验证 |
-| **Luban 配置表系统** | 🟡 | **P0** | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON，`weapon`/`level` 已定义，**生成逻辑已跑通，缺数据补充** |
+| **Luban 配置表系统** | 🟡 | **P0** | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON，`weapon`/`level`/`player`/`battle`（Enemy/Wave/Drop）已定义并接入，新增流程文档已补充；待 `buff` / `item` 修复 / YooAsset 收集器配置 |
 | 编辑器工具 | ✅ | - | - | `docs/modules/pipeline/editor-tools/` | BattleSceneSetup、Force Recompile、TMP Migration |
 
 ### 全局与支撑系统
@@ -123,9 +123,9 @@ Luban 配置表数据补充
     ├── 阻塞 → 关卡系统波次/胜负
     └── 阻塞 → 奖励系统、跨玩法联动
 
-敌人 AI / FSM 缺失
-    ├── 阻塞 → 关卡波次/胜负判定
-    └── 阻塞 → 掉落/拾取系统
+敌人 AI / FSM 基础框架已完成
+    ├── 仍待接入 `TbEnemy` 配置表
+    └── 仍待更优生成逻辑与波次/掉落联动
 
 共享系统（Currency / Inventory / PlayerProfile）
     ├── 阻塞 → 奖励系统
@@ -172,4 +172,7 @@ Luban 配置表数据补充
 | 2026-06-30 | 光标资源可配置化；`CursorManager` 支持 `SetDefaultCursor`/`SetCursor` 自定义 `Texture2D` 光标纹理；`MainMenuUI.SetupDefaultCursor()` 生成默认箭头光标并支持后续替换为美术资源；更新 `cursor-system` 模块文档与 `射击模块实现文档.md` |
 | 2026-06-30 | 修复 Console 编译报错：将自定义枚举 `CursorLockMode` 重命名为 `GameCursorLockMode`，避免与 `UnityEngine.CursorLockMode` 冲突；查看 `Editor.log` 确认编译通过 |
 | 2026-06-30 | 修复光标锁死在屏幕中心：`CursorManager.ApplyCursorState` 在 Free 模式不可见时不再提前解锁，显示光标时根据当前 `lockState` 决定是否 `UniTask.Yield()` 等待一帧；注释 `ProcedureMainMenu` 编辑器自动跳转战斗调试代码；补充 `using System;` 解决 `OperationCanceledException` 编译错误；更新 `cursor-system` 模块文档与日报 |
+| 2026-07-03 | 搭建敌人 FSM 框架：`EnemyStateContext` / `EnemyStateMachineDriver` / `EnemyStateInterceptor`；实现 `EnemyIdleState` / `EnemyChaseState` / `EnemyAttackState` / `EnemyDeadState`；重构 `EnemyEntity` 接入 FSM 与黑板驱动；`IEnemyEvent` 新增 `OnEnemyStateChanged`；Play Mode 验证状态切换与死亡销毁正常 |
+| 2026-07-03 | 统一敌人与玩家障碍物碰撞效果：敌人 `Rigidbody2D` 改为 `Dynamic` + 冻结旋转；`EnemyIdle`/`Attack`/`Dead` 进入时清空速度；修复敌人穿 `Ground` 问题 |
+| 2026-07-03 | 实现自研 2D 网格 A* 寻路系统：`INavigationSystem`/`INavigationGridBuilder`/`NavigationGrid`/`AStarNavigationSystem`/`ColliderGridBuilder`/`NavigationSystem`；接入 `EnemyChaseState` 路径跟随；`ProcedureBattle` 初始化导航网格；编译通过；Play Mode 寻路验证待继续 |
 | 2026-06-30 | 代码审查与问题整改：`WeaponSystem.GetWeaponInSlot` 替代直接访问私有字段；修复 `InputSystem._weaponWheelUI` 未赋值；迁移 `KeyCode.C` 到 `IBattleInputEvent.OnCycleCrosshairStyle`；`SensitivitySetting` 常量命名与 `PlayerPrefs.Save` 优化；`SettingsUI` 设置字体、`RemoveAllListeners`、移除手动 Layer 切换；`CursorManager.Release()` 释放 CTS；补充 `InputSystem` 缺少的 `using Cysharp.Threading.Tasks`；更新日报 |

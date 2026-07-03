@@ -1,7 +1,8 @@
 # Luban 配置表系统
 
 > 项目已接入 Luban 工具链，配置工程位于 `Configs/GameConfig/`。
-> 当前状态：**配置工程已搭建，数据表已定义，但生成脚本尚未成功运行**（`Tools/Luban/` 缺少运行时依赖文件）。
+> 当前状态：**配置工程已搭建，数据表已定义，生成脚本可正常运行**。
+> 新增/修改配置表流程见 [ADDING-NEW-CONFIG.md](./ADDING-NEW-CONFIG.md)。
 
 ---
 
@@ -12,36 +13,15 @@
 | `Luban.dll` | `Tools/Luban/Luban.dll` | Luban 主程序 |
 | `README.md` | `Tools/Luban/README.md` | 安装说明 |
 
-### 当前问题
+### 工具链状态
 
-运行生成脚本时会报错：
+当前 `Tools/Luban/` 已包含完整运行依赖，`gen_code_bin_to_project.bat` 可正常生成代码与 JSON 数据。
 
-```
-A fatal error was encountered. The library 'hostpolicy.dll' required to execute the application was not found...
-Luban.runtimeconfig.json was not found.
-```
-
-**原因**：`Tools/Luban/` 目录下只有 `Luban.dll`，缺少 Luban 正常运行所需的 `.runtimeconfig.json`、`.deps.json` 及依赖 DLL。
-
-**修复方法**：
-
-从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到 `Tools/Luban/`，而不是只拷贝 `Luban.dll`。
+若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到 `Tools/Luban/`。
 
 官方地址：
 - GitHub：https://github.com/focus-creative-games/luban/releases
 - Gitee 镜像：https://gitee.com/focus-creative-games/luban/releases
-
-完整目录示例：
-
-```
-Tools/Luban/
-├── Luban.dll
-├── Luban.runtimeconfig.json
-├── Luban.deps.json
-├── hostpolicy.dll
-├── hostfxr.dll
-├── ... 其他依赖 DLL
-```
 
 验证安装：
 
@@ -61,11 +41,14 @@ Configs/GameConfig/
 │   └── builtin.xml                         # Unity 类型映射（vector2/3/4/2int/3int）
 ├── Datas/
 │   ├── __tables__.xlsx                     # 表注册索引
-│   ├── __beans__.xlsx                      # 复合类型定义（当前为空）
+│   ├── __beans__.xlsx                      # 数据结构（bean）定义
 │   ├── __enums__.xlsx                      # 枚举定义
+│   ├── player.xlsx                         # 玩家属性表
 │   ├── weapon.xlsx                         # 武器表
 │   ├── level.xlsx                          # 关卡表
-│   └── item.xlsx                           # 物品表（示例数据，含复杂类型）
+│   ├── item.xlsx                           # 物品表（示例数据，含复杂类型）
+│   ├── battle.xlsx                         # 战斗表（含 Enemy/Wave/Drop 多个 sheet）
+│   ├── buff.xlsx                           # Buff 表
 └── CustomTemplate/
     ├── ConfigSystem.cs                     # 配置加载器模板
     ├── ExternalTypeUtil.cs                 # Unity 类型转换工具

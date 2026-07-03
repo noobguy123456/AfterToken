@@ -11,6 +11,9 @@ namespace GameLogic
         [SerializeField] private int _configId;
         [SerializeField] private int _maxHp = 50;
         [SerializeField] private int _hp = 50;
+        [SerializeField] private Animator _animator;
+        [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private Rigidbody2D _rb;
 
         [Header("血条")]
         [SerializeField] private Transform _healthBarRoot;
@@ -22,10 +25,44 @@ namespace GameLogic
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
         private const float HEALTH_BAR_OFFSET_Y = 0.6f;
 
+        private IFsm<EnemyEntity> _fsm;
+
         public int ConfigId => _configId;
         public int Hp => _hp;
         public int MaxHp => _maxHp;
         public bool IsDead => _hp <= 0;
+
+        /// <summary>
+        /// 敌人状态机黑板。
+        /// </summary>
+        public EnemyStateContext Context { get; private set; }
+
+        /// <summary>
+        /// 敌人刚体。
+        /// </summary>
+        public Rigidbody2D Rigidbody => _rb;
+
+        private void Awake()
+        {
+            if (_animator == null) _animator = GetComponent<Animator>();
+            if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
+            if (_rb == null) _rb = GetComponent<Rigidbody2D>();
+            EnsureRigidbody();
+        }
+
+        /// <summary>
+        /// 确保刚体配置与玩家一致：Dynamic、无重力、冻结旋转。
+        /// </summary>
+        private void EnsureRigidbody()
+        {
+            if (_rb == null)
+            {
+                _rb = gameObject.AddComponent<Rigidbody2D>();
+            }
+            _rb.gravityScale = 0;
+            _rb.bodyType = RigidbodyType2D.Dynamic;
+            _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        }
 
         public void Initialize(int configId, int maxHp)
         {
@@ -33,8 +70,12 @@ namespace GameLogic
             _maxHp = maxHp;
             _hp = maxHp;
 
+            Context = new EnemyStateContext();
+            Context.IsDead = false;
+
             EnsureHealthBar();
             UpdateHealthBar();
+            CreateFsm();
         }
 
         public void TakeDamage(int damage, Vector2 hitDirection)
@@ -48,7 +89,84 @@ namespace GameLogic
 
             if (_hp <= 0)
             {
-                Die();
+                Context.IsDead = true;
+            }
+        }
+
+        /// <summary>
+        /// 根据状态名播放动画。
+        /// </summary>
+        public void PlayAnimation(string stateName)
+        {
+            // TODO: 接入 TbEnemyAnimation 配置表
+            string animName = stateName switch
+            {
+                "Idle" => "Enemy_Idle",
+                "Chase" => "Enemy_Run",
+                "Attack" => "Enemy_Attack",
+                "Dead" => "Enemy_Dead",
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(animName))
+            {
+                Log.Warning($"[EnemyEntity] 找不到状态 {stateName} 对应的动画");
+                return;
+            }
+
+            if (_animator != null)
+            {
+                _animator.Play(animName, 0, 0f);
+            }
+        }
+
+        /// <summary>
+        /// 设置朝向。
+        /// </summary>
+        public void SetFacing(Vector2 direction)
+        {
+            if (direction.x > 0.01f)
+            {
+                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            }
+            else if (direction.x < -0.01f)
+            {
+                transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            }
+        }
+
+        private void CreateFsm()
+        {
+            if (_fsm != null)
+            {
+                GameModule.Fsm.DestroyFsm(_fsm);
+                _fsm = null;
+            }
+
+            _fsm = GameModule.Fsm.CreateFsm<EnemyEntity>(
+                $"EnemyFsm_{GetInstanceID()}",
+                this,
+                new EnemyIdleState(),
+                new EnemyChaseState(),
+                new EnemyAttackState(),
+                new EnemyDeadState()
+            );
+
+            _fsm.Start<EnemyIdleState>();
+        }
+
+        private void Update()
+        {
+            if (Context == null) return;
+            EnemyStateMachineDriver.Instance.UpdateContext(Context, this);
+        }
+
+        private void OnDestroy()
+        {
+            if (_fsm != null)
+            {
+                GameModule.Fsm.DestroyFsm(_fsm);
+                _fsm = null;
             }
         }
 
@@ -129,12 +247,6 @@ namespace GameLogic
                 tex.SetPixel(x, y, Color.white);
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0f, 0.5f), 4);
-        }
-
-        private void Die()
-        {
-            GameEvent.Get<IEnemyEvent>().OnEnemyDied(GetInstanceID());
-            Destroy(gameObject);
         }
     }
 }

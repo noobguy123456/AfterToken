@@ -10,7 +10,7 @@
       1003
     ],
     "playerMaxHp": 100,
-    "enemyCount": 3,
+    "enemyCount": 15,
     "enemySpawnRadius": 6,
     "enemyConfigId": 9001,
     "enemyMaxHp": 50
@@ -26,7 +26,7 @@
       1004
     ],
     "playerMaxHp": 100,
-    "enemyCount": 5,
+    "enemyCount": 20,
     "enemySpawnRadius": 8,
     "enemyConfigId": 9001,
     "enemyMaxHp": 80

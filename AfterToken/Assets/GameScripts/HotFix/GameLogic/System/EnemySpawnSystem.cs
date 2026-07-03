@@ -75,7 +75,8 @@ namespace GameLogic
 
             var rb = go.AddComponent<Rigidbody2D>();
             rb.gravityScale = 0;
-            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
             return go;
         }

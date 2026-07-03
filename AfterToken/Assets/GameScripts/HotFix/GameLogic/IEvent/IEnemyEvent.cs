@@ -9,5 +9,6 @@ namespace GameLogic
     {
         void OnEnemySpawned(int enemyId, int configId);
         void OnEnemyDied(int enemyId);
+        void OnEnemyStateChanged(int enemyId, string stateName, string previousStateName);
     }
 }
