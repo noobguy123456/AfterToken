@@ -39,8 +39,9 @@
 | `Assets/GameScripts/HotFix/GameLogic/FSM/Player/PlayerDodgeState.cs` | 进入时消耗体力 |
 | `Assets/GameScripts/HotFix/GameLogic/IEvent/IPlayerEvent.cs` | 新增 `OnStaminaChanged` 事件 |
 | `Configs/GameConfig/Datas/player.xlsx` | 新增玩家属性列：maxStamina / staminaRecoveryRate / dodgeStaminaCost / dodgeSpeed / dodgeDuration |
-| `Assets/GameScripts/HotFix/GameProto/GameConfig/cfg/Player.cs` | 同步新增配置字段（因当前 Luban 工具链不完整，已手动同步；后续需重新生成） |
-| `Assets/AssetRaw/Configs/json/cfg_tbplayer.json` | 同步新增字段数据（需与 xlsx 保持一致） |
+| `Assets/GameScripts/HotFix/GameProto/GameConfig/cfg/Player.cs` | 同步新增配置字段（已通过 `gen_code_bin_to_project.bat` 重新生成） |
+| `Assets/AssetRaw/Configs/json/cfg_tbplayer.json` | 同步新增字段数据（已通过 Luban 重新生成） |
+| `Configs/GameConfig/Datas/__beans__.xlsx` | 在 `cfg.Player` bean 定义中新增 stamina / dodge 相关字段 |
 
 ---
 

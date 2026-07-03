@@ -25,14 +25,14 @@ public sealed partial class Player : Luban.BeanBase
         JObject _obj = _buf as JObject;
         Id = (int)_obj.GetValue("id");
         MaxHp = (int)_obj.GetValue("maxHp");
+        MoveSpeed = (float)_obj.GetValue("moveSpeed");
+        RotationSpeed = (float)_obj.GetValue("rotationSpeed");
+        ColliderRadius = (float)_obj.GetValue("colliderRadius");
         MaxStamina = (int)_obj.GetValue("maxStamina");
         StaminaRecoveryRate = (float)_obj.GetValue("staminaRecoveryRate");
         DodgeStaminaCost = (int)_obj.GetValue("dodgeStaminaCost");
-        MoveSpeed = (float)_obj.GetValue("moveSpeed");
         DodgeSpeed = (float)_obj.GetValue("dodgeSpeed");
         DodgeDuration = (float)_obj.GetValue("dodgeDuration");
-        RotationSpeed = (float)_obj.GetValue("rotationSpeed");
-        ColliderRadius = (float)_obj.GetValue("colliderRadius");
         Prefab = (string)_obj.GetValue("prefab");
     }
 
@@ -50,6 +50,18 @@ public sealed partial class Player : Luban.BeanBase
     /// </summary>
     public readonly int MaxHp;
     /// <summary>
+    /// 移动速度
+    /// </summary>
+    public readonly float MoveSpeed;
+    /// <summary>
+    /// 旋转速度
+    /// </summary>
+    public readonly float RotationSpeed;
+    /// <summary>
+    /// 碰撞体半径
+    /// </summary>
+    public readonly float ColliderRadius;
+    /// <summary>
     /// 最大体力
     /// </summary>
     public readonly int MaxStamina;
@@ -62,10 +74,6 @@ public sealed partial class Player : Luban.BeanBase
     /// </summary>
     public readonly int DodgeStaminaCost;
     /// <summary>
-    /// 移动速度
-    /// </summary>
-    public readonly float MoveSpeed;
-    /// <summary>
     /// 闪避速度
     /// </summary>
     public readonly float DodgeSpeed;
@@ -73,14 +81,6 @@ public sealed partial class Player : Luban.BeanBase
     /// 闪避持续时间
     /// </summary>
     public readonly float DodgeDuration;
-    /// <summary>
-    /// 旋转速度
-    /// </summary>
-    public readonly float RotationSpeed;
-    /// <summary>
-    /// 碰撞体半径
-    /// </summary>
-    public readonly float ColliderRadius;
     /// <summary>
     /// 预制体
     /// </summary>
@@ -99,16 +99,17 @@ public sealed partial class Player : Luban.BeanBase
         return "{ "
         + "id:" + Id + ","
         + "maxHp:" + MaxHp + ","
+        + "moveSpeed:" + MoveSpeed + ","
+        + "rotationSpeed:" + RotationSpeed + ","
+        + "colliderRadius:" + ColliderRadius + ","
         + "maxStamina:" + MaxStamina + ","
         + "staminaRecoveryRate:" + StaminaRecoveryRate + ","
         + "dodgeStaminaCost:" + DodgeStaminaCost + ","
-        + "moveSpeed:" + MoveSpeed + ","
         + "dodgeSpeed:" + DodgeSpeed + ","
         + "dodgeDuration:" + DodgeDuration + ","
-        + "rotationSpeed:" + RotationSpeed + ","
-        + "colliderRadius:" + ColliderRadius + ","
         + "prefab:" + Prefab + ","
         + "}";
     }
 }
 }
+

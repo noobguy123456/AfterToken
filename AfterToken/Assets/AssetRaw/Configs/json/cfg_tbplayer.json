@@ -2,14 +2,14 @@
   {
     "id": 1,
     "maxHp": 100,
+    "moveSpeed": 5,
+    "rotationSpeed": 720,
+    "colliderRadius": 0.5,
     "maxStamina": 100,
     "staminaRecoveryRate": 30,
     "dodgeStaminaCost": 25,
-    "moveSpeed": 5,
     "dodgeSpeed": 15,
     "dodgeDuration": 0.4,
-    "rotationSpeed": 720,
-    "colliderRadius": 0.5,
     "prefab": "Player_Hero"
   }
 ]
