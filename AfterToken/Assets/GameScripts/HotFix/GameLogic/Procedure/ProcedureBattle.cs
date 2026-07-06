@@ -113,7 +113,10 @@ namespace GameLogic
             }
 
             var navSystem = _battleRoot.GetComponent<NavigationSystem>();
-            navSystem?.Initialize(_levelConfig.enemySpawnRadius);
+            if (navSystem != null)
+            {
+                navSystem.Initialize(_levelConfig.enemySpawnRadius, playerSystem?.SpawnPosition ?? Vector2.zero);
+            }
         }
 
         private void CleanupBattleSystems()

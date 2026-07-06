@@ -6,7 +6,7 @@ namespace GameLogic
     /// <summary>
     /// 敌人实体。
     /// </summary>
-    public class EnemyEntity : MonoBehaviour
+    public class EnemyEntity : MonoBehaviour, IDamageable
     {
         [SerializeField] private int _configId;
         [SerializeField] private int _maxHp = 50;
@@ -25,12 +25,18 @@ namespace GameLogic
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
         private const float HEALTH_BAR_OFFSET_Y = 0.6f;
 
+        // 已迁移到 PlaceholderSpriteProvider.GetWhiteSprite4()
+
         private IFsm<EnemyEntity> _fsm;
 
         public int ConfigId => _configId;
         public int Hp => _hp;
         public int MaxHp => _maxHp;
         public bool IsDead => _hp <= 0;
+        public float MoveSpeed { get; private set; }
+        public int AttackDamage { get; private set; }
+        public float AttackRange { get; private set; }
+        public float AttackInterval { get; private set; }
 
         /// <summary>
         /// 敌人状态机黑板。
@@ -64,11 +70,15 @@ namespace GameLogic
             _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
 
-        public void Initialize(int configId, int maxHp)
+        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval)
         {
             _configId = configId;
             _maxHp = maxHp;
             _hp = maxHp;
+            MoveSpeed = moveSpeed;
+            AttackDamage = attackDamage;
+            AttackRange = attackRange;
+            AttackInterval = attackInterval;
 
             Context = new EnemyStateContext();
             Context.IsDead = false;
@@ -121,17 +131,13 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 设置朝向。
+        /// 设置朝向。只翻转身体 Sprite，不翻转整个 Transform，避免血条等子对象晃动。
         /// </summary>
         public void SetFacing(Vector2 direction)
         {
-            if (direction.x > 0.01f)
+            if (_spriteRenderer != null)
             {
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
-            }
-            else if (direction.x < -0.01f)
-            {
-                transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+                _spriteRenderer.flipX = direction.x < -0.01f;
             }
         }
 
@@ -203,7 +209,7 @@ namespace GameLogic
                 _healthBarRoot = rootGo.transform;
             }
 
-            var whiteSprite = CreateWhiteSprite();
+            var whiteSprite = PlaceholderSpriteProvider.GetWhiteSprite4();
 
             if (_healthBarBackground == null)
             {
@@ -239,14 +245,6 @@ namespace GameLogic
             else _healthBarFill.color = Color.red;
         }
 
-        private Sprite CreateWhiteSprite()
-        {
-            var tex = new Texture2D(4, 4);
-            for (int x = 0; x < 4; x++)
-            for (int y = 0; y < 4; y++)
-                tex.SetPixel(x, y, Color.white);
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0f, 0.5f), 4);
-        }
+
     }
 }

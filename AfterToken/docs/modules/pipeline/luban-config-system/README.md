@@ -10,14 +10,14 @@
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| `Luban.dll` | `Tools/Luban/Luban.dll` | Luban 主程序 |
+| `Luban.exe` | `Tools/Luban/Luban.exe` | Luban 主程序（脚本中解析为 `Configs/GameConfig/../../../Tools/Luban/Luban.exe`，即 `E:\U3D_project\AfterToken\Tools\Luban\Luban.exe`） |
 | `README.md` | `Tools/Luban/README.md` | 安装说明 |
 
 ### 工具链状态
 
 当前 `Tools/Luban/` 已包含完整运行依赖，`gen_code_bin_to_project.bat` 可正常生成代码与 JSON 数据。
 
-若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到 `Tools/Luban/`。
+`Tools/Luban/` 指**仓库根目录**下的 `Tools/Luban/`，对应本机路径为 `E:\U3D_project\AfterToken\Tools\Luban`。若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到仓库根目录的 `Tools/Luban/` 下。
 
 官方地址：
 - GitHub：https://github.com/focus-creative-games/luban/releases
@@ -26,7 +26,7 @@
 验证安装：
 
 ```bash
-dotnet Tools/Luban/Luban.dll --help
+dotnet Tools/Luban/Luban.exe --help
 ```
 
 ---
@@ -46,8 +46,9 @@ Configs/GameConfig/
 │   ├── player.xlsx                         # 玩家属性表
 │   ├── weapon.xlsx                         # 武器表
 │   ├── level.xlsx                          # 关卡表
+│   ├── enemy.xlsx                          # 敌人属性表
 │   ├── item.xlsx                           # 物品表（示例数据，含复杂类型）
-│   ├── battle.xlsx                         # 战斗表（含 Enemy/Wave/Drop 多个 sheet）
+│   ├── battle.xlsx                         # 战斗表（含 Wave/Drop 多个 sheet）
 │   ├── buff.xlsx                           # Buff 表
 └── CustomTemplate/
     ├── ConfigSystem.cs                     # 配置加载器模板
@@ -85,8 +86,14 @@ Configs/GameConfig/
 |-----------|-----------|-----------|---------|
 | `cfg.TbWeapon` | `Weapon` | `map` | 武器表 |
 | `cfg.TbLevel` | `Level` | `list` | 关卡表 |
+| `cfg.TbItem` | `Item` | `map` | 物品表 |
+| `cfg.TbPlayer` | `Player` | `map` | 玩家属性表 |
+| `cfg.TbEnemy` | `Enemy` | `map` | 敌人属性表（数据源：`enemy.xlsx`） |
+| `cfg.TbWave` | `Wave` | `list` | 波次表（数据源：`battle.xlsx#Wave`） |
+| `cfg.TbDrop` | `Drop` | `list` | 掉落表（数据源：`battle.xlsx#Drop`） |
+| `cfg.TbBuff` | `Buff` | `map` | Buff 表 |
 
-> 注意：`item.xlsx` 当前未在 `__tables__.xlsx` 中注册。
+> 注意：`item.xlsx` 已注册，但引用的 `item.ItemExchange` Bean 与 `item.EQuality` 枚举仍需在 `__beans__.xlsx` / `__enums__.xlsx` 中定义。
 
 ### 2.4 已定义的枚举
 
@@ -111,6 +118,13 @@ Configs/GameConfig/
 - 2 个关卡：1 Training Ground、2 Abandoned Factory
 - 字段与当前硬编码 `LevelConfig` 一致
 
+#### `enemy.xlsx`
+
+- 独立敌人属性表，已从 `battle.xlsx#Enemy` 拆分出来，方便单独调整不同敌人类型。
+- 当前数据：
+  - `9001` Training Dummy：`prefab = Enemy`，`maxHp = 50`，`moveSpeed = 2`，`attackDamage = 5`，`attackRange = 1.5`，`attackInterval = 1`
+  - `9002` Assault Bot：`prefab = Enemy_Assault`，`maxHp = 80`，`moveSpeed = 3`，`attackDamage = 15`，`attackRange = 2`，`attackInterval = 1.2`
+
 #### `item.xlsx`
 
 - 10 条示例物品数据
@@ -125,9 +139,9 @@ Configs/GameConfig/
 
 ## 三、生成脚本
 
-`gen_code_bin_to_project.bat` 流程：
+`gen_code_bin_to_project.bat` 流程（脚本内所有输出与注释已改为英文，避免中文编码导致的乱码问题）：
 
-1. 检查 `Tools/Luban/Luban.dll` 是否存在。
+1. 检查 `Tools/Luban/Luban.exe` 是否存在。
 2. 复制 `CustomTemplate/ConfigSystem.cs` → `Assets/GameScripts/HotFix/GameProto/ConfigSystem.cs`
 3. 复制 `CustomTemplate/ExternalTypeUtil.cs` → `Assets/GameScripts/HotFix/GameProto/ExternalTypeUtil.cs`
 4. 调用 Luban 生成：
@@ -137,7 +151,19 @@ Configs/GameConfig/
    - 代码输出：`Assets/GameScripts/HotFix/GameProto/GameConfig/`
    - 数据输出：`Assets/AssetRaw/Configs/json/`
 
-### 运行方式
+### 3.1 生成路径
+
+`gen_code_bin_to_project.bat` 以自身所在目录 `Configs/GameConfig/` 为基准，涉及以下路径：
+
+| 变量 | 相对路径（基于 `Configs/GameConfig/`） | 本机绝对路径 |
+|---|---|---|
+| `LUBAN_EXE` | `..\..\..\Tools\Luban\Luban.exe` | `E:\U3D_project\AfterToken\Tools\Luban\Luban.exe` |
+| `CODE_OUT` | `..\..\Assets\GameScripts\HotFix\GameProto` | `E:\U3D_project\AfterToken\AfterToken\Assets\GameScripts\HotFix\GameProto` |
+| `DATA_OUT` | `..\..\Assets\AssetRaw\Configs\json` | `E:\U3D_project\AfterToken\AfterToken\Assets\AssetRaw\Configs\json` |
+
+> 注意：`Luban.exe` 位于**仓库根目录** `E:\U3D_project\AfterToken\Tools\Luban\`，而代码与数据输出位于**项目代码根目录** `E:\U3D_project\AfterToken\AfterToken\Assets\`。
+
+### 3.2 运行方式
 
 在 `Configs/GameConfig/` 目录下双击运行 `gen_code_bin_to_project.bat`，或在仓库根目录执行：
 
@@ -172,12 +198,12 @@ var levelList = ConfigSystem.Instance.Tables.TbLevel.DataList;
 
 | 问题 | 优先级 | 解决方案 |
 |------|--------|----------|
-| `Tools/Luban/` 缺少运行时文件 | P0 | 下载完整 Luban 工具链并替换当前目录 |
+| `Tools/Luban/` 在新环境可能缺少运行时文件 | P0 | 下载完整 Luban 工具链并解压到仓库根目录 `Tools/Luban/` |
 | `item.xlsx` 引用了未定义的 Bean/Enum | P1 | 在 `__beans__.xlsx`/`__enums__.xlsx` 中定义 `ItemExchange`/`EQuality`，或简化 item 表 |
-| `item.xlsx` 未在 `__tables__.xlsx` 注册 | P1 | 注册 `cfg.TbItem` |
-| 尚未运行生成脚本 | P0 | 修复工具链后运行 `gen_code_bin_to_project.bat` |
 | 未替换 `WeaponConfigMgr` / `LevelConfigMgr` | P1 | 生成代码后逐步替换 |
-| 缺少 `TbPlayer`、`TbEnemy`、`TbWave`、`TbDrop`、`TbBuff` 等战斗表 | P1 | 按项目需求补充 |
+| `TbEnemy` 已从 `battle.xlsx#Enemy` 拆分为独立 `enemy.xlsx`，已接入业务 | P1 | 后续新增敌人类型直接在 `enemy.xlsx` 中添加，并同步创建对应 Prefab 与 YooAsset 地址 |
+| `TbEnemy` 接入后 `9001` 的 `prefab` 字段原值为 `Enemy_Dummy`，与实际资源地址 `Enemy` 不符 | P0 | 已修正为 `Enemy`；`attackDamage` 已从 `10` 下调为 `5` |
+| `TbWave`/`TbDrop`/`TbBuff` 尚未接入业务 | P1 | 按项目需求接入波次/掉落/Buff 系统 |
 
 ---
 

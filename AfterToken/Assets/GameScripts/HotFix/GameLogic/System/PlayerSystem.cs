@@ -34,6 +34,11 @@ namespace GameLogic
         public int CurrentStamina => _currentStamina;
         public int MaxStamina => _maxStamina;
 
+        /// <summary>
+        /// 玩家出生位置（世界坐标）。
+        /// </summary>
+        public Vector2 SpawnPosition => _spawnPoint != null ? (Vector2)_spawnPoint.position : Vector2.zero;
+
         private GameConfig.cfg.Player _playerConfig;
 
         /// <summary>
@@ -113,6 +118,10 @@ namespace GameLogic
 
             _playerFsm.Start<PlayerIdleState>();
 
+            _playerEntity.OnTakeDamage += HandlePlayerDamage;
+            WeaponSystem.Instance?.SetOwner(_playerEntity);
+            CameraSystem.Instance?.SetTarget(go.transform);
+
             GameEvent.Get<IPlayerEvent>().OnPlayerCreated(go.transform.position);
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
             GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
@@ -180,9 +189,9 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 玩家受伤。
+        /// 处理玩家受伤。
         /// </summary>
-        public void TakeDamage(int damage, Vector2 hitDirection)
+        private void HandlePlayerDamage(int damage, Vector2 hitDirection)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
 
@@ -200,9 +209,10 @@ namespace GameLogic
             GameEvent.Get<IHitFeedbackEvent>().OnDamageIndicator(relativeAngle, 1f);
             GameEvent.Get<ICameraEvent>().OnCameraShake(0.2f, 0.1f);
 
-            if (_currentHp <= 0 && _playerEntity?.Context != null)
+            if (_currentHp <= 0 && _playerEntity != null)
             {
                 _playerEntity.Context.IsDead = true;
+                _playerEntity.SetDead();
             }
         }
 
@@ -332,12 +342,7 @@ namespace GameLogic
             }
 
             var sr = go.AddComponent<SpriteRenderer>();
-            var tex = new Texture2D(16, 16);
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
-                tex.SetPixel(x, y, Color.white);
-            tex.Apply();
-            sr.sprite = Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
+            sr.sprite = PlaceholderSpriteProvider.GetWhiteSprite16();
             sr.color = Color.cyan;
             sr.sortingOrder = 5;
 
@@ -346,6 +351,7 @@ namespace GameLogic
 
             var rb = go.AddComponent<Rigidbody2D>();
             rb.gravityScale = 0;
+            rb.bodyType = RigidbodyType2D.Dynamic;
             rb.freezeRotation = true;
 
             return go;

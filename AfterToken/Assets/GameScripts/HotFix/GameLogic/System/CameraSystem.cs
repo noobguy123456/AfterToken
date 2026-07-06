@@ -56,6 +56,7 @@ namespace GameLogic
         private RenderTexture _scopeRenderTexture;
 
         private Vector3 _velocity;
+        private Transform _target;
 
         private float _targetFov;
         private float _currentFovVelocity;
@@ -199,16 +200,24 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 设置相机跟随目标。解耦 CameraSystem 对 PlayerSystem 的直接依赖。
+        /// </summary>
+        public void SetTarget(Transform target)
+        {
+            _target = target;
+        }
+
         private void LateUpdate()
         {
-            var player = PlayerSystem.Instance?.GetPlayerEntity();
-            if (player == null) return;
+            var target = _target ?? PlayerSystem.Instance?.GetPlayerEntity()?.transform;
+            if (target == null) return;
 
-            Vector3 playerPos = player.transform.position;
+            Vector3 playerPos = target.position;
             Vector3 targetPosition = playerPos + _offset;
 
             // 可选：根据玩家速度加入提前量，让相机略微超前于玩家移动方向
-            if (_lookAheadFactor > 0f && player.TryGetComponent<Rigidbody2D>(out var playerRb))
+            if (_lookAheadFactor > 0f && target.TryGetComponent<Rigidbody2D>(out var playerRb))
             {
                 targetPosition += (Vector3)playerRb.linearVelocity * _lookAheadFactor;
             }

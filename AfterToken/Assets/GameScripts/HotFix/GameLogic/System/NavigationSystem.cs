@@ -6,22 +6,19 @@ namespace GameLogic.Navigation
 {
     /// <summary>
     /// 导航系统组件。
-    /// 负责管理导航网格、寻路算法、路径缓存与分帧调度。
+    /// 负责管理导航网格、寻路算法、路径缓存。
     /// </summary>
-    public class NavigationSystem : MonoBehaviour
+    public class NavigationSystem : MonoBehaviour, INavigationSystem
     {
         public static NavigationSystem Instance { get; private set; }
 
         [SerializeField] private float _cellSize = 0.5f;
         [SerializeField] private float _margin = 3f;
-        [SerializeField] private int _maxRequestsPerFrame = 5;
-        [SerializeField] private float _pathUpdateInterval = 0.2f;
 
         private INavigationSystem _navigator;
         private INavigationGridBuilder _gridBuilder;
 
         private readonly Dictionary<int, PathCacheEntry> _pathCache = new();
-        private readonly Queue<PathRequestEntry> _requestQueue = new();
         private int _frameCounter;
 
         private void Awake()
@@ -38,19 +35,32 @@ namespace GameLogic.Navigation
         }
 
         /// <summary>
+        /// 设置导航网格（供 INavigationSystem 使用，通常通过 Rebuild 自动设置）。
+        /// </summary>
+        public void SetGrid(NavigationGrid grid)
+        {
+            _navigator?.SetGrid(grid);
+        }
+
+        /// <summary>
         /// 初始化导航系统。
         /// </summary>
         /// <param name="spawnRadius">敌人生成半径，用于计算网格边界余量。</param>
-        public void Initialize(float spawnRadius)
+        /// <param name="origin">网格扫描中心，默认 (0, 0)。</param>
+        public void Initialize(float spawnRadius, Vector2? origin = null)
         {
             _margin = Mathf.Max(_margin, spawnRadius + 2f);
-            _gridBuilder = new ColliderGridBuilder(_cellSize, _margin);
+            _gridBuilder = new ColliderGridBuilder(
+                _cellSize,
+                _margin,
+                scanCenter: origin,
+                scanRadius: spawnRadius + _margin);
             _navigator = new AStarNavigationSystem(_gridBuilder);
             _navigator.Rebuild();
         }
 
         /// <summary>
-        /// 请求路径。如果缓存命中直接返回，否则加入队列异步计算。
+        /// 请求路径。优先命中缓存。
         /// </summary>
         public PathResult FindPath(Vector2 from, Vector2 to)
         {
@@ -97,21 +107,7 @@ namespace GameLogic.Navigation
 
         private void Update()
         {
-            ProcessRequests();
             CleanupCache();
-        }
-
-        private void ProcessRequests()
-        {
-            if (_requestQueue.Count == 0) return;
-
-            int processCount = Mathf.Min(_maxRequestsPerFrame, _requestQueue.Count);
-            for (int i = 0; i < processCount; i++)
-            {
-                var request = _requestQueue.Dequeue();
-                var result = _navigator.FindPath(request.From, request.To);
-                request.Callback?.Invoke(result);
-            }
         }
 
         private void CleanupCache()
@@ -119,8 +115,8 @@ namespace GameLogic.Navigation
             _frameCounter++;
             if (_frameCounter % 60 != 0) return;
 
-            var keysToRemove = new List<int>();
             float now = Time.time;
+            var keysToRemove = new List<int>();
             foreach (var pair in _pathCache)
             {
                 if (now - pair.Value.Timestamp > 2f)
@@ -136,11 +132,11 @@ namespace GameLogic.Navigation
 
         private int GetCacheKey(Vector2 from, Vector2 to)
         {
-            // 粗粒度缓存：坐标按 0.5m 量化
-            int fx = Mathf.RoundToInt(from.x * 2f);
-            int fy = Mathf.RoundToInt(from.y * 2f);
-            int tx = Mathf.RoundToInt(to.x * 2f);
-            int ty = Mathf.RoundToInt(to.y * 2f);
+            // 粗粒度缓存：坐标按 0.5m 量化，使用 FloorToInt 减少边界抖动
+            int fx = Mathf.FloorToInt(from.x * 2f);
+            int fy = Mathf.FloorToInt(from.y * 2f);
+            int tx = Mathf.FloorToInt(to.x * 2f);
+            int ty = Mathf.FloorToInt(to.y * 2f);
             int hash = 17;
             hash = hash * 31 + fx;
             hash = hash * 31 + fy;
@@ -168,13 +164,6 @@ namespace GameLogic.Navigation
             {
                 return Vector2.Distance(from, From) < 0.5f && Vector2.Distance(to, To) < 0.5f;
             }
-        }
-
-        private class PathRequestEntry
-        {
-            public Vector2 From;
-            public Vector2 To;
-            public System.Action<PathResult> Callback;
         }
     }
 }

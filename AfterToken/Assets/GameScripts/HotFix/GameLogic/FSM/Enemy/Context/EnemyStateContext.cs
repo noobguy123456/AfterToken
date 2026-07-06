@@ -1,4 +1,5 @@
 using UnityEngine;
+using GameLogic.Navigation;
 
 namespace GameLogic
 {
@@ -11,6 +12,7 @@ namespace GameLogic
         public bool WantsToChase;
         public bool WantsToAttack;
         public Vector2 PlayerPosition;
+        public INavigationSystem NavigationSystem;
         public StateTransitionRequest PendingRequest;
 
         public void ResetIntent()

@@ -46,32 +46,23 @@ namespace GameLogic
             {
                 if (damageInfo.TargetGameObject != null)
                 {
-                    var enemy = damageInfo.TargetGameObject.GetComponent<EnemyEntity>();
-                    if (enemy != null)
+                    var damageable = damageInfo.TargetGameObject.GetComponent<IDamageable>();
+                    if (damageable != null)
                     {
-                        enemy.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
+                        damageable.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
 
-                        // 命中反馈：在敌人位置显示受击标记 + 伤害飘字
+                        // 命中反馈：在目标位置显示受击标记 + 伤害飘字
                         var mainCamera = Camera.main;
                         if (mainCamera != null)
                         {
-                            var enemyScreenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);
-                            GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false, enemyScreenPos);
+                            var screenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);
+                            GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false, screenPos);
                         }
                         ShowDamageNumber(damageInfo);
                     }
                     else
                     {
-                        // 简化：如果目标是玩家自己，处理自伤（避免友军伤害可扩展）
-                        var playerSystem = PlayerSystem.Instance;
-                        if (playerSystem != null && damageInfo.TargetGameObject == playerSystem.GetPlayerEntity()?.gameObject)
-                        {
-                            playerSystem.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
-                        }
-                        else
-                        {
-                            Log.Debug($"[BattleSystem] 命中非敌人目标: {damageInfo.TargetGameObject.name}");
-                        }
+                        Log.Debug($"[BattleSystem] 命中非可受伤目标: {damageInfo.TargetGameObject.name}");
                     }
                 }
 

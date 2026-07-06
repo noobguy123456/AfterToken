@@ -32,28 +32,60 @@ namespace GameLogic
 
         private async UniTask SpawnEnemiesAsync()
         {
+            Vector2 spawnCenter = PlayerSystem.Instance?.SpawnPosition ?? Vector2.zero;
+            var enemyCfg = LoadEnemyConfig(_enemyConfigId);
+            if (enemyCfg == null)
+            {
+                Log.Warning($"[EnemySpawnSystem] 找不到敌人配置 {_enemyConfigId}，使用默认值");
+            }
+
+            string prefabAddress = !string.IsNullOrEmpty(enemyCfg?.Prefab) ? enemyCfg.Prefab : "Enemy";
+            int maxHp = _enemyMaxHp > 0 ? _enemyMaxHp : (enemyCfg?.MaxHp ?? 50);
+            float moveSpeed = enemyCfg?.MoveSpeed ?? 2f;
+            int attackDamage = enemyCfg?.AttackDamage ?? 5;
+            float attackRange = enemyCfg?.AttackRange ?? 1.2f;
+            float attackInterval = enemyCfg?.AttackInterval ?? 0.5f;
+
             for (int i = 0; i < _enemyCount; i++)
             {
-                float angle = i * 120f * Mathf.Deg2Rad;
-                Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * _spawnRadius;
+                float angle = i * (360f / _enemyCount) * Mathf.Deg2Rad;
+                Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _spawnRadius;
 
-                var go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform);
+                var go = await GameModule.Resource.LoadGameObjectAsync(prefabAddress, transform);
+                if (go == null && prefabAddress != "Enemy")
+                {
+                    Log.Warning($"[EnemySpawnSystem] 加载敌人预制体 {prefabAddress} 失败，回退到 Enemy");
+                    go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform);
+                }
                 if (go == null)
                 {
-                    go = CreatePlaceholderEnemy(pos);
+                    go = CreatePlaceholderEnemy(spawnPos);
                 }
                 else
                 {
-                    go.transform.position = pos;
+                    go.transform.position = spawnPos;
                 }
 
                 var enemy = go.GetComponent<EnemyEntity>();
                 if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
-                enemy.Initialize(_enemyConfigId, _enemyMaxHp);
+                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval);
 
                 GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), _enemyConfigId);
 
                 await UniTask.Yield();
+            }
+        }
+
+        private GameConfig.cfg.Enemy LoadEnemyConfig(int configId)
+        {
+            try
+            {
+                return ConfigSystem.Instance?.Tables?.TbEnemy?.GetOrDefault(configId);
+            }
+            catch (System.Exception e)
+            {
+                Log.Warning($"[EnemySpawnSystem] 读取敌人配置 {configId} 失败: {e.Message}");
+                return null;
             }
         }
 
@@ -66,12 +98,13 @@ namespace GameLogic
             go.layer = LayerMask.NameToLayer("Enemy");
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = CreatePlaceholderSprite();
+            sr.sprite = PlaceholderSpriteProvider.GetWhiteSprite16();
             sr.color = Color.red;
             sr.sortingOrder = 5;
+            go.transform.localScale = Vector3.one * 0.3f;
 
             var col = go.AddComponent<CircleCollider2D>();
-            col.radius = 0.3f;
+            col.radius = 0.15f;
 
             var rb = go.AddComponent<Rigidbody2D>();
             rb.gravityScale = 0;
@@ -81,14 +114,6 @@ namespace GameLogic
             return go;
         }
 
-        private Sprite CreatePlaceholderSprite()
-        {
-            var tex = new Texture2D(16, 16);
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
-                tex.SetPixel(x, y, Color.white);
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
-        }
+
     }
 }

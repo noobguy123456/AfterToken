@@ -8,7 +8,7 @@ namespace GameLogic
     /// 负责玩家表现、动画、物理移动。
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
-    public class PlayerEntity : MonoBehaviour
+    public class PlayerEntity : MonoBehaviour, IDamageable, IWeaponOwner
     {
         [SerializeField] private Animator _animator;
         [SerializeField] private Rigidbody2D _rb;
@@ -23,6 +23,16 @@ namespace GameLogic
         public bool IsMoving => MoveDirection.sqrMagnitude > 0.001f;
         public bool IsDead { get; private set; }
         public bool IsDodging { get; private set; }
+
+        #region IWeaponOwner
+
+        int IWeaponOwner.OwnerId => GetInstanceID();
+        Vector2 IWeaponOwner.Position => transform.position;
+        Vector2 IWeaponOwner.AimPosition => AimPosition;
+        Vector2 IWeaponOwner.MoveDirection => MoveDirection;
+        bool IWeaponOwner.IsMoving => IsMoving;
+
+        #endregion
 
         /// <summary>
         /// 玩家状态机黑板。
@@ -94,6 +104,17 @@ namespace GameLogic
             _rb.linearVelocity = Vector2.zero;
             MoveDirection = Vector2.zero;
             MoveSpeed = BaseMoveSpeed;
+        }
+
+        /// <summary>
+        /// 玩家受伤事件。由 PlayerSystem 订阅并处理血量扣除，实体自身不持有血量。
+        /// </summary>
+        public event System.Action<int, Vector2> OnTakeDamage;
+
+        public void TakeDamage(int damage, Vector2 hitDirection)
+        {
+            if (IsDead) return;
+            OnTakeDamage?.Invoke(damage, hitDirection);
         }
 
         private void Update()

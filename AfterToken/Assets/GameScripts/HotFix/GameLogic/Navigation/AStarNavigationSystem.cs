@@ -15,7 +15,8 @@ namespace GameLogic.Navigation
         private float[] _gCost;
         private float[] _fCost;
         private int[] _parent;
-        private bool[] _closed;
+        private int[] _visited;
+        private int _currentGeneration;
         private readonly SimplePriorityQueue<int> _openQueue = new();
         private readonly HashSet<int> _openSet = new();
 
@@ -36,7 +37,7 @@ namespace GameLogic.Navigation
                 _gCost = new float[total];
                 _fCost = new float[total];
                 _parent = new int[total];
-                _closed = new bool[total];
+                _visited = new int[total];
             }
         }
 
@@ -90,9 +91,12 @@ namespace GameLogic.Navigation
                 return directResult;
             }
 
-            System.Array.Fill(_gCost, float.MaxValue);
-            System.Array.Fill(_fCost, float.MaxValue);
-            System.Array.Fill(_closed, false);
+            _currentGeneration++;
+            if (_currentGeneration <= 0) // 防止 int 溢出
+            {
+                _currentGeneration = 1;
+                System.Array.Clear(_visited, 0, _visited.Length);
+            }
             _openQueue.Clear();
             _openSet.Clear();
 
@@ -112,7 +116,7 @@ namespace GameLogic.Navigation
                     return ReconstructPath(startIndex, endIndex, to);
                 }
 
-                _closed[currentIndex] = true;
+                _visited[currentIndex] = _currentGeneration;
                 int cx = currentIndex % _grid.Width;
                 int cy = currentIndex / _grid.Width;
 
@@ -125,7 +129,7 @@ namespace GameLogic.Navigation
                     if (!_grid.IsWalkable(nx, ny)) continue;
 
                     int neighborIndex = _grid.GetIndex(nx, ny);
-                    if (_closed[neighborIndex]) continue;
+                    if (_visited[neighborIndex] == _currentGeneration) continue;
 
                     float tentativeG = _gCost[currentIndex] + CellDistance;
                     if (tentativeG < _gCost[neighborIndex])

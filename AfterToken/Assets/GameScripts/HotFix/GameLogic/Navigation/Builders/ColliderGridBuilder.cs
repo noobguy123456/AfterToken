@@ -13,19 +13,25 @@ namespace GameLogic.Navigation
         private readonly LayerMask _obstacleMask;
         private readonly Vector2? _forcedBoundsCenter;
         private readonly Vector2? _forcedBoundsSize;
+        private readonly Vector2? _scanCenter;
+        private readonly float? _scanRadius;
 
         public ColliderGridBuilder(
             float cellSize = 0.5f,
             float margin = 2f,
             LayerMask? obstacleMask = null,
             Vector2? forcedBoundsCenter = null,
-            Vector2? forcedBoundsSize = null)
+            Vector2? forcedBoundsSize = null,
+            Vector2? scanCenter = null,
+            float? scanRadius = null)
         {
             _cellSize = cellSize;
             _margin = margin;
             _obstacleMask = obstacleMask ?? LayerMask.GetMask("Obstacle");
             _forcedBoundsCenter = forcedBoundsCenter;
             _forcedBoundsSize = forcedBoundsSize;
+            _scanCenter = scanCenter;
+            _scanRadius = scanRadius;
         }
 
         public NavigationGrid Build()
@@ -53,7 +59,6 @@ namespace GameLogic.Navigation
                 Walkable = new bool[width * height]
             };
 
-            Vector2 halfCell = Vector2.one * (_cellSize * 0.5f);
             float checkRadius = _cellSize * 0.25f;
 
             for (int y = 0; y < height; y++)
@@ -61,7 +66,6 @@ namespace GameLogic.Navigation
                 for (int x = 0; x < width; x++)
                 {
                     Vector2 center = grid.GetWorldPosition(x, y);
-                    // 使用小圆检测格子中心是否被障碍物覆盖
                     bool blocked = Physics2D.OverlapCircle(center, checkRadius, _obstacleMask) != null;
                     grid.Walkable[grid.GetIndex(x, y)] = !blocked;
                 }
@@ -77,15 +81,18 @@ namespace GameLogic.Navigation
                 return new Bounds((Vector3)_forcedBoundsCenter.Value, (Vector3)_forcedBoundsSize.Value);
             }
 
-            Collider2D[] obstacles = Physics2D.OverlapAreaAll(
-                Vector2.one * -1000f,
-                Vector2.one * 1000f,
-                _obstacleMask);
+            Vector2 center = _scanCenter ?? Vector2.zero;
+            float radius = _scanRadius ?? 10f;
+            Vector2 halfSize = Vector2.one * (radius + _margin);
+            Vector2 min = center - halfSize;
+            Vector2 max = center + halfSize;
+
+            Collider2D[] obstacles = Physics2D.OverlapAreaAll(min, max, _obstacleMask);
 
             if (obstacles == null || obstacles.Length == 0)
             {
-                Log.Warning("[ColliderGridBuilder] 未找到任何障碍物，使用默认边界 (-10, -10) ~ (10, 10)");
-                return new Bounds(Vector3.zero, new Vector3(20f, 20f, 1f));
+                Log.Warning("[ColliderGridBuilder] 未在扫描范围内找到任何障碍物，使用扫描范围作为边界");
+                return new Bounds((Vector3)center, (Vector3)(halfSize * 2f));
             }
 
             Bounds bounds = obstacles[0].bounds;

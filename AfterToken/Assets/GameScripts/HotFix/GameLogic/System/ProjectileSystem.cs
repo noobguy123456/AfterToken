@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using TEngine;
 using Cysharp.Threading.Tasks;
@@ -23,6 +24,7 @@ namespace GameLogic
 
         private readonly Queue<GameObject> _projectilePool = new Queue<GameObject>();
         private readonly List<GameObject> _allProjectiles = new List<GameObject>();
+        private readonly Dictionary<int, EnemyEntity> _enemyMap = new Dictionary<int, EnemyEntity>();
         private bool _preloaded;
 
         private void Awake()
@@ -37,6 +39,8 @@ namespace GameLogic
             }
 
             _eventMgr.AddEvent<int, GameObject>(IProjectileEvent_Event.OnProjectileHit, OnProjectileHit);
+            _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemySpawned, OnEnemySpawned);
+            _eventMgr.AddEvent<int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
         }
 
         private void OnDestroy()
@@ -56,7 +60,7 @@ namespace GameLogic
             _projectilePool.Clear();
         }
 
-        private async void Start()
+        private async UniTaskVoid Start()
         {
             await PreloadProjectilesAsync(5);
         }
@@ -95,7 +99,7 @@ namespace GameLogic
             go.transform.SetParent(_projectileRoot, false);
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = CreatePlaceholderSprite();
+            sr.sprite = PlaceholderSpriteProvider.GetWhiteSprite16();
             sr.color = Color.yellow;
             sr.sortingOrder = 10;
 
@@ -110,14 +114,26 @@ namespace GameLogic
             return go;
         }
 
-        private Sprite CreatePlaceholderSprite()
+        private void OnEnemySpawned(int enemyId, int configId)
         {
-            var tex = new Texture2D(16, 16);
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
-                tex.SetPixel(x, y, Color.white);
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, 16, 16), new Vector2(0.5f, 0.5f), 16);
+            // 延迟一帧查找，确保 EnemyEntity 已初始化
+            FindEnemyAndCache(enemyId).Forget();
+        }
+
+        private async UniTaskVoid FindEnemyAndCache(int enemyId)
+        {
+            await UniTask.Yield();
+            var enemy = GameObject.FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None)
+                .FirstOrDefault(e => e.GetInstanceID() == enemyId);
+            if (enemy != null)
+            {
+                _enemyMap[enemyId] = enemy;
+            }
+        }
+
+        private void OnEnemyDied(int enemyId)
+        {
+            _enemyMap.Remove(enemyId);
         }
 
         public void CreateProjectile(int weaponConfigId, int ownerId, Vector2 position, Vector2 direction, int targetId = 0, bool tracking = false)
@@ -187,15 +203,16 @@ namespace GameLogic
         private void Update()
         {
             float deltaTime = Time.deltaTime;
-            var ids = new List<int>(_activeProjectiles.Keys);
 
-            foreach (var id in ids)
+            // 使用字典直接遍历，避免每帧分配 List<int>
+            var enumerator = _activeProjectiles.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                if (!_activeProjectiles.TryGetValue(id, out var data)) continue;
+                var data = enumerator.Current.Value;
                 if (!data.IsActive) continue;
-
                 Tick(data, deltaTime);
             }
+            enumerator.Dispose();
 
             ProcessPendingHits();
         }
@@ -244,19 +261,13 @@ namespace GameLogic
 
             data.Position = newPosition;
 
-            if (_entityMap.TryGetValue(data.Id, out var visualEntity))
-            {
-                visualEntity.UpdateVisual();
-            }
         }
 
         private Transform FindTarget(int targetId)
         {
-            var enemy = GameObject.FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None);
-            foreach (var e in enemy)
+            if (_enemyMap.TryGetValue(targetId, out var enemy) && enemy != null)
             {
-                if (e.GetInstanceID() == targetId)
-                    return e.transform;
+                return enemy.transform;
             }
             return null;
         }

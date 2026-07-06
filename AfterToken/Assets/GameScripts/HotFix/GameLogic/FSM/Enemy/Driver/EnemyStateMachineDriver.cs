@@ -52,6 +52,7 @@ namespace GameLogic
         {
             if (context == null || owner == null) return;
             context.ResetIntent();
+            context.NavigationSystem = GameLogic.Navigation.NavigationSystem.Instance;
 
             if (context.IsDead)
             {
@@ -73,8 +74,8 @@ namespace GameLogic
             context.PlayerPosition = playerPos;
             float distance = Vector2.Distance(ownerPos, playerPos);
 
-            // 攻击范围优先于追击范围；具体数值后续接入 TbEnemy 配置
-            float attackRange = 1.2f;
+            // 攻击/追击范围从敌人实体读取（由 TbEnemy 配置注入）
+            float attackRange = owner.AttackRange > 0.01f ? owner.AttackRange : 1.2f;
             float chaseRange = 8f;
 
             context.WantsToAttack = distance <= attackRange;

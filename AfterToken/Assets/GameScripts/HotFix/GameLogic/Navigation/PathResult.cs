@@ -8,6 +8,8 @@ namespace GameLogic.Navigation
     /// </summary>
     public class PathResult
     {
+        private static readonly PathResult _failed = new() { Success = false };
+
         /// <summary>
         /// 是否成功找到路径。
         /// </summary>
@@ -28,6 +30,9 @@ namespace GameLogic.Navigation
             Waypoints = new List<Vector2>();
         }
 
-        public static PathResult Failed => new() { Success = false };
+        /// <summary>
+        /// 失败的寻路结果。返回的是共享实例，调用者不应修改其 Waypoints。
+        /// </summary>
+        public static PathResult Failed => _failed;
     }
 }

@@ -11,11 +11,19 @@
 - [x] 敌人状态：`EnemyIdleState` / `EnemyChaseState` / `EnemyAttackState` / `EnemyDeadState`
 - [x] `EnemyEntity` 接入 FSM：创建/更新黑板、状态机生命周期管理、死亡后延迟销毁
 - [x] `IEnemyEvent` 新增 `OnEnemyStateChanged(int enemyId, string stateName, string previousStateName)`
+- [x] 修复血条左右晃动：`SetFacing` 改为只翻转身体 Sprite（`_spriteRenderer.flipX`），不再翻转整个 `Transform`
 - [x] Play Mode 验证：Idle → Chase → Attack → Dead 切换正常
 - [x] 统一敌人与玩家障碍物碰撞效果：`Rigidbody2D` 改为 `Dynamic` + 冻结旋转
 - [x] 自研 2D 网格 A* 寻路系统框架：`INavigationSystem` / `INavigationGridBuilder` / `NavigationGrid` / `AStarNavigationSystem` / `ColliderGridBuilder` / `NavigationSystem`
 - [x] `EnemyChaseState` 接入寻路：路径跟随 + 近距离直线可达时直接冲刺 + 寻路失败 fallback
 - [x] `ProcedureBattle` 初始化导航网格
+- [x] 解耦 `EnemyChaseState` 与 `NavigationSystem` 具体类：状态机通过 `EnemyStateContext.NavigationSystem`（`INavigationSystem`）访问寻路
+- [x] 限制 `ColliderGridBuilder` 扫描范围：不再全图扫描，以玩家出生点为中心、生成半径 + 余量为边界
+- [x] 敌人血条使用共享白色 Sprite，避免每实例创建 Texture
+- [x] A* 寻路使用 generation array 替代 `Array.Fill`，提升大网格性能
+- [x] `PathResult.Failed` 改为共享只读实例，减少 GC
+- [x] `EnemyChaseState` fallback 移动统一使用 `elapse` 参数
+- [x] 清理 `NavigationSystem` 未使用的分帧队列 dead code
 
 ## 进行中
 - [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家

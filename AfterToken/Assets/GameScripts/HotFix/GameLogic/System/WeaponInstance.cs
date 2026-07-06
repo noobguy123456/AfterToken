@@ -24,6 +24,20 @@ namespace GameLogic
             CurrentSpreadIncrement = 0;
         }
 
+        /// <summary>
+        /// 释放武器实例资源（如未完成的换弹计时器）。
+        /// </summary>
+        public void Dispose()
+        {
+            if (IsReloading && _reloadTimerId != 0)
+            {
+                GameModule.Timer.RemoveTimer(_reloadTimerId);
+                _reloadTimerId = 0;
+            }
+            IsReloading = false;
+            Config = null;
+        }
+
         public void Tick(float deltaTime, bool isMoving, bool isAiming)
         {
             // 扩散恢复

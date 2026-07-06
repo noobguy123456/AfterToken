@@ -331,7 +331,13 @@ namespace GameLogic.GM
             if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
 
             var enemyCfg = ConfigSystem.Instance.Tables.TbEnemy.GetOrDefault(enemyId);
-            enemy.Initialize(enemyId, enemyCfg?.MaxHp ?? 50);
+            enemy.Initialize(
+                enemyId,
+                enemyCfg?.MaxHp ?? 50,
+                enemyCfg?.MoveSpeed ?? 2f,
+                enemyCfg?.AttackDamage ?? 5,
+                enemyCfg?.AttackRange ?? 1.2f,
+                enemyCfg?.AttackInterval ?? 0.5f);
 
             GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), enemyId);
             LogToConsole($"生成敌人 {enemyId} 在 {position}");
