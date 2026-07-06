@@ -5,10 +5,10 @@
     "maxHp": 50,
     "moveSpeed": 2,
     "rotationSpeed": 360,
-    "attackDamage": 10,
+    "attackDamage": 5,
     "attackRange": 1.5,
     "attackInterval": 1,
-    "prefab": "Enemy_Dummy"
+    "prefab": "Enemy"
   },
   {
     "id": 9002,

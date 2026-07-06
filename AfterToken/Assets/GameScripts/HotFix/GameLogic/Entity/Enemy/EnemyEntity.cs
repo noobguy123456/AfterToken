@@ -88,9 +88,9 @@ namespace GameLogic
             CreateFsm();
         }
 
-        public void TakeDamage(int damage, Vector2 hitDirection)
+        public bool TakeDamage(int damage, Vector2 hitDirection)
         {
-            if (IsDead) return;
+            if (IsDead) return false;
 
             _hp -= damage;
             if (_hp < 0) _hp = 0;
@@ -101,6 +101,8 @@ namespace GameLogic
             {
                 Context.IsDead = true;
             }
+
+            return true;
         }
 
         /// <summary>

@@ -49,16 +49,18 @@ namespace GameLogic
                     var damageable = damageInfo.TargetGameObject.GetComponent<IDamageable>();
                     if (damageable != null)
                     {
-                        damageable.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
-
-                        // 命中反馈：在目标位置显示受击标记 + 伤害飘字
-                        var mainCamera = Camera.main;
-                        if (mainCamera != null)
+                        bool tookDamage = damageable.TakeDamage((int)damageInfo.Damage, damageInfo.HitDirection);
+                        if (tookDamage)
                         {
-                            var screenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);
-                            GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false, screenPos);
+                            // 命中反馈：在目标位置显示受击标记 + 伤害飘字
+                            var mainCamera = Camera.main;
+                            if (mainCamera != null)
+                            {
+                                var screenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);
+                                GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(false, screenPos);
+                            }
+                            ShowDamageNumber(damageInfo);
                         }
-                        ShowDamageNumber(damageInfo);
                     }
                     else
                     {

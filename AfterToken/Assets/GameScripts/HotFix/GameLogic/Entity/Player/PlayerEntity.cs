@@ -111,10 +111,11 @@ namespace GameLogic
         /// </summary>
         public event System.Action<int, Vector2> OnTakeDamage;
 
-        public void TakeDamage(int damage, Vector2 hitDirection)
+        public bool TakeDamage(int damage, Vector2 hitDirection)
         {
-            if (IsDead) return;
+            if (IsDead) return false;
             OnTakeDamage?.Invoke(damage, hitDirection);
+            return true;
         }
 
         private void Update()

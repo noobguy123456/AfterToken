@@ -19,6 +19,14 @@ namespace GameLogic
                 Owner.Rigidbody.linearVelocity = Vector2.zero;
                 Owner.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
             }
+
+            // 禁用碰撞体，避免死亡后继续被命中/造成伤害
+            var colliders = Owner.GetComponentsInChildren<Collider2D>();
+            foreach (var col in colliders)
+            {
+                col.enabled = false;
+            }
+
             // TODO: 播放死亡动画、触发掉落
             DespawnAsync().Forget();
         }
