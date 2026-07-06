@@ -10,14 +10,14 @@
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| `Luban.exe` | `Tools/Luban/Luban.exe` | Luban 主程序（脚本中解析为 `Configs/GameConfig/../../../Tools/Luban/Luban.exe`，即 `E:\U3D_project\AfterToken\Tools\Luban\Luban.exe`） |
+| `Luban.exe` | `Tools/Luban/Luban.exe` | Luban 主程序（详见 [3.1 生成路径](#31-生成路径)） |
 | `README.md` | `Tools/Luban/README.md` | 安装说明 |
 
 ### 工具链状态
 
 当前 `Tools/Luban/` 已包含完整运行依赖，`gen_code_bin_to_project.bat` 可正常生成代码与 JSON 数据。
 
-`Tools/Luban/` 指**仓库根目录**下的 `Tools/Luban/`，对应本机路径为 `E:\U3D_project\AfterToken\Tools\Luban`。若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到仓库根目录的 `Tools/Luban/` 下。
+`Tools/Luban/` 指**仓库根目录**下的 `Tools/Luban/`（本机为 `E:\U3D_project\AfterToken\Tools\Luban`），与脚本所在目录 `Configs/GameConfig/` 相差三级 `..\..\..\`。若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到仓库根目录的 `Tools/Luban/` 下。
 
 官方地址：
 - GitHub：https://github.com/focus-creative-games/luban/releases
