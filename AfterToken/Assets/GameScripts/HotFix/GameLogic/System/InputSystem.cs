@@ -15,6 +15,7 @@ namespace GameLogic
         [SerializeField] private KeyCode _weaponWheelKey = KeyCode.Tab;
         [SerializeField] private KeyCode _reloadKey = KeyCode.R;
         [SerializeField] private KeyCode _dodgeKey = KeyCode.Space;
+        [SerializeField] private KeyCode _interactKey = KeyCode.E;
         [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
         [SerializeField] private float _wheelTimeScale = 0.2f;
 
@@ -62,6 +63,7 @@ namespace GameLogic
             HandleWeaponWheelInput();
             HandleDodgeInput();
             HandleCrosshairStyleInput();
+            HandleInteractInput();
         }
 
         private void HandleMoveInput()
@@ -215,6 +217,14 @@ namespace GameLogic
             if (Input.GetKeyDown(KeyCode.C))
             {
                 BattleInputEvent?.OnCycleCrosshairStyle();
+            }
+        }
+
+        private void HandleInteractInput()
+        {
+            if (Input.GetKeyDown(_interactKey))
+            {
+                BattleInputEvent?.OnInteractPressed();
             }
         }
 

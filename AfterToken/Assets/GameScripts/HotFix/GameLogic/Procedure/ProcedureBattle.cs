@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using TEngine;
 using UnityEngine;
 using GameLogic.Navigation;
+using GameLogic.Portal;
 
 namespace GameLogic
 {
@@ -16,17 +17,27 @@ namespace GameLogic
 
         protected override UniTaskVoid EnterAsync()
         {
-            int levelId = BattleContext.CurrentLevelId;
-            if (levelId <= 0) levelId = 1;
-            _levelConfig = LevelConfigMgr.Instance.Get(levelId);
-            if (_levelConfig == null)
+            string sceneName = BattleContext.CustomSceneName;
+            if (!string.IsNullOrEmpty(sceneName))
             {
-                Log.Error($"[ProcedureBattle] 找不到关卡配置 {levelId}，使用默认关卡 1");
-                _levelConfig = LevelConfigMgr.Instance.Get(1);
+                Log.Debug($"[ProcedureBattle] 进入自定义战斗场景：{sceneName}");
+                BattleContext.CustomSceneName = null;
+            }
+            else
+            {
+                int levelId = BattleContext.CurrentLevelId;
+                if (levelId <= 0) levelId = 1;
+                _levelConfig = LevelConfigMgr.Instance.Get(levelId);
+                if (_levelConfig == null)
+                {
+                    Log.Error($"[ProcedureBattle] 找不到关卡配置 {levelId}，使用默认关卡 1");
+                    _levelConfig = LevelConfigMgr.Instance.Get(1);
+                }
+                sceneName = _levelConfig?.sceneName ?? "BattleScene";
+                Log.Debug($"[ProcedureBattle] 进入战斗流程，关卡={levelId} 场景={sceneName}");
             }
 
-            Log.Debug($"[ProcedureBattle] 进入战斗流程，关卡={levelId} 场景={_levelConfig?.sceneName}");
-            return LoadSceneWithLoadingAsync(_levelConfig.sceneName, async ct =>
+            return LoadSceneWithLoadingAsync(sceneName, async ct =>
             {
                 Log.Debug("[ProcedureBattle] 场景加载完成，初始化战斗系统");
                 InitializeBattleSystems();
@@ -66,6 +77,7 @@ namespace GameLogic
             _battleRoot.AddComponent<HitFeedbackSystem>();
             _battleRoot.AddComponent<PoolSystem>();
             _battleRoot.AddComponent<NavigationSystem>();
+            _battleRoot.AddComponent<PortalSystem>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _battleRoot.AddComponent<GameLogic.GM.GMController>();

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using GameConfig;
+using GameLogic.Portal;
 using TEngine;
 using UnityEngine;
 
@@ -125,6 +126,11 @@ namespace GameLogic
             GameEvent.Get<IPlayerEvent>().OnPlayerCreated(go.transform.position);
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
             GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+
+            if (PortalPlayerState.HasSavedState)
+            {
+                PortalPlayerState.Restore(this);
+            }
         }
 
         private void OnMoveInput(Vector2 direction)
@@ -285,6 +291,20 @@ namespace GameLogic
         /// 获取玩家实体。
         /// </summary>
         public PlayerEntity GetPlayerEntity() => _playerEntity;
+
+        /// <summary>
+        /// 恢复玩家血量与体力（用于跨场景状态保留）。
+        /// </summary>
+        public void RestoreHpAndStamina(int hp, int maxHp, int stamina, int maxStamina)
+        {
+            _maxHp = Mathf.Max(1, maxHp);
+            _currentHp = Mathf.Clamp(hp, 0, _maxHp);
+            _maxStamina = Mathf.Max(1, maxStamina);
+            _currentStamina = Mathf.Clamp(stamina, 0, _maxStamina);
+
+            GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
+            GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+        }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         /// <summary>

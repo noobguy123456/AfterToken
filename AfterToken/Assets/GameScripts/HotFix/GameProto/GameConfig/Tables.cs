@@ -45,6 +45,10 @@ public partial class Tables
     /// Buff表
     /// </summary>
     public cfg.TbBuff TbBuff {get; }
+    /// <summary>
+    /// 传送门表
+    /// </summary>
+    public cfg.TbPortal TbPortal {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -57,6 +61,7 @@ public partial class Tables
         TbWave = new cfg.TbWave(loader("cfg_tbwave"));
         TbDrop = new cfg.TbDrop(loader("cfg_tbdrop"));
         TbBuff = new cfg.TbBuff(loader("cfg_tbbuff"));
+        TbPortal = new cfg.TbPortal(loader("cfg_tbportal"));
         ResolveRef();
     }
     
@@ -70,6 +75,7 @@ public partial class Tables
         TbWave.ResolveRef(this);
         TbDrop.ResolveRef(this);
         TbBuff.ResolveRef(this);
+        TbPortal.ResolveRef(this);
     }
 }
 

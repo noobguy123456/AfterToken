@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GameLogic.Portal;
 using UnityEngine;
 using TEngine;
 
@@ -59,14 +60,30 @@ namespace GameLogic
 
         private void Start()
         {
-            // 从关卡配置或默认档案读取当前携带的武器
-            var defaults = _defaultWeaponIds ?? new[] { 1001, 1002, 1003 };
-            for (int i = 0; i < defaults.Length && i < MAX_WEAPON_SLOTS; i++)
+            if (PortalPlayerState.HasSavedState && PortalPlayerState.Weapons != null)
             {
-                EquipWeapon(i, defaults[i]);
+                for (int i = 0; i < MAX_WEAPON_SLOTS && i < PortalPlayerState.Weapons.Length; i++)
+                {
+                    var data = PortalPlayerState.Weapons[i];
+                    if (data.IsValid)
+                    {
+                        EquipWeapon(i, data.ConfigId);
+                        GetWeaponInSlot(i)?.SetAmmo(data.CurrentAmmo);
+                    }
+                }
+                SwitchToSlot(PortalPlayerState.CurrentWeaponSlot);
             }
+            else
+            {
+                // 从关卡配置或默认档案读取当前携带的武器
+                var defaults = _defaultWeaponIds ?? new[] { 1001, 1002, 1003 };
+                for (int i = 0; i < defaults.Length && i < MAX_WEAPON_SLOTS; i++)
+                {
+                    EquipWeapon(i, defaults[i]);
+                }
 
-            SwitchToSlot(0);
+                SwitchToSlot(0);
+            }
         }
 
         /// <summary>
@@ -92,6 +109,7 @@ namespace GameLogic
         }
 
         public WeaponInstance CurrentWeapon => _slots[_currentSlot];
+        public int CurrentSlotIndex => _currentSlot;
         public bool IsAiming => _isAiming;
         public bool IsFiring => _isFiring;
         public AimMode CurrentAimMode => _aimMode;
@@ -158,7 +176,7 @@ namespace GameLogic
             SwitchToSlot(slot);
         }
 
-        private void SwitchToSlot(int slot)
+        public void SwitchToSlot(int slot)
         {
             var prevWeapon = CurrentWeapon;
             if (prevWeapon != null && prevWeapon.IsReloading)

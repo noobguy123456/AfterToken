@@ -38,6 +38,15 @@ namespace GameLogic
             Config = null;
         }
 
+        /// <summary>
+        /// 设置当前弹药数（用于跨场景状态保留）。
+        /// </summary>
+        public void SetAmmo(int ammo)
+        {
+            if (Config == null) return;
+            CurrentAmmo = Mathf.Clamp(ammo, 0, Config.clipSize);
+        }
+
         public void Tick(float deltaTime, bool isMoving, bool isAiming)
         {
             // 扩散恢复

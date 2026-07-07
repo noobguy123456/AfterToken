@@ -22,5 +22,6 @@ namespace GameLogic
         void OnWeaponSelected(int slot);
         void OnDodgePressed();
         void OnCycleCrosshairStyle();
+        void OnInteractPressed();
     }
 }

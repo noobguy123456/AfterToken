@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1001,
+    "portalType": "portal_return_lobby",
+    "targetLevelId": 0,
+    "targetSceneName": "",
+    "spawnCondition": "none",
+    "conditionParam": "",
+    "keepPlayerState": false,
+    "promptText": "按 E 返回大厅",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 1002,
+    "portalType": "portal_next_level",
+    "targetLevelId": 2,
+    "targetSceneName": "",
+    "spawnCondition": "all_enemies_defeated",
+    "conditionParam": "",
+    "keepPlayerState": true,
+    "promptText": "按 E 进入下一关",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 1003,
+    "portalType": "portal_custom_scene",
+    "targetLevelId": 0,
+    "targetSceneName": "BattleScene_L01",
+    "spawnCondition": "none",
+    "conditionParam": "",
+    "keepPlayerState": false,
+    "promptText": "按 E 进入废弃工厂",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  }
+]

@@ -10,6 +10,7 @@
 docs/modules/
 ├── ui/                    # UI 相关
 ├── combat/                # 战斗相关
+├── scene/                 # 场景与流程相关
 ├── infra/                 # 基础设施
 ├── shared/                # 共享系统 / 跨玩法
 ├── simulation/            # 模拟经营
@@ -42,6 +43,12 @@ docs/modules/
 | `projectile-system` | [README](./combat/projectile-system/README.md) | [progress](./combat/projectile-system/progress.md) |
 | `reward-system` | [README](./combat/reward-system/README.md) | [progress](./combat/reward-system/progress.md) |
 | `weapon-system` | [README](./combat/weapon-system/README.md) | [progress](./combat/weapon-system/progress.md) |
+
+### 场景系统
+
+| 模块 | README | 进度 |
+|---|---|---|
+| `portal-system` | [README](./scene/portal-system/README.md) | [progress](./scene/portal-system/progress.md) |
 
 ### 基础设施
 

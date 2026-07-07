@@ -102,3 +102,16 @@ Assets/AssetRaw/Scenes/
 ```
 
 纯 UI 场景（`MainMenuScene`、`LobbyScene`）必须包含 `tag = MainCamera`、`clearFlags = SolidColor` 的相机，避免黑屏或截图异常。
+
+## 传送门系统
+
+场景间切换通过传送门（Portal System）实现，详细设计见 [`docs/portal-system-design.md`](../portal-system-design.md)。
+
+- 传送门实体挂载 `PortalEntity` 脚本，通过 `ConfigId` 关联 `portal.xlsx` 配置表。
+- 触发方式：玩家进入触发区域后按交互键 `E`。
+- 传送门类型：
+  - `portal_return_lobby`：返回关卡选择大厅（`ProcedureLobby`）
+  - `portal_next_level`：进入下一关卡（`ProcedureBattle`）
+  - `portal_custom_scene`：自定义场景跳转
+- 流程切换统一通过 `GameApp.ChangeProcedure<T>` 完成，转场效果由 `TransitionUI` 提供灰色渐变。
+- 玩家状态保留通过 `PortalPlayerState` 实现，是否保留由配置表 `keepPlayerState` 控制。
