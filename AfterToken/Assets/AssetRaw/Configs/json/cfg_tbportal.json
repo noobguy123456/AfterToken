@@ -7,7 +7,7 @@
     "spawnCondition": "none",
     "conditionParam": "",
     "keepPlayerState": false,
-    "promptText": "按 E 返回大厅",
+    "promptText": "Press E to return to lobby",
     "transitionType": "fade_to_gray",
     "transitionDuration": 0.5
   },
@@ -19,7 +19,7 @@
     "spawnCondition": "all_enemies_defeated",
     "conditionParam": "",
     "keepPlayerState": true,
-    "promptText": "按 E 进入下一关",
+    "promptText": "Press E to go to next level",
     "transitionType": "fade_to_gray",
     "transitionDuration": 0.5
   },
@@ -27,11 +27,23 @@
     "id": 1003,
     "portalType": "portal_custom_scene",
     "targetLevelId": 0,
-    "targetSceneName": "BattleScene_L01",
+    "targetSceneName": "BattleScene_L02",
     "spawnCondition": "none",
     "conditionParam": "",
     "keepPlayerState": false,
-    "promptText": "按 E 进入废弃工厂",
+    "promptText": "Press E to go to Stage 2",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 1004,
+    "portalType": "portal_custom_scene",
+    "targetLevelId": 0,
+    "targetSceneName": "BattleScene_L03",
+    "spawnCondition": "none",
+    "conditionParam": "",
+    "keepPlayerState": false,
+    "promptText": "Press E to go to Stage 3",
     "transitionType": "fade_to_gray",
     "transitionDuration": 0.5
   }

@@ -1,25 +1,41 @@
 [
   {
     "id": 1,
-    "displayName": "Training Ground",
-    "sceneName": "BattleScene",
-    "description": "Basic training level.",
+    "displayName": "Training Ground L1",
+    "sceneName": "BattleScene_L01",
+    "description": "First battle scene with portal to L2.",
     "defaultWeaponIds": [
       1001,
       1002,
       1003
     ],
     "playerMaxHp": 100,
-    "enemyCount": 15,
+    "enemyCount": 10,
     "enemySpawnRadius": 6,
     "enemyConfigId": 9001,
     "enemyMaxHp": 50
   },
   {
     "id": 2,
-    "displayName": "Abandoned Factory",
-    "sceneName": "BattleScene_L01",
-    "description": "Advanced level with more enemies.",
+    "displayName": "Abandoned Factory L2",
+    "sceneName": "BattleScene_L02",
+    "description": "Second battle scene with portal to L3.",
+    "defaultWeaponIds": [
+      1002,
+      1003,
+      1004
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 15,
+    "enemySpawnRadius": 8,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 80
+  },
+  {
+    "id": 3,
+    "displayName": "Boss Arena L3",
+    "sceneName": "BattleScene_L03",
+    "description": "Final battle scene with return portal.",
     "defaultWeaponIds": [
       1002,
       1003,
@@ -29,6 +45,6 @@
     "enemyCount": 20,
     "enemySpawnRadius": 8,
     "enemyConfigId": 9001,
-    "enemyMaxHp": 80
+    "enemyMaxHp": 100
   }
 ]

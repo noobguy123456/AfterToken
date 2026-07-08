@@ -83,7 +83,11 @@ namespace GameLogic
             var text = go.GetComponentInChildren<TextMeshProUGUI>();
             if (text != null)
             {
-                text.text = $"Level {level.id}: {level.displayName}";
+                text.text = $"Stage {level.id}";
+            }
+            else
+            {
+                Log.Warning($"[LobbyUI] 关卡按钮 {level.id} 找不到 TextMeshProUGUI 组件");
             }
 
             _levelButtonInstances.Add(go);

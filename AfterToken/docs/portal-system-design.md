@@ -2,7 +2,7 @@
 
 > 所属模块：场景模块  
 > 用途：场景间切换  
-> 状态：设计阶段，待开发
+> 状态：基础版已完成，新增多战斗场景测试与门上目的地显示；待完整 Play Mode 验证
 
 ---
 
@@ -85,6 +85,7 @@ Assets/GameScripts/HotFix/GameLogic/
 - 检测玩家进入/离开触发区。
 - 显示/隐藏交互提示。
 - 处理交互输入并触发传送流程。
+- **新增**：在子物体 `DestinationLabel`（TextMeshPro）上显示目的地名称。
 
 ```csharp
 public class PortalEntity : MonoBehaviour
@@ -296,7 +297,7 @@ void OnInteractPressed();
 
 | 资源 | 路径 | 说明 |
 |------|------|------|
-| Portal Prefab | `Assets/AssetRaw/Actor/Portal_Placeholder.prefab` | 包含 SpriteRenderer（紫色/蓝色圆圈）、CircleCollider2D（Trigger）、PortalEntity 脚本 |
+| Portal Prefab | `Assets/AssetRaw/Actor/Portal_Placeholder.prefab` | 包含 SpriteRenderer（紫色/蓝色圆圈）、CircleCollider2D（Trigger）、PortalEntity 脚本、**DestinationLabel（TextMeshPro，显示目的地）** |
 | InteractionPromptUI Prefab | `Assets/AssetRaw/UI/Prefabs/InteractionPromptUI.prefab` | 屏幕空间提示文本 |
 | TransitionUI Prefab | `Assets/AssetRaw/UI/Prefabs/TransitionUI.prefab` | 全屏灰色遮罩，带 CanvasGroup |
 
@@ -321,16 +322,17 @@ void OnInteractPressed();
 9. **流程集成**：`ProcedureBattle` 初始化 `PortalSystem`。
 10. **资源与场景**：创建占位 Prefab，在 `BattleScene` 中摆放一个测试 Portal。
 11. **文档与验证**：更新本文档，输出验证清单。
+12. **多场景测试**：新增 `BattleScene_L01/L02/L03`，配置连闯关传送门，门上显示目的地。
 
 ---
 
 ## 9. 验证清单
 
-- [ ] `portal.xlsx` 生成成功，`cfg.Portal` 与 `cfg.TbPortal` 可用。
-- [ ] `PortalConfigMgr` 能正确读取配置。
-- [ ] `InputSystem` 中新增 `E` 键交互输入。
-- [ ] 场景中放置 `Portal_Placeholder` 并填入 `ConfigId`。
-- [ ] `PortalSystem` 初始化时扫描到所有 Portal。
+- [x] `portal.xlsx` 生成成功，`cfg.Portal` 与 `cfg.TbPortal` 可用。
+- [x] `PortalConfigMgr` 能正确读取配置。
+- [x] `InputSystem` 中新增 `E` 键交互输入。
+- [x] 场景中放置 `Portal_Placeholder` 并填入 `ConfigId`。
+- [x] `PortalSystem` 初始化时扫描到所有 Portal。
 - [ ] `none` 条件 Portal 开局激活；`all_enemies_defeated` Portal 在敌人全灭后激活。
 - [ ] 玩家进入 Portal 区域显示 `InteractionPromptUI`。
 - [ ] 玩家离开 Portal 区域隐藏 `InteractionPromptUI`。
@@ -342,3 +344,48 @@ void OnInteractPressed();
 - [ ] 传送过程中无报错、无资源泄漏。
 
 > 注：涉及 Play Mode 实际运行验证（手动走进传送门、观察场景切换）需由用户在编辑器或真机中完成。
+
+---
+
+## 10. 多战斗场景测试配置
+
+为验证传送门连闯流程，已新增三个测试战斗场景：
+
+| 场景 | 关卡 ID | 传送门 ConfigId | 目的地 | 说明 |
+|------|--------|----------------|--------|------|
+| `BattleScene_L01` | 1 | 1003 | `BattleScene_L02` | 初始训练场，直接可见激活的传送门 |
+| `BattleScene_L02` | 2 | 1004 | `BattleScene_L03` | 废弃工厂，直接可见激活的传送门 |
+| `BattleScene_L03` | 3 | 1001 | 返回大厅 | Boss 竞技场，直接可见激活的传送门 |
+
+### 10.1 关卡配置（`level.xlsx`）
+
+| 关卡 ID | 显示名称 | 场景名 | 敌人数量 |
+|--------|---------|--------|---------|
+| 1 | Training Ground L1 | `BattleScene_L01` | 10 |
+| 2 | Abandoned Factory L2 | `BattleScene_L02` | 15 |
+| 3 | Boss Arena L3 | `BattleScene_L03` | 20 |
+
+### 10.2 传送门配置（`portal.xlsx`）
+
+| ConfigId | 类型 | 目标 | 出现条件 | 提示文本 | 保留玩家状态 |
+|---------|------|------|---------|---------|------------|
+| 1003 | `portal_custom_scene` | `BattleScene_L02` | `none` | 按 E 前往关卡2 | false |
+| 1004 | `portal_custom_scene` | `BattleScene_L03` | `none` | 按 E 前往关卡3 | false |
+| 1001 | `portal_return_lobby` | - | `none` | 按 E 返回大厅 | false |
+
+### 10.3 门上目的地显示
+
+`PortalEntity` 在 `Initialize` 时会为传送门创建/更新 `DestinationLabel` 子物体：
+
+- `portal_return_lobby` → 显示 **"返回大厅"**
+- `portal_next_level` → 显示 **"关卡 {targetLevelId}"**
+- `portal_custom_scene` → 显示 **"关卡 X"**（将 `BattleScene_LXX` 中的数字提取并本地化显示）
+
+### 10.4 测试路径
+
+1. 从大厅（`LobbyScene`）选择 **Level 1**，进入 `BattleScene_L01`。
+2. 移动到右侧传送门，门上显示 **"关卡 2"**，按 **E** 进入 `BattleScene_L02`。
+3. 移动到传送门，门上显示 **"关卡 3"**，按 **E** 进入 `BattleScene_L03`。
+4. 移动到传送门，门上显示 **"返回大厅"**，按 **E** 回到大厅。
+
+> 当前三个测试场景中的传送门均为 `none` 条件直接激活，便于快速验证场景切换；后续可将 L03 的传送门改为 `all_enemies_defeated` 以测试条件激活。

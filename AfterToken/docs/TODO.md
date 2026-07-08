@@ -63,7 +63,7 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 传送门系统 | 🟡 | P1 | 关卡系统、事件系统、输入系统 | `docs/modules/scene/portal-system/` | 基础版完成：配置表、核心逻辑、UI、转场、场景摆放、编译通过；待 Play Mode 验证 |
+| 传送门系统 | 🟡 | P1 | 关卡系统、事件系统、输入系统 | `docs/modules/scene/portal-system/` | 基础版完成：配置表、核心逻辑、UI、转场、场景摆放、编译通过；已新增 L01/L02/L03 三个测试战斗场景并配置传送门，门上显示目的地；待 Play Mode 验证 |
 
 ### 基础设施
 
@@ -182,3 +182,4 @@ Luban 配置表数据补充
 | 2026-07-03 | 统一敌人与玩家障碍物碰撞效果：敌人 `Rigidbody2D` 改为 `Dynamic` + 冻结旋转；`EnemyIdle`/`Attack`/`Dead` 进入时清空速度；修复敌人穿 `Ground` 问题 |
 | 2026-07-03 | 实现自研 2D 网格 A* 寻路系统：`INavigationSystem`/`INavigationGridBuilder`/`NavigationGrid`/`AStarNavigationSystem`/`ColliderGridBuilder`/`NavigationSystem`；接入 `EnemyChaseState` 路径跟随；`ProcedureBattle` 初始化导航网格；编译通过；Play Mode 寻路验证待继续 |
 | 2026-06-30 | 代码审查与问题整改：`WeaponSystem.GetWeaponInSlot` 替代直接访问私有字段；修复 `InputSystem._weaponWheelUI` 未赋值；迁移 `KeyCode.C` 到 `IBattleInputEvent.OnCycleCrosshairStyle`；`SensitivitySetting` 常量命名与 `PlayerPrefs.Save` 优化；`SettingsUI` 设置字体、`RemoveAllListeners`、移除手动 Layer 切换；`CursorManager.Release()` 释放 CTS；补充 `InputSystem` 缺少的 `using Cysharp.Threading.Tasks`；更新日报 |
+| 2026-07-08 | 修复 Portal UI 不可见问题：Prefab `RectTransform.localScale` 归一化并保留 `Canvas`；portal 提示改为英文；Lobby 关卡按钮改为 `Stage X`；运行 TMP 迁移工具将 7 个 UI Prefab 的 Legacy Text 迁移为 `TextMeshProUGUI`；防御性修复 `CursorManager` 窗口切换异常处理；更新 `tengine-dev` skill 与文档；待 Play Mode 最终验证 |

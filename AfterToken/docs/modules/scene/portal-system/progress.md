@@ -42,3 +42,4 @@
 |------|----------|
 | 2026-06-30 | 确认需求，整理设计文档与实现文档 |
 | 2026-07-07 | 完成 Portal System 基础版：配置表、核心逻辑、UI、转场、场景摆放、编译通过；将跨场景状态类重命名为 PortalPlayerState 并归入 Portal 命名空间 |
+| 2026-07-08 | 修复 `TransitionUI` / `InteractionPromptUI` 的 YooAsset location 错误：将 Prefab 从 `Assets/Resources/` 移回 `Assets/AssetRaw/UI/<Name>/<Name>.prefab`，`[Window]` 改回标准 location 加载；Editor Simulate Build 清单已确认包含两个地址；待 Play Mode 最终验证 |

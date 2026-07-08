@@ -3,6 +3,7 @@
 ## 已完成
 - [x] MainMenuUI / LobbyUI / LoadingUI / BattleMainUI Prefab 化
 - [x] DamageNumberUI / HitFeedbackUI / WeaponWheelUI / SniperScopeUI Prefab 化
+- [x] TransitionUI / InteractionPromptUI Prefab 化并按规范放 Assets/AssetRaw/UI/
 - [x] 所有热更 UI Prefab 放 Assets/AssetRaw/UI/
 - [x] WindowAttribute 使用 location 参数走 YooAsset
 
@@ -14,4 +15,5 @@
 ## 更新记录
 
 - 2026-06-30：新增 `UIWindowTimeScale` Inspector 配置与 `GamePauseManager` 时间缩放栈，支持 UI 面板打开时暂停/慢动作游戏进程而不影响声音。
+- 2026-07-08：修复 `TransitionUI` / `InteractionPromptUI` 资源路径，取消 `FromResources = true` 与 `Assets/Resources/` 临时方案，严格按 `Assets/AssetRaw/UI/<Name>/<Name>.prefab` + `[Window]` location 规范执行。
 

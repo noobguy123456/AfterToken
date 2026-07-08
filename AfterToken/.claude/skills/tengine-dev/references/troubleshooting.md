@@ -58,6 +58,7 @@ Burst/IL2CPP 裁剪了代码。在 `Assets/link.xml` 中保留需要的类型：
 2. location 不含路径和扩展名（`HeroPrefab` 而非 `Actor/Hero/HeroPrefab.prefab`）
 3. `GameModule.Resource.CheckLocationValid("location")` 返回 false 说明未收集
 4. 重新打包资源（Editor 模拟器可能引用旧清单）
+5. UI Prefab 必须放在 `Assets/AssetRaw/UI/<Name>/<Name>.prefab`，`[Window]` 的 `location` 写 `"Name"`。禁止因为加载不到就改为 `FromResources = true` 或把 Prefab 移到 `Assets/Resources/` 下。
 
 #### 内存持续增长
 

@@ -162,30 +162,61 @@ namespace GameLogic
         /// </summary>
         private void OnApplicationFocusChanged(bool focused)
         {
-            if (focused && _showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
-            {
-                ApplyCursorState();
-            }
+            if (!focused) return;
+            Log.Debug($"[CursorManager] Focus changed, showRefCount={_showRefCount}, mode={_currentMode}");
+            ApplyCursorState().Forget();
         }
 
-        private async void ApplyCursorState()
+        private async UniTaskVoid ApplyCursorState()
         {
-            // 取消上一次的延迟应用，避免连续调用导致状态竞争。
-            _applyCts?.Cancel();
-            _applyCts?.Dispose();
-            _applyCts = new CancellationTokenSource();
-            var ct = _applyCts.Token;
-
-            bool visible = _showRefCount > 0;
-
-            if (visible)
+            try
             {
-                // 从 Locked 切换到 None 时，Windows 需要一帧才能真正释放鼠标。
-                // 先解锁并等待一帧，再显示光标，避免光标短暂锁死在屏幕中心。
-                bool needYield = Cursor.lockState == CursorLockMode.Locked;
-                Cursor.lockState = CursorLockMode.None;
-                if (needYield)
+                // 取消上一次的延迟应用，避免连续调用导致状态竞争。
+                _applyCts?.Cancel();
+                _applyCts?.Dispose();
+                _applyCts = new CancellationTokenSource();
+                var ct = _applyCts.Token;
+
+                bool visible = _showRefCount > 0;
+
+                if (visible)
                 {
+                    // 从 Locked 切换到 None 时，Windows 需要一帧才能真正释放鼠标。
+                    // 先解锁并等待一帧，再显示光标，避免光标短暂锁死在屏幕中心。
+                    bool needYield = Cursor.lockState == CursorLockMode.Locked;
+                    Cursor.lockState = CursorLockMode.None;
+                    if (needYield)
+                    {
+                        try
+                        {
+                            await UniTask.Yield(ct);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            return;
+                        }
+                    }
+
+                    Cursor.visible = true;
+
+                    var texture = _currentCursorTexture ?? _defaultCursorTexture;
+                    var hotSpot = _currentCursorTexture != null ? _currentHotSpot : _defaultHotSpot;
+                    Cursor.SetCursor(texture, hotSpot, CursorMode.Auto);
+                }
+                else
+                {
+                    Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+                    Cursor.visible = false;
+                    if (_currentMode == GameCursorLockMode.Locked)
+                    {
+                        Cursor.lockState = CursorLockMode.Locked;
+                    }
+                    // Free 模式下保持当前 lockState（可能是 Locked），等显示时再由 visible 分支解锁并延迟一帧，
+                    // 避免 Windows 在不可见时提前解锁导致显示光标时仍锁在中心。
+
+                    // 延迟一帧再次确认，解决 Windows 下从 UI 返回战斗时光标未立即隐藏/锁定的问题。
+                    // 当游戏窗口尚未获得焦点或鼠标不在窗口内时，首次设置可能不生效；
+                    // 窗口重新激活后会由 Application.focusChanged 再次触发 ApplyCursorState。
                     try
                     {
                         await UniTask.Yield(ct);
@@ -194,42 +225,19 @@ namespace GameLogic
                     {
                         return;
                     }
+
+                    if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
+                    {
+                        Cursor.visible = false;
+                        Cursor.lockState = CursorLockMode.Locked;
+                    }
                 }
 
-                Cursor.visible = true;
-
-                var texture = _currentCursorTexture ?? _defaultCursorTexture;
-                var hotSpot = _currentCursorTexture != null ? _currentHotSpot : _defaultHotSpot;
-                Cursor.SetCursor(texture, hotSpot, CursorMode.Auto);
+                Log.Debug($"[CursorManager] ApplyCursorState done: visible={visible}, lockState={Cursor.lockState}");
             }
-            else
+            catch (Exception e)
             {
-                Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-                Cursor.visible = false;
-                if (_currentMode == GameCursorLockMode.Locked)
-                {
-                    Cursor.lockState = CursorLockMode.Locked;
-                }
-                // Free 模式下保持当前 lockState（可能是 Locked），等显示时再由 visible 分支解锁并延迟一帧，
-                // 避免 Windows 在不可见时提前解锁导致显示光标时仍锁在中心。
-
-                // 延迟一帧再次确认，解决 Windows 下从 UI 返回战斗时光标未立即隐藏/锁定的问题。
-                // 当游戏窗口尚未获得焦点或鼠标不在窗口内时，首次设置可能不生效；
-                // 窗口重新激活后会由 Application.focusChanged 再次触发 ApplyCursorState。
-                try
-                {
-                    await UniTask.Yield(ct);
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-
-                if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
-                {
-                    Cursor.visible = false;
-                    Cursor.lockState = CursorLockMode.Locked;
-                }
+                Log.Error($"[CursorManager] ApplyCursorState failed: {e}");
             }
         }
     }
