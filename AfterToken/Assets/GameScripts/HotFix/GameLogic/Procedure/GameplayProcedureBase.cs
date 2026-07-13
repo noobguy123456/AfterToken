@@ -19,6 +19,7 @@ namespace GameLogic
         protected override void OnEnter(IFsm<IProcedureModule> procedureOwner)
         {
             base.OnEnter(procedureOwner);
+            ProcedureStateRecorder.Record(GetType().Name);
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
             EnterAsync().Forget();

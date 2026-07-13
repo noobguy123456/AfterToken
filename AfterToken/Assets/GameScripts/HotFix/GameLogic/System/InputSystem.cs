@@ -212,6 +212,22 @@ namespace GameLogic
             }
         }
 
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus) return;
+
+            // 切出窗口时清空可能卡住的输入状态，避免返回后按键/鼠标状态异常。
+            if (_isWheelOpen)
+            {
+                _isWheelOpen = false;
+                GamePauseManager.PopTimeScale();
+            }
+            _isAimPressed = false;
+            _battleInputEvent?.OnAimReleased();
+            _battleInputEvent?.OnFireReleased();
+            _battleInputEvent?.OnWeaponWheelToggled(false);
+        }
+
         private void HandleCrosshairStyleInput()
         {
             if (Input.GetKeyDown(KeyCode.C))

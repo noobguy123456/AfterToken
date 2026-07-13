@@ -162,9 +162,17 @@ namespace GameLogic
         /// </summary>
         private void OnApplicationFocusChanged(bool focused)
         {
-            if (!focused) return;
-            Log.Debug($"[CursorManager] Focus changed, showRefCount={_showRefCount}, mode={_currentMode}");
-            ApplyCursorState().Forget();
+            Log.Debug($"[CursorManager] Focus changed, focused={focused}, showRefCount={_showRefCount}, mode={_currentMode}");
+            if (focused)
+            {
+                ApplyCursorState().Forget();
+            }
+            else
+            {
+                // 切出游戏窗口时先解锁并显示光标，避免系统光标被锁在屏幕中心导致 Alt+Tab 操作困难。
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
         }
 
         private async UniTaskVoid ApplyCursorState()

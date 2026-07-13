@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using TEngine;
 
 namespace GameLogic
@@ -24,21 +25,21 @@ namespace GameLogic
     public class BattleMainUI : UIWindow
     {
         #region 脚本工具生成的代码
-        private Text _textHp;
-        private Text _textAmmo;
-        private Text _textWeapon;
+        private TextMeshProUGUI _textHp;
+        private TextMeshProUGUI _textAmmo;
+        private TextMeshProUGUI _textWeapon;
         private Slider _sliderHp;
         private Slider _sliderStamina;
         private RectTransform _rectCrosshair;
 
         // [DEBUG] 调试状态文字，后续删除
-        private Text _textState;
+        private TextMeshProUGUI _textState;
 
         protected override void ScriptGenerator()
         {
-            _textHp = FindChildComponent<Text>("m_rect_HudRoot/m_text_Hp");
-            _textAmmo = FindChildComponent<Text>("m_rect_HudRoot/m_text_Ammo");
-            _textWeapon = FindChildComponent<Text>("m_rect_HudRoot/m_text_Weapon");
+            _textHp = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Hp");
+            _textAmmo = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Ammo");
+            _textWeapon = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Weapon");
             _sliderHp = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Hp");
             _sliderStamina = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Stamina");
             _rectCrosshair = FindChildComponent<RectTransform>("m_rect_Crosshair");
@@ -53,6 +54,7 @@ namespace GameLogic
         [SerializeField] private float _reloadingSpinSpeed = 360f;
 
         private bool _pendingFirstFrameRefresh = true;
+        private int _readyPollFrames = 60;
         private Image _crosshairImage;
         private CrosshairStyle _currentStyle;
         private CrosshairStyle _preReloadStyle;
@@ -95,6 +97,14 @@ namespace GameLogic
                 _pendingFirstFrameRefresh = false;
                 RefreshAll();
                 Log.Debug("[BattleMainUI] 首帧延迟刷新完成");
+            }
+
+            // 系统组件（WeaponSystem 等）的 Start 可能在 UI 创建之后才完成，
+            // 持续轮询几帧，确保武器信息正确显示，避免一直显示 -/-。
+            if (_readyPollFrames > 0 && WeaponSystem.Instance?.CurrentWeapon == null)
+            {
+                _readyPollFrames--;
+                RefreshAll();
             }
         }
 
@@ -438,7 +448,7 @@ namespace GameLogic
             rect.anchoredPosition = new Vector2(10f, 80f);
             rect.sizeDelta = new Vector2(300f, 30f);
 
-            _textState = go.AddComponent<Text>();
+            _textState = go.AddComponent<TextMeshProUGUI>();
             _textState.font = _textHp?.font;
             _textState.fontSize = 20;
             _textState.color = Color.yellow;

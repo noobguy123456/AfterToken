@@ -1,0 +1,80 @@
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Unity Version: 6000.0.76f1</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>During this run, ResourceModule will use editor resource files, which you should validate first.</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>YooAssets initialize !</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Create resource package : DefaultPackage</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Object pool system onInit.</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>ResourceModule Run Mode：EditorSimulateMode</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Strict checking is enabled for the Memory Pool. It will drastically affect the performance.</color>
+======== 初始化 LauncherMgr 完成 ========
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Init sound settings complete.</color>
+[LockAssemblyReload] Play Mode 已锁定程序集重载。
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>YooAsset use user settings.</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>The package DefaultPackage create file system : YooAsset.DefaultEditorFileSystem</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Init resource package version : Succeed</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Editor resource mode detected.</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>更新资源清单！！！</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Init resource package version : Simulate</color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>HybridCLR ProcedureLoadAssembly OnEnter</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureMainMenu] 进入主菜单流程</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 准备加载场景 MainMenuScene，先显示 LoadingUI</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] LoadingUI 已显示，开始加载场景 MainMenuScene</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 场景 MainMenuScene 加载完成</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureMainMenu] 场景加载完成，显示系统光标并打开 MainMenuUI</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] 强制显示光标</color></color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>Unload unused assets...</color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>GC.Collect...</color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[MainMenuUI] 节点绑定: Title=True, Start=True, Exit=True, Settings=True</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureMainMenu] MainMenuUI 已打开</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 场景 MainMenuScene 后续逻辑执行完成</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameApp] 准备切换流程到 ProcedureBattle，先关闭所有 UI</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] OnLeave 开始，isShutdown=False，当前 UI 栈数量=0</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] Cleanup：关闭所有 UI、Timer、卸载资源</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] CloseAll 后 UI 栈数量=0</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] OnLeave 完成，当前 UI 栈数量=0</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] 进入战斗流程，关卡=1 场景=BattleScene_L01</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 准备加载场景 BattleScene_L01，先显示 LoadingUI</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] LoadingUI 已显示，开始加载场景 BattleScene_L01</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameApp] 已切换流程到 ProcedureBattle</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 场景 BattleScene_L01 加载完成</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] 场景加载完成，初始化战斗系统</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] 创建 BattleRoot 并挂载系统组件</color></color>
+<color=#CFCFCF><b>[INFO] ► </b></color> - <color=#CFCFCF>[AStarNavigationSystem] 导航网格重建完成: 40x40 = 1600 个格子</color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] 战斗系统初始化完成，隐藏系统光标</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] 强制隐藏光标</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=False, lockState=Locked</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[PortalSystem] Scanned 1 portal(s).</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[BattleMainUI] RefreshAll: player=100/100, weapon=Pistol</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[BattleMainUI] 节点绑定: Hp=True, Ammo=True, Weapon=True, Crosshair=True</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] BattleMainUI 已打开</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[DamageNumberUI] 已创建</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] DamageNumberUI 已打开</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[HitFeedbackUI] 节点绑定: HitMarkerTemplate=True, Indicators=8</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[ProcedureBattle] HitFeedbackUI 已打开</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[GameplayProcedureBase] 场景 BattleScene_L01 后续逻辑执行完成</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[BattleMainUI] RefreshAll: player=100/100, weapon=Pistol</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[BattleMainUI] 首帧延迟刷新完成</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] 强制显示光标</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+UI_TEXT: HP=null Ammo=null Weapon=null
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] Focus changed, focused=True, showRefCount=1, mode=Free</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+CHECK: BattleRoot=True BattleUI=False
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] Focus changed, focused=False, showRefCount=1, mode=Free</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] Focus changed, focused=True, showRefCount=1, mode=Free</color></color>
+<color=#CFCFCF><b>[Debug] ► </b></color> - <color=#00FF18><color=#888888>[CursorManager] ApplyCursorState done: visible=True, lockState=None</color></color>
+[LockAssemblyReload] Play Mode 结束，已解锁程序集重载并清除流程记录。
+UI_NOT_FOUND
+PLAYER_NOT_FOUND
+PLAYER_GO_NOT_FOUND
+HELLO_FROM_EXECUTE
+PS=null
+NO_PS
+Current=ProcedureBattle
+PANEL=
+UIRoot children:
+  0: UICanvas active=True
+  1: UICamera active=True
+  2: EventSystem active=True

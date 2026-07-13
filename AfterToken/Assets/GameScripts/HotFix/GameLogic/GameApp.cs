@@ -6,6 +6,7 @@ using GameLogic;
 using Obfuz;
 #endif
 using TEngine;
+using UnityEngine;
 #pragma warning disable CS0436
 
 
@@ -33,7 +34,71 @@ public partial class GameApp
         Utility.Unity.AddDestroyListener(Release);
         Log.Warning("======= StartGameLogic =======");
         StartGameLogic();
+
+#if UNITY_EDITOR
+        // 临时挂载 Alt+Tab 诊断组件。
+        var uiRoot = GameObject.Find("UIRoot");
+        if (uiRoot != null && uiRoot.GetComponent<GameLogic.FocusPauseDiagnostics>() == null)
+        {
+            uiRoot.AddComponent<GameLogic.FocusPauseDiagnostics>();
+        }
+
+        // 如果 Play Mode 期间发生了程序集重载，尝试恢复到之前的流程。
+        TryResumeLastProcedure();
+#endif
     }
+
+#if UNITY_EDITOR
+    private static void TryResumeLastProcedure()
+    {
+        var lastProcedure = ProcedureStateRecorder.GetLastProcedure();
+        if (string.IsNullOrEmpty(lastProcedure) || lastProcedure == nameof(ProcedureMainMenu))
+        {
+            return;
+        }
+
+        Log.Warning($"[GameApp] 检测到程序集重载，准备从主菜单恢复到 {lastProcedure}");
+
+        // Domain Reload 后 UIModule 的窗口堆栈已丢失，但旧 Panel GameObject 可能还挂在 UIRoot 下，需要手动清理。
+        var uiRoot = GameObject.Find("UIRoot");
+        if (uiRoot != null)
+        {
+            var canvas = uiRoot.GetComponentInChildren<Canvas>(true)?.transform;
+            if (canvas != null)
+            {
+                for (int i = canvas.childCount - 1; i >= 0; i--)
+                {
+                    var child = canvas.GetChild(i);
+                    if (child != null)
+                    {
+                        UnityEngine.Object.Destroy(child.gameObject);
+                    }
+                }
+            }
+        }
+
+        GameModule.UI.CloseAll();
+
+        var oldBattleRoot = GameObject.Find("BattleRoot");
+        if (oldBattleRoot != null)
+        {
+            UnityEngine.Object.Destroy(oldBattleRoot);
+        }
+
+        switch (lastProcedure)
+        {
+            case nameof(ProcedureLobby):
+                ChangeProcedure<ProcedureLobby>();
+                break;
+            case nameof(ProcedureBattle):
+                ChangeProcedure<ProcedureBattle>();
+                break;
+            default:
+                Log.Warning($"[GameApp] 未知流程 {lastProcedure}，保持主菜单。");
+                break;
+        }
+    }
+#endif
     
     private static void StartGameLogic()
     {

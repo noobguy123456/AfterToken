@@ -78,6 +78,7 @@ namespace GameLogic
             _battleRoot.AddComponent<PoolSystem>();
             _battleRoot.AddComponent<NavigationSystem>();
             _battleRoot.AddComponent<PortalSystem>();
+            _battleRoot.AddComponent<PlayerDeathHandler>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _battleRoot.AddComponent<GameLogic.GM.GMController>();
