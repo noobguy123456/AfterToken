@@ -85,6 +85,7 @@ namespace GameLogic
             CreateScopeCamera();
 
             _eventMgr.AddEvent<Vector3>(IPlayerEvent_Event.OnPlayerPositionChanged, OnPlayerPositionChanged);
+            _eventMgr.AddEvent(IPlayerEvent_Event.OnPlayerDied, OnPlayerDied);
             _eventMgr.AddEvent<float, float>(ICameraEvent_Event.OnCameraShake, OnCameraShake);
             _eventMgr.AddEvent<float>(ICameraEvent_Event.OnAimFovChanged, OnAimFovChanged);
             _eventMgr.AddEvent<float, float>(IHitFeedbackEvent_Event.OnDamageIndicator, OnDamageIndicator);
@@ -127,6 +128,14 @@ namespace GameLogic
         private void OnPlayerPositionChanged(Vector3 position)
         {
             // 位置事件保留给其他系统使用，相机跟随直接在 LateUpdate 读取玩家 Transform。
+        }
+
+        private void OnPlayerDied()
+        {
+            // 玩家死亡后暂停 timeScale，但震动衰减应使用 unscaledDeltaTime，
+            // 否则 timeScale=0 时震动的幅度和时长都不会衰减，导致镜头一直抖。
+            _shakeMagnitude = 0f;
+            _shakeDuration = 0f;
         }
 
         private void OnCameraShake(float magnitude, float duration)
@@ -178,21 +187,21 @@ namespace GameLogic
                 }
             }
 
-            // 震动衰减
+            // 震动衰减（使用 unscaledDeltaTime，确保 timeScale=0 时仍能正常衰减）
             if (_shakeDuration > 0)
             {
-                _shakeDuration -= Time.deltaTime;
-                _shakeMagnitude = Mathf.Lerp(_shakeMagnitude, 0f, _shakeDamping * Time.deltaTime);
+                _shakeDuration -= Time.unscaledDeltaTime;
+                _shakeMagnitude = Mathf.Lerp(_shakeMagnitude, 0f, _shakeDamping * Time.unscaledDeltaTime);
             }
             else
             {
                 _shakeMagnitude = 0;
             }
 
-            // 伤害指示器计时
+            // 伤害指示器计时（同样使用 unscaledDeltaTime，避免暂停时卡住）
             if (_damageIndicatorTimer < _damageIndicatorDuration)
             {
-                _damageIndicatorTimer += Time.deltaTime;
+                _damageIndicatorTimer += Time.unscaledDeltaTime;
             }
             else
             {

@@ -29,13 +29,11 @@ namespace GameLogic
 
         protected override void OnLeave(IFsm<IProcedureModule> procedureOwner, bool isShutdown)
         {
-            Log.Debug($"[GameplayProcedureBase] OnLeave 开始，isShutdown={isShutdown}，当前 UI 栈数量={GameModule.UI.WindowCount}");
             base.OnLeave(procedureOwner, isShutdown);
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = null;
             Cleanup();
-            Log.Debug($"[GameplayProcedureBase] OnLeave 完成，当前 UI 栈数量={GameModule.UI.WindowCount}");
         }
 
         /// <summary>
@@ -48,31 +46,24 @@ namespace GameLogic
             LoadingUI loadingUI = null;
             try
             {
-                Log.Debug($"[GameplayProcedureBase] 准备加载场景 {sceneName}，先显示 LoadingUI");
                 loadingUI = await GameModule.UI.ShowUIAsyncAwait<LoadingUI>();
                 loadingUI?.SetProgress(0f);
-                Log.Debug($"[GameplayProcedureBase] LoadingUI 已显示，开始加载场景 {sceneName}");
 
                 await GameModule.Scene.LoadSceneAsync(sceneName, progressCallBack: p =>
                 {
                     loadingUI?.SetProgress(p);
                 });
 
-                Log.Debug($"[GameplayProcedureBase] 场景 {sceneName} 加载完成");
-
                 if (_cts == null || _cts.IsCancellationRequested)
                 {
-                    Log.Debug($"[GameplayProcedureBase] 场景 {sceneName} 加载后流程已被取消，跳过后续逻辑");
                     if (loadingUI != null) GameModule.UI.CloseUI<LoadingUI>();
                     return;
                 }
 
                 await afterLoadAction.Invoke(_cts.Token);
-                Log.Debug($"[GameplayProcedureBase] 场景 {sceneName} 后续逻辑执行完成");
             }
             catch (OperationCanceledException)
             {
-                Log.Debug($"[GameplayProcedureBase] 场景 {sceneName} 加载已取消。");
             }
             catch (Exception e)
             {
@@ -89,9 +80,7 @@ namespace GameLogic
 
         private void Cleanup()
         {
-            Log.Debug("[GameplayProcedureBase] Cleanup：关闭所有 UI、Timer、卸载资源");
             GameModule.UI.CloseAll();
-            Log.Debug($"[GameplayProcedureBase] CloseAll 后 UI 栈数量={GameModule.UI.WindowCount}");
             GameModule.Timer.RemoveAllTimer();
             GameModule.Resource.UnloadUnusedAssets();
         }

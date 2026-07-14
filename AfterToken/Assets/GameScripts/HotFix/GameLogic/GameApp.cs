@@ -36,13 +36,6 @@ public partial class GameApp
         StartGameLogic();
 
 #if UNITY_EDITOR
-        // 临时挂载 Alt+Tab 诊断组件。
-        var uiRoot = GameObject.Find("UIRoot");
-        if (uiRoot != null && uiRoot.GetComponent<GameLogic.FocusPauseDiagnostics>() == null)
-        {
-            uiRoot.AddComponent<GameLogic.FocusPauseDiagnostics>();
-        }
-
         // 如果 Play Mode 期间发生了程序集重载，尝试恢复到之前的流程。
         TryResumeLastProcedure();
 #endif
@@ -134,7 +127,6 @@ public partial class GameApp
             return;
         }
 
-        Log.Debug($"[GameApp] 准备切换流程到 {typeof(T).Name}，先关闭所有 UI");
         GameModule.UI.CloseAll();
 
         try
@@ -146,7 +138,6 @@ public partial class GameApp
                 return;
             }
             method.MakeGenericMethod(typeof(T)).Invoke(_procedureFsm, null);
-            Log.Debug($"[GameApp] 已切换流程到 {typeof(T).Name}");
         }
         catch (Exception e)
         {

@@ -52,7 +52,6 @@ namespace GameLogic
             var updater = gameObject.GetComponent<DamageNumberUpdater>();
             if (updater == null) updater = gameObject.AddComponent<DamageNumberUpdater>();
             updater.Owner = this;
-            Log.Debug("[DamageNumberUI] 已创建");
         }
 
         protected override void OnDestroy()

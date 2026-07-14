@@ -18,12 +18,7 @@ namespace GameLogic
         protected override UniTaskVoid EnterAsync()
         {
             string sceneName = BattleContext.CustomSceneName;
-            if (!string.IsNullOrEmpty(sceneName))
-            {
-                Log.Debug($"[ProcedureBattle] 进入自定义战斗场景：{sceneName}");
-                BattleContext.CustomSceneName = null;
-            }
-            else
+            if (string.IsNullOrEmpty(sceneName))
             {
                 int levelId = BattleContext.CurrentLevelId;
                 if (levelId <= 0) levelId = 1;
@@ -34,24 +29,22 @@ namespace GameLogic
                     _levelConfig = LevelConfigMgr.Instance.Get(1);
                 }
                 sceneName = _levelConfig?.sceneName ?? "BattleScene";
-                Log.Debug($"[ProcedureBattle] 进入战斗流程，关卡={levelId} 场景={sceneName}");
+            }
+            else
+            {
+                BattleContext.CustomSceneName = null;
             }
 
             return LoadSceneWithLoadingAsync(sceneName, async ct =>
             {
-                Log.Debug("[ProcedureBattle] 场景加载完成，初始化战斗系统");
                 InitializeBattleSystems();
                 ApplyLevelConfig();
-                Log.Debug("[ProcedureBattle] 战斗系统初始化完成，隐藏系统光标");
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Locked);
                 CursorManager.Instance?.ForceHideCursor();
 
                 await GameModule.UI.ShowUIAsyncAwait<BattleMainUI>();
-                Log.Debug("[ProcedureBattle] BattleMainUI 已打开");
                 await GameModule.UI.ShowUIAsyncAwait<DamageNumberUI>();
-                Log.Debug("[ProcedureBattle] DamageNumberUI 已打开");
                 await GameModule.UI.ShowUIAsyncAwait<HitFeedbackUI>();
-                Log.Debug("[ProcedureBattle] HitFeedbackUI 已打开");
             });
         }
 
@@ -63,7 +56,6 @@ namespace GameLogic
 
         private void InitializeBattleSystems()
         {
-            Log.Debug("[ProcedureBattle] 创建 BattleRoot 并挂载系统组件");
             _battleRoot = new GameObject("BattleRoot");
 
             _battleRoot.AddComponent<InputSystem>();

@@ -103,7 +103,6 @@ namespace GameLogic
             if (_showRefCount == 1)
             {
                 ApplyCursorState();
-                Log.Debug("[CursorManager] 显示光标");
             }
         }
 
@@ -121,7 +120,6 @@ namespace GameLogic
             if (_showRefCount == 0)
             {
                 ApplyCursorState();
-                Log.Debug("[CursorManager] 隐藏光标");
             }
         }
 
@@ -133,7 +131,6 @@ namespace GameLogic
         {
             _showRefCount = 0;
             ApplyCursorState();
-            Log.Debug("[CursorManager] 强制隐藏光标");
         }
 
         /// <summary>
@@ -144,7 +141,6 @@ namespace GameLogic
         {
             _showRefCount = 1;
             ApplyCursorState();
-            Log.Debug("[CursorManager] 强制显示光标");
         }
 
         /// <summary>
@@ -162,7 +158,6 @@ namespace GameLogic
         /// </summary>
         private void OnApplicationFocusChanged(bool focused)
         {
-            Log.Debug($"[CursorManager] Focus changed, focused={focused}, showRefCount={_showRefCount}, mode={_currentMode}");
             if (focused)
             {
                 ApplyCursorState().Forget();
@@ -241,7 +236,6 @@ namespace GameLogic
                     }
                 }
 
-                Log.Debug($"[CursorManager] ApplyCursorState done: visible={visible}, lockState={Cursor.lockState}");
             }
             catch (Exception e)
             {

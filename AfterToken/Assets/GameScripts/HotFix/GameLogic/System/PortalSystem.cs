@@ -61,7 +61,6 @@ namespace GameLogic.Portal
         {
             var portals = FindObjectsByType<PortalEntity>(FindObjectsSortMode.None);
             _portals.AddRange(portals);
-            Log.Debug($"[PortalSystem] Scanned {_portals.Count} portal(s).");
         }
 
         /// <summary>

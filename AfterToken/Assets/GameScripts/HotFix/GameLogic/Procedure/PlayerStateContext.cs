@@ -79,7 +79,6 @@ namespace GameLogic.Portal
             }
 
             HasSavedState = true;
-            Debug.Log("[PortalPlayerState] Player state saved.");
         }
 
         /// <summary>
@@ -88,11 +87,7 @@ namespace GameLogic.Portal
         /// </summary>
         public static void Restore(PlayerSystem playerSystem)
         {
-            if (!HasSavedState)
-            {
-                Debug.Log("[PortalPlayerState] No saved state to restore.");
-                return;
-            }
+            if (!HasSavedState) return;
 
             if (playerSystem == null)
             {
@@ -101,9 +96,7 @@ namespace GameLogic.Portal
             }
 
             playerSystem.RestoreHpAndStamina(Hp, MaxHp, Stamina, MaxStamina);
-
             Clear();
-            Debug.Log("[PortalPlayerState] Player state restored.");
         }
 
         /// <summary>

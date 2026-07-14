@@ -37,7 +37,6 @@ namespace GameLogic
             FixFullScreenCanvas();
             CursorManager.Instance?.ShowCursor();
             RefreshAllSlots();
-            Log.Debug($"[WeaponWheelUI] 节点绑定: Root={_wheelRoot != null}, Highlight={_highlight != null}");
         }
 
         protected override void OnUpdate()

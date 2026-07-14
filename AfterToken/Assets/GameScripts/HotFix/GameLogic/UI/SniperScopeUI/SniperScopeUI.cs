@@ -28,7 +28,6 @@ namespace GameLogic
             FixFullScreenCanvas();
             ApplyVignetteSprite();
             RefreshScopeTexture();
-            Log.Debug($"[SniperScopeUI] 节点绑定: Vignette={_vignetteImage != null}, Scope={_scopeImage != null}");
         }
 
         protected override void OnRefresh()

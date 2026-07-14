@@ -62,10 +62,6 @@ namespace GameLogic
                             ShowDamageNumber(damageInfo);
                         }
                     }
-                    else
-                    {
-                        Log.Debug($"[BattleSystem] 命中非可受伤目标: {damageInfo.TargetGameObject.name}");
-                    }
                 }
 
                 // 命中特效

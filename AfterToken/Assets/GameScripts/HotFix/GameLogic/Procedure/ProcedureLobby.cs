@@ -10,14 +10,11 @@ namespace GameLogic
     {
         protected override UniTaskVoid EnterAsync()
         {
-            Log.Debug("[ProcedureLobby] 进入大厅流程");
             return LoadSceneWithLoadingAsync("LobbyScene", async ct =>
             {
-                Log.Debug("[ProcedureLobby] 场景加载完成，显示系统光标并打开 LobbyUI");
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
                 CursorManager.Instance?.ForceShowCursor();
                 await GameModule.UI.ShowUIAsyncAwait<LobbyUI>();
-                Log.Debug("[ProcedureLobby] LobbyUI 已打开");
             });
         }
     }

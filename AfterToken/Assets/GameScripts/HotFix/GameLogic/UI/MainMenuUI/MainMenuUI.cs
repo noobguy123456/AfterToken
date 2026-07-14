@@ -38,7 +38,6 @@ namespace GameLogic
             FixFullScreenCanvas();
             SetupDefaultCursor();
             CursorManager.Instance?.ShowCursor();
-            Log.Debug($"[MainMenuUI] 节点绑定: Title={_titleText != null}, Start={_startButton != null}, Exit={_exitButton != null}, Settings={_settingsButton != null}");
             BindEvents();
         }
 

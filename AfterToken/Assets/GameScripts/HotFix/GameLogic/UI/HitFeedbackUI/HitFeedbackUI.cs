@@ -54,7 +54,6 @@ namespace GameLogic
             Instance = this;
             InitializeIndicators();
             InitializeHitMarkerPool();
-            Log.Debug($"[HitFeedbackUI] 节点绑定: HitMarkerTemplate={_hitMarkerTemplate != null}, Indicators={CountBoundIndicators()}");
         }
 
         protected override void OnDestroy()

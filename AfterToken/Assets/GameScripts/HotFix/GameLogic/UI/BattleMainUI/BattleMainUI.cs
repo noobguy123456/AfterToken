@@ -32,8 +32,7 @@ namespace GameLogic
         private Slider _sliderStamina;
         private RectTransform _rectCrosshair;
 
-        // [DEBUG] 调试状态文字，后续删除
-        private TextMeshProUGUI _textState;
+
 
         protected override void ScriptGenerator()
         {
@@ -71,9 +70,7 @@ namespace GameLogic
             FixFullScreenCanvas();
             InitializeCrosshair();
             EnsureBarSliders();
-            CreateDebugStateText();
             RefreshAll();
-            Log.Debug($"[BattleMainUI] 节点绑定: Hp={_textHp != null}, Ammo={_textAmmo != null}, Weapon={_textWeapon != null}, Crosshair={_rectCrosshair != null}");
         }
 
         protected override void RegisterEvent()
@@ -85,7 +82,6 @@ namespace GameLogic
             AddUIEvent<int, int>(IWeaponEvent_Event.OnWeaponSwitched, OnWeaponSwitched);
             AddUIEvent<int, bool>(IWeaponEvent_Event.OnReloadStateChanged, OnReloadStateChanged);
             AddUIEvent<int, int>(IPlayerEvent_Event.OnStaminaChanged, OnStaminaChanged);
-            AddUIEvent<string, string>(IPlayerEvent_Event.OnPlayerStateChanged, OnPlayerStateChanged);
         }
 
         protected override void OnUpdate()
@@ -96,12 +92,11 @@ namespace GameLogic
             {
                 _pendingFirstFrameRefresh = false;
                 RefreshAll();
-                Log.Debug("[BattleMainUI] 首帧延迟刷新完成");
             }
 
-            // 系统组件（WeaponSystem 等）的 Start 可能在 UI 创建之后才完成，
-            // 持续轮询几帧，确保武器信息正确显示，避免一直显示 -/-。
-            if (_readyPollFrames > 0 && WeaponSystem.Instance?.CurrentWeapon == null)
+            // 系统组件（PlayerSystem / WeaponSystem 等）的 Start 可能在 UI 创建之后才完成，
+            // 持续轮询几帧，确保玩家与武器信息正确显示，避免一直显示 -/-。
+            if (_readyPollFrames > 0 && (PlayerSystem.Instance == null || WeaponSystem.Instance?.CurrentWeapon == null))
             {
                 _readyPollFrames--;
                 RefreshAll();
@@ -147,7 +142,6 @@ namespace GameLogic
             int idx = System.Array.IndexOf(values, _currentStyle);
             int next = (idx + 1) % values.Length;
             SetCrosshairStyle(values[next]);
-            Log.Debug($"[BattleMainUI] 切换准星样式: {_currentStyle}");
         }
 
         /// <summary>
@@ -417,44 +411,6 @@ namespace GameLogic
             }
         }
 
-        /// <summary>
-        /// [DEBUG] 玩家状态变化时刷新调试文字。
-        /// TODO: 后续删除该调试 UI。
-        /// </summary>
-        private void OnPlayerStateChanged(string currentState, string prevState)
-        {
-            if (_textState != null)
-            {
-                _textState.text = $"State: {currentState}";
-            }
-        }
-
-        /// <summary>
-        /// [DEBUG] 创建当前状态调试文字。
-        /// TODO: 后续删除该调试 UI。
-        /// </summary>
-        private void CreateDebugStateText()
-        {
-            var hudRoot = FindChildComponent<RectTransform>("m_rect_HudRoot");
-            if (hudRoot == null) return;
-
-            var go = new GameObject("m_text_State_Debug", typeof(RectTransform));
-            go.transform.SetParent(hudRoot, false);
-
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.zero;
-            rect.pivot = Vector2.zero;
-            rect.anchoredPosition = new Vector2(10f, 80f);
-            rect.sizeDelta = new Vector2(300f, 30f);
-
-            _textState = go.AddComponent<TextMeshProUGUI>();
-            _textState.font = _textHp?.font;
-            _textState.fontSize = 20;
-            _textState.color = Color.yellow;
-            _textState.text = "State: Idle";
-        }
-
         #endregion
 
         /// <summary>
@@ -533,6 +489,8 @@ namespace GameLogic
 
         private void RefreshAll()
         {
+            EnsureTextComponents();
+
             var playerSystem = PlayerSystem.Instance;
             if (playerSystem != null)
             {
@@ -559,7 +517,20 @@ namespace GameLogic
                 if (_textWeapon != null) _textWeapon.text = "Weapon: -";
             }
 
-            Log.Debug($"[BattleMainUI] RefreshAll: player={(playerSystem != null ? $"{playerSystem.CurrentHp}/{playerSystem.MaxHp}" : "null")}, weapon={(weapon != null ? weapon.Config.name : "null")}");
+        }
+
+        /// <summary>
+        /// 运行时兜底：如果文本/Slider 组件在脚本生成阶段未拿到，按路径再查找一次。
+        /// 用于应对 Domain Reload 后旧实例字段丢失、Prefab 结构变化等边界情况。
+        /// </summary>
+        private void EnsureTextComponents()
+        {
+            if (_textHp == null) _textHp = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Hp");
+            if (_textAmmo == null) _textAmmo = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Ammo");
+            if (_textWeapon == null) _textWeapon = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Weapon");
+            if (_sliderHp == null) _sliderHp = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Hp");
+            if (_sliderStamina == null) _sliderStamina = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Stamina");
+            if (_rectCrosshair == null) _rectCrosshair = FindChildComponent<RectTransform>("m_rect_Crosshair");
         }
     }
 }

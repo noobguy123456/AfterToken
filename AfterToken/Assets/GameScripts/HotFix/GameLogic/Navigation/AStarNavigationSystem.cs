@@ -49,7 +49,6 @@ namespace GameLogic.Navigation
                 return;
             }
             SetGrid(_builder.Build());
-            Log.Info($"[AStarNavigationSystem] 导航网格重建完成: {_grid.Width}x{_grid.Height} = {_grid.TotalCells} 个格子");
         }
 
         public bool IsWalkable(Vector2 worldPos)

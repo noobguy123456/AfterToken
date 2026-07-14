@@ -38,7 +38,6 @@ namespace GameLogic
             CursorManager.Instance?.ShowCursor();
             EnsureContentRoot();
             BuildSettingsContent();
-            Log.Debug("[SettingsUI] 设置面板已打开");
         }
 
         protected override void OnDestroy()
