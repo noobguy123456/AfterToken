@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using TEngine;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,17 +34,18 @@ namespace GameLogic
 
         private void BindTexts()
         {
-            if (_titleText != null) _titleText.text = "玩家死亡";
-            if (_messageText != null) _messageText.text = "你已被击败，请选择下一步操作";
+            // 项目字体 MainUIFont 为 Latin-only 静态字库，UI 文本统一使用英文。
+            if (_titleText != null) _titleText.text = "YOU DIED";
+            if (_messageText != null) _messageText.text = "You have been defeated. Choose your next move.";
             if (_restartButton != null)
             {
                 var restartText = _restartButton.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (restartText != null) restartText.text = "重新开始";
+                if (restartText != null) restartText.text = "Restart";
             }
             if (_returnButton != null)
             {
                 var returnText = _returnButton.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (returnText != null) returnText.text = "返回关卡选择";
+                if (returnText != null) returnText.text = "Back to Lobby";
             }
         }
 
