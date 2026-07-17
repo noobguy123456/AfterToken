@@ -29,7 +29,7 @@ namespace GameLogic
 
         private void OnClickCloseBtn()
         {
-            PopErrorLog().Forget();
+            PopErrorLog().Forget();;
         }
 
         #endregion

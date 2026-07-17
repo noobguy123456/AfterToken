@@ -106,15 +106,10 @@ namespace GameLogic
             MoveSpeed = BaseMoveSpeed;
         }
 
-        /// <summary>
-        /// 玩家受伤事件。由 PlayerSystem 订阅并处理血量扣除，实体自身不持有血量。
-        /// </summary>
-        public event System.Action<int, Vector2> OnTakeDamage;
-
         public bool TakeDamage(int damage, Vector2 hitDirection)
         {
             if (IsDead) return false;
-            OnTakeDamage?.Invoke(damage, hitDirection);
+            GameEvent.Get<IPlayerEvent>().OnPlayerDamaged(damage, hitDirection);
             return true;
         }
 

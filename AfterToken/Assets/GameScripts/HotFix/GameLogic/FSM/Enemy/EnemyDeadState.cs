@@ -28,7 +28,7 @@ namespace GameLogic
             }
 
             // TODO: 播放死亡动画、触发掉落
-            DespawnAsync().Forget();
+            DespawnAsync().Forget();;
         }
 
         protected override void OnUpdateState(IFsm<EnemyEntity> fsm, float elapse, float real)

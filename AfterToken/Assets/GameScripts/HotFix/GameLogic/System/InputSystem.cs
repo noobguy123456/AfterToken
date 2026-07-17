@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using TEngine;
@@ -24,6 +26,7 @@ namespace GameLogic
         private bool _isWheelOpen;
         private WeaponWheelUI _weaponWheelUI;
         private IBattleInputEvent _battleInputEvent;
+        private CancellationTokenSource _weaponWheelCts;
 
         private IBattleInputEvent BattleInputEvent
         {
@@ -40,7 +43,7 @@ namespace GameLogic
 
         private void Start()
         {
-            _mainCamera = Camera.main;
+            _mainCamera = CameraSystem.Instance?.MainCamera;
         }
 
         private void Update()
@@ -150,7 +153,7 @@ namespace GameLogic
                 _isWheelOpen = true;
                 // 武器轮盘属于输入层触发的全局时间缩放效果，通过 GamePauseManager 统一控制。
                 GamePauseManager.PushTimeScale(_wheelTimeScale);
-                ShowWeaponWheelAsync().Forget();
+                ShowWeaponWheelAsync().Forget();;
                 BattleInputEvent?.OnWeaponWheelToggled(true);
             }
 
@@ -172,7 +175,18 @@ namespace GameLogic
 
         private async UniTaskVoid ShowWeaponWheelAsync()
         {
-            _weaponWheelUI = await GameModule.UI.ShowUIAsyncAwait<WeaponWheelUI>();
+            _weaponWheelCts?.Cancel();
+            _weaponWheelCts?.Dispose();
+            _weaponWheelCts = new CancellationTokenSource();
+
+            try
+            {
+                _weaponWheelUI = await GameModule.UI.ShowUIAsyncAwait<WeaponWheelUI>(_weaponWheelCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // 输入系统销毁时取消，忽略异常。
+            }
         }
 
         private int CalculateWheelSlot()
@@ -207,9 +221,16 @@ namespace GameLogic
                 }
                 else
                 {
-                    GameModule.UI.ShowUI<SettingsUI>();
+                    GameModule.UI.ShowUIAsync<SettingsUI>();
                 }
             }
+        }
+
+        private void OnDestroy()
+        {
+            _weaponWheelCts?.Cancel();
+            _weaponWheelCts?.Dispose();
+            _weaponWheelCts = null;
         }
 
         private void OnApplicationFocus(bool hasFocus)

@@ -48,6 +48,16 @@ namespace GameLogic
             _tracerRoot = root.transform;
 
             _tracerMaterial = new Material(Shader.Find("Sprites/Default"));
+
+            InitializeRocketLaser();
+        }
+
+        private void InitializeRocketLaser()
+        {
+            if (_lockOnLaserPrefab == null) return;
+
+            _rocketLaser = Instantiate(_lockOnLaserPrefab, transform);
+            _rocketLaser.enabled = false;
         }
 
         private void OnDestroy()
@@ -290,11 +300,6 @@ namespace GameLogic
 
             var player = PlayerSystem.Instance?.GetPlayerEntity();
             if (player == null) return;
-
-            if (_rocketLaser == null && _lockOnLaserPrefab != null)
-            {
-                _rocketLaser = Instantiate(_lockOnLaserPrefab);
-            }
 
             if (_rocketLaser != null)
             {

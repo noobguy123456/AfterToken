@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
+using GameLogic;
 using TEngine;
 using UnityEngine;
 
@@ -18,6 +21,7 @@ namespace GameLogic.Portal
 
         private PortalEntity _currentPortal;
         private InteractionPromptUI _promptUI;
+        private CancellationTokenSource _promptCts;
 
         /// <summary>
         /// 当前存活敌人数量。
@@ -45,6 +49,10 @@ namespace GameLogic.Portal
         {
             _eventMgr.Clear();
             Instance = null;
+
+            _promptCts?.Cancel();
+            _promptCts?.Dispose();
+            _promptCts = null;
         }
 
         private void RegisterEvents()
@@ -55,12 +63,12 @@ namespace GameLogic.Portal
         }
 
         /// <summary>
-        /// 扫描场景中的所有 PortalEntity。
+        /// 从注册表收集所有 PortalEntity。
         /// </summary>
         private void ScanPortals()
         {
-            var portals = FindObjectsByType<PortalEntity>(FindObjectsSortMode.None);
-            _portals.AddRange(portals);
+            _portals.Clear();
+            _portals.AddRange(PortalRegistry.All);
         }
 
         /// <summary>
@@ -128,20 +136,20 @@ namespace GameLogic.Portal
             {
                 switch (config.portalType)
                 {
-                    case PortalType.ReturnToLobby:
+                    case PortalType.RETURN_TO_LOBBY:
                         GameApp.ChangeProcedure<ProcedureLobby>();
                         break;
-                    case PortalType.NextLevel:
+                    case PortalType.NEXT_LEVEL:
                         SwitchToNextLevel(config.targetLevelId);
                         break;
-                    case PortalType.CustomScene:
+                    case PortalType.CUSTOM_SCENE:
                         SwitchToCustomScene(config.targetSceneName);
                         break;
                     default:
                         Log.Error($"[PortalSystem] Unknown portal type: {config.portalType}");
                         break;
                 }
-            }).Forget();
+            }).Forget();;
         }
 
         private void OnEnemySpawned(int enemyId, int configId)
@@ -189,9 +197,9 @@ namespace GameLogic.Portal
         {
             switch (conditionType)
             {
-                case PortalSpawnCondition.None:
+                case PortalSpawnCondition.NONE:
                     return new NoneCondition();
-                case PortalSpawnCondition.AllEnemiesDefeated:
+                case PortalSpawnCondition.ALL_ENEMIES_DEFEATED:
                     return new AllEnemiesDefeatedCondition();
                 default:
                     Log.Warning($"[PortalSystem] Unsupported spawn condition: {conditionType}");
@@ -202,16 +210,27 @@ namespace GameLogic.Portal
         private void ShowPrompt(string text)
         {
             if (string.IsNullOrEmpty(text)) return;
-            ShowPromptAsync(text).Forget();
+            ShowPromptAsync(text).Forget();;
         }
 
         private async UniTaskVoid ShowPromptAsync(string text)
         {
-            if (_promptUI == null)
+            _promptCts?.Cancel();
+            _promptCts?.Dispose();
+            _promptCts = new CancellationTokenSource();
+
+            try
             {
-                _promptUI = await GameModule.UI.ShowUIAsyncAwait<InteractionPromptUI>();
+                if (_promptUI == null)
+                {
+                    _promptUI = await GameModule.UI.ShowUIAsyncAwait<InteractionPromptUI>(_promptCts.Token);
+                }
+                _promptUI?.SetPrompt(text);
             }
-            _promptUI?.SetPrompt(text);
+            catch (OperationCanceledException)
+            {
+                // PortalSystem 销毁时取消，忽略异常。
+            }
         }
 
         private void HidePrompt()

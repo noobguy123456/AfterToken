@@ -25,7 +25,7 @@ namespace GameLogic
         {
             if (damageInfo == null) return;
 
-            var mainCamera = Camera.main;
+            var mainCamera = CameraSystem.Instance?.MainCamera;
             if (mainCamera == null) return;
 
             Vector3 worldPos = damageInfo.HitPoint;
@@ -53,7 +53,7 @@ namespace GameLogic
                         if (tookDamage)
                         {
                             // 命中反馈：在目标位置显示受击标记 + 伤害飘字
-                            var mainCamera = Camera.main;
+                            var mainCamera = CameraSystem.Instance?.MainCamera;
                             if (mainCamera != null)
                             {
                                 var screenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);

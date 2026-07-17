@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,6 +28,7 @@ namespace Procedure
         private bool _loadMetadataAssemblyComplete;
         private bool _loadAssemblyWait;
         private bool _loadMetadataAssemblyWait;
+        private bool _assemblyLoadFired;
         private Assembly _mainLogicAssembly;
         private List<Assembly> _hotfixAssemblyList;
         private IFsm<IProcedureModule> _procedureOwner;
@@ -110,6 +111,10 @@ namespace Procedure
         protected override void OnUpdate(IFsm<IProcedureModule> procedureOwner, float elapseSeconds, float realElapseSeconds)
         {
             base.OnUpdate(procedureOwner, elapseSeconds, realElapseSeconds);
+            if (_assemblyLoadFired)
+            {
+                return;
+            }
             if (!_loadAssemblyComplete)
             {
                 return;
@@ -118,6 +123,7 @@ namespace Procedure
             {
                 return;
             }
+            _assemblyLoadFired = true;
             AllAssemblyLoadComplete();
         }
 
@@ -132,7 +138,7 @@ namespace Procedure
                 return;
             }
             
-            var appType = _mainLogicAssembly.GetType("GameApp");
+            var appType = _mainLogicAssembly.GetType("GameLogic.GameApp");
             if (appType == null)
             {
                 Log.Fatal($"Main logic type 'GameApp' missing.");

@@ -48,18 +48,26 @@ namespace GameLogic
         /// </summary>
         protected override void OnInit()
         {
-            var uiRoot = GameObject.Find("UIRoot");
-            if (uiRoot != null)
+            var uiRoot = SingletonSystem.GetGameObject("UIRoot");
+            if (uiRoot == null)
             {
-                _instanceRoot = uiRoot.GetComponentInChildren<Canvas>()?.transform;
-                _uiCamera = uiRoot.GetComponentInChildren<Camera>();
+                uiRoot = new GameObject("UIRoot");
+                var canvas = uiRoot.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                uiRoot.AddComponent<CanvasScaler>();
+                uiRoot.AddComponent<GraphicRaycaster>();
+                SingletonSystem.Retain(uiRoot, null);
             }
-            else
+
+            _instanceRoot = uiRoot.GetComponentInChildren<Canvas>()?.transform;
+            _uiCamera = uiRoot.GetComponentInChildren<Camera>();
+
+            if (_instanceRoot == null)
             {
                 Log.Fatal("UIRoot not found !");
                 return;
             }
-            
+
             Resource = new UIResourceLoader();
 
             UnityEngine.Object.DontDestroyOnLoad(_instanceRoot.parent != null ? _instanceRoot.parent : _instanceRoot);
@@ -269,38 +277,16 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 同步打开窗口。
-        /// </summary>
-        /// <typeparam name="T">窗口类。</typeparam>
-        /// <param name="userDatas">用户自定义数据。</param>
-        /// <returns>打开窗口操作句柄。</returns>
-        public void ShowUI<T>(params System.Object[] userDatas) where T : UIWindow , new()
-        {
-            ShowUIImp<T>(false, userDatas);
-        }
-        
-        /// <summary>
-        /// 异步打开窗口。
+        /// 异步打开窗口并等待加载完成。
         /// </summary>
         /// <param name="userDatas">用户自定义数据。</param>
-        /// <returns>打开窗口操作句柄。</returns>
-        public async UniTask<T> ShowUIAsyncAwait<T>(params System.Object[] userDatas) where T : UIWindow , new()
+        /// <returns>窗口实例。</returns>
+        public async UniTask<T> ShowUIAsyncAwait<T>(CancellationToken cancellationToken = default, params System.Object[] userDatas) where T : UIWindow , new()
         {
-            return await ShowUIAwaitImp<T>(true, userDatas) as T;
+            return await ShowUIAwaitImp<T>(cancellationToken, userDatas) as T;
         }
 
-        /// <summary>
-        /// 同步打开窗口。
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="userDatas"></param>
-        /// <returns>打开窗口操作句柄。</returns>
-        public void ShowUI(Type type, params System.Object[] userDatas)
-        {
-            ShowUIImp(type, false, userDatas);
-        }
-
-        private void ShowUIImp(Type type, bool isAsync, params System.Object[] userDatas)
+        private void ShowUIImp(Type type, params System.Object[] userDatas)
         {
             string windowName = type.FullName;
 
@@ -308,11 +294,11 @@ namespace GameLogic
             {
                 window = CreateInstance(type);
                 Push(window); //首次压入
-                window.InternalLoad(window.AssetName, OnWindowPrepare, isAsync, userDatas).Forget();
+                window.InternalLoadAsync(window.AssetName, OnWindowPrepare, userDatas).Forget();;
             }
         }
         
-        private void ShowUIImp<T>(bool isAsync, params System.Object[] userDatas) where T : UIWindow , new()
+        private void ShowUIImp<T>(params System.Object[] userDatas) where T : UIWindow , new()
         {
             Type type = typeof(T);
             string windowName = type.FullName;
@@ -321,7 +307,7 @@ namespace GameLogic
             {
                 window = CreateInstance<T>();
                 Push(window); //首次压入
-                window.InternalLoad(window.AssetName, OnWindowPrepare, isAsync, userDatas).Forget();
+                window.InternalLoadAsync(window.AssetName, OnWindowPrepare, userDatas).Forget();;
             }
         }
 
@@ -340,7 +326,7 @@ namespace GameLogic
             return false;
         }
         
-        private async UniTask<T> ShowUIAwaitImp<T>(bool isAsync, params System.Object[] userDatas) where T : UIWindow , new()
+        private async UniTask<T> ShowUIAwaitImp<T>(CancellationToken cancellationToken, params System.Object[] userDatas) where T : UIWindow , new()
         {
             Type type = typeof(T);
             string windowName = type.FullName;
@@ -353,17 +339,8 @@ namespace GameLogic
             {
                 window = CreateInstance<T>();
                 Push(window); //首次压入
-                window.InternalLoad(window.AssetName, OnWindowPrepare, isAsync, userDatas).Forget();
-                float time = 0f;
-                while (!window.IsLoadDone)
-                {
-                    time += Time.deltaTime;
-                    if (time > 60f)
-                    {
-                        break;
-                    }
-                    await UniTask.Yield();
-                }
+                await window.InternalLoadAsync(window.AssetName, OnWindowPrepare, userDatas)
+                    .AttachExternalCancellation(cancellationToken);
                 return window as T;
             }
         }
@@ -622,7 +599,7 @@ namespace GameLogic
                 return;
             }
 
-            GetUIAsyncImp(callback).Forget();
+            GetUIAsyncImp(callback).Forget();;
 
             async UniTaskVoid GetUIAsyncImp(Action<T> ctx)
             {

@@ -1,3 +1,4 @@
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameConfig;
 using GameLogic.Portal;
@@ -68,6 +69,7 @@ namespace GameLogic
             _eventMgr.AddEvent<Vector2>(IBattleInputEvent_Event.OnAimInput, OnAimInput);
             _eventMgr.AddEvent(IBattleInputEvent_Event.OnReloadPressed, OnReloadPressed);
             _eventMgr.AddEvent(IBattleInputEvent_Event.OnDodgePressed, OnDodgePressed);
+            _eventMgr.AddEvent<int, Vector2>(IPlayerEvent_Event.OnPlayerDamaged, HandlePlayerDamaged);
         }
 
         private void OnDestroy()
@@ -83,12 +85,12 @@ namespace GameLogic
 
         private void Start()
         {
-            CreatePlayerAsync().Forget();
+            CreatePlayerAsync(this.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private async UniTask CreatePlayerAsync()
+        private async UniTask CreatePlayerAsync(CancellationToken cancellationToken)
         {
-            var go = await GameModule.Resource.LoadGameObjectAsync("Player", _spawnPoint);
+            var go = await GameModule.Resource.LoadGameObjectAsync("Player", _spawnPoint, cancellationToken);
             if (go == null)
             {
                 Log.Warning("[PlayerSystem] 加载 Player Prefab 失败，使用占位玩家");
@@ -119,7 +121,6 @@ namespace GameLogic
 
             _playerFsm.Start<PlayerIdleState>();
 
-            _playerEntity.OnTakeDamage += HandlePlayerDamage;
             WeaponSystem.Instance?.SetOwner(_playerEntity);
             CameraSystem.Instance?.SetTarget(go.transform);
 
@@ -197,7 +198,7 @@ namespace GameLogic
         /// <summary>
         /// 处理玩家受伤。
         /// </summary>
-        private void HandlePlayerDamage(int damage, Vector2 hitDirection)
+        private void HandlePlayerDamaged(int damage, Vector2 hitDirection)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
 
@@ -205,7 +206,6 @@ namespace GameLogic
             if (_currentHp < 0) _currentHp = 0;
 
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
-            GameEvent.Get<IPlayerEvent>().OnPlayerDamaged(damage, hitDirection);
 
             // 计算伤害来源相对玩家朝向的角度（0-360，0 为前方）
             float playerAngle = Mathf.Atan2(_playerEntity.transform.up.y, _playerEntity.transform.up.x) * Mathf.Rad2Deg;

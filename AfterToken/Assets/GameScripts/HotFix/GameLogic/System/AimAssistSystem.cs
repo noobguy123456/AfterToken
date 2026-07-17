@@ -86,7 +86,7 @@ namespace GameLogic
 
         private Transform FindBestAssistTarget(Vector2 origin, Vector2 direction)
         {
-            var enemies = GameObject.FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None);
+            var enemies = EnemyRegistry.All;
             Transform best = null;
             float bestScore = float.MaxValue;
 
@@ -144,7 +144,7 @@ namespace GameLogic
 
         private Transform FindLockOnTarget(Vector2 origin, Vector2 direction)
         {
-            var enemies = GameObject.FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None);
+            var enemies = EnemyRegistry.All;
             Transform best = null;
             float bestAngle = float.MaxValue;
 

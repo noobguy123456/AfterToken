@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using System.Collections.Generic;
+using TMPro;
 using TEngine;
+using UnityEngine;
 
 namespace GameLogic
 {
@@ -13,12 +13,12 @@ namespace GameLogic
     public class DamageNumberUI : UIWindow
     {
         #region 脚本工具生成的代码
-        private Text _textTemplate;
+        private TextMeshProUGUI _textTemplate;
         private RectTransform _rootRect;
 
         protected override void ScriptGenerator()
         {
-            _textTemplate = FindChildComponent<Text>("m_text_Template");
+            _textTemplate = FindChildComponent<TextMeshProUGUI>("m_text_Template");
             _rootRect = rectTransform;
         }
         #endregion
@@ -29,12 +29,12 @@ namespace GameLogic
         [SerializeField] private float _moveOffset = 40f;
 
         private static DamageNumberUI _instance;
-        private readonly Queue<Text> _pool = new Queue<Text>();
+        private readonly Queue<TextMeshProUGUI> _pool = new Queue<TextMeshProUGUI>();
         private readonly List<ActiveNumber> _activeNumbers = new List<ActiveNumber>();
 
         private class ActiveNumber
         {
-            public Text Text;
+            public TextMeshProUGUI Text;
             public float Timer;
             public Vector2 StartPos;
         }
@@ -44,14 +44,7 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             _instance = this;
-            // 兜底：无论Prefab中模板是否隐藏，都确保模板节点 inactive。
-            var templateTransform = rectTransform?.Find("m_text_Template");
-            templateTransform?.gameObject.SetActive(false);
             InitializePool();
-            // 用独立 MonoBehaviour 驱动飘字动画，避免 UIWindow.OnUpdate 被 UI 栈显隐规则中断。
-            var updater = gameObject.GetComponent<DamageNumberUpdater>();
-            if (updater == null) updater = gameObject.AddComponent<DamageNumberUpdater>();
-            updater.Owner = this;
         }
 
         protected override void OnDestroy()
@@ -85,7 +78,7 @@ namespace GameLogic
             if (_textTemplate == null || _rootRect == null) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rootRect, screenPos, null, out var localPos)) return;
 
-            Text txt;
+            TextMeshProUGUI txt;
             if (_pool.Count > 0)
             {
                 txt = _pool.Dequeue();
@@ -141,23 +134,10 @@ namespace GameLogic
             }
         }
 
-        private void ReturnToPool(Text txt)
+        private void ReturnToPool(TextMeshProUGUI txt)
         {
             txt.gameObject.SetActive(false);
             _pool.Enqueue(txt);
-        }
-
-        /// <summary>
-        /// 独立驱动飘字动画的 MonoBehaviour，避免被 TEngine UI 栈显隐中断。
-        /// </summary>
-        private class DamageNumberUpdater : MonoBehaviour
-        {
-            public DamageNumberUI Owner;
-
-            private void Update()
-            {
-                Owner?.UpdateNumbers(Time.deltaTime);
-            }
         }
     }
 }

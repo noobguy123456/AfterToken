@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using TEngine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -268,15 +269,37 @@ namespace GameLogic
             return false;
         }
 
-        public static void Restart()
+        /// <summary>
+        /// 重启游戏：释放所有单例并异步重新加载首场景。
+        /// </summary>
+        public static async UniTask RestartAsync()
         {
-            if (Camera.main != null)
+            var cameraSystem = CameraSystem.Instance;
+            if (cameraSystem != null)
             {
-                Camera.main.gameObject.SetActive(false);
+                cameraSystem.gameObject.SetActive(false);
             }
 
             Release();
-            SceneManager.LoadScene(0);
+
+            string firstScenePath = SceneUtility.GetScenePathByBuildIndex(0);
+            if (!string.IsNullOrEmpty(firstScenePath))
+            {
+                await GameModule.Scene.LoadSceneAsync(firstScenePath);
+            }
+            else
+            {
+                Log.Error("[SingletonSystem] 无法获取 build index 0 的场景路径。");
+            }
+        }
+
+        /// <summary>
+        /// 同步封装（已废弃，请使用 <see cref="RestartAsync"/>）。
+        /// </summary>
+        [Obsolete("请使用 RestartAsync")]
+        public static void Restart()
+        {
+            RestartAsync().Forget();
         }
 
         internal static ISingleton GetSingleton(string name)
@@ -305,7 +328,7 @@ namespace GameLogic
             
             _isInit = true;
 
-            _updateDriver ??= ModuleSystem.GetModule<IUpdateDriver>();
+            _updateDriver ??= GameModule.UpdateDriver;
             _updateDriver.AddUpdateListener(OnUpdate);
             _updateDriver.AddFixedUpdateListener(OnFixedUpdate);
             _updateDriver.AddLateUpdateListener(OnLateUpdate);
@@ -324,7 +347,7 @@ namespace GameLogic
 
             _isInit = false;
 
-            _updateDriver ??= ModuleSystem.GetModule<IUpdateDriver>();
+            _updateDriver ??= GameModule.UpdateDriver;
             _updateDriver.RemoveUpdateListener(OnUpdate);
             _updateDriver.RemoveFixedUpdateListener(OnFixedUpdate);
             _updateDriver.RemoveLateUpdateListener(OnLateUpdate);

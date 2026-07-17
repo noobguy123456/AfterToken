@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using Object = UnityEngine.Object;
 using TEngine;
 using UnityEngine;
 
@@ -9,23 +12,23 @@ namespace GameLogic
         /// <summary>
         /// 窗口组件的实例资源对象。
         /// </summary>
-        public override GameObject gameObject { protected set; get; }
+        public override GameObject gameObject { get; protected set; }
 
         /// <summary>
         /// 窗口组件矩阵位置组件。
         /// </summary>
-        public override RectTransform rectTransform { protected set; get; }
+        public override RectTransform rectTransform { get; protected set; }
         
         /// <summary>
         /// 窗口位置组件。
         /// </summary>
-        public override Transform transform { protected set; get; }
+        public override Transform transform { get; protected set; }
 
         /// <summary>
         /// 窗口组件名称。
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public string name { protected set; get; } = string.Empty;
+        public string name { get; protected set; } = string.Empty;
 
         /// <summary>
         /// UI类型。
@@ -154,16 +157,36 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 根据资源名创建
+        /// 根据资源名创建（已废弃，请使用 <see cref="CreateByPathAsync"/>）。
         /// </summary>
-        /// <param name="resPath"></param>
-        /// <param name="parentUI"></param>
-        /// <param name="parentTrans"></param>
-        /// <param name="visible"></param>
-        /// <returns></returns>
+        [Obsolete("请使用 CreateByPathAsync")]
         public bool CreateByPath(string resPath, UIBase parentUI, Transform parentTrans = null, bool visible = true)
         {
             GameObject goInst = UIModule.Resource.LoadGameObject(resPath, parent: parentTrans);
+            if (goInst == null)
+            {
+                return false;
+            }
+
+            if (!Create(parentUI, goInst, visible))
+            {
+                return false;
+            }
+
+            goInst.transform.localScale = Vector3.one;
+            goInst.transform.localPosition = Vector3.zero;
+            return true;
+        }
+
+        /// <summary>
+        /// 根据资源名异步创建。
+        /// </summary>
+        public async UniTask<bool> CreateByPathAsync(string resPath, UIBase parentUI, Transform parentTrans = null, bool visible = true)
+        {
+            GameObject goInst = await UIModule.Resource.LoadGameObjectAsync(
+                resPath,
+                parent: parentTrans,
+                cancellationToken: parentUI.gameObject.GetCancellationTokenOnDestroy());
             if (goInst == null)
             {
                 return false;

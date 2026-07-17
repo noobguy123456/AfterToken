@@ -1,118 +1,143 @@
-﻿using GameLogic;
-using TEngine;
+﻿using TEngine;
 using Object = UnityEngine.Object;
 
-public class GameModule
+namespace GameLogic
 {
-    #region 框架模块
-
     /// <summary>
-    /// 获取游戏基础模块。
+    /// 游戏模块门面，统一提供对 TEngine 模块与项目自定义模块的访问。
     /// </summary>
-    public static RootModule Base
+    public static class GameModule
     {
-        get => _base ??= Object.FindFirstObjectByType<RootModule>();
-        private set => _base = value;
-    }
+        #region 框架模块
 
-    private static RootModule _base;
+        /// <summary>
+        /// 获取游戏基础模块。
+        /// </summary>
+        public static RootModule Base
+        {
+            get => _base;
+            private set => _base = value;
+        }
 
-    /// <summary>
-    /// 获取调试模块。
-    /// </summary>
-    public static IDebuggerModule Debugger
-    {
-        get => _debugger ??= Get<IDebuggerModule>();
-        private set => _debugger = value;
-    }
+        private static RootModule _base;
 
+        /// <summary>
+        /// 获取调试模块。
+        /// </summary>
+        public static IDebuggerModule Debugger
+        {
+            get => _debugger ??= Get<IDebuggerModule>();
+            private set => _debugger = value;
+        }
 
-    private static IDebuggerModule _debugger;
+        private static IDebuggerModule _debugger;
 
-    /// <summary>
-    /// 获取有限状态机模块。
-    /// </summary>
-    public static IFsmModule Fsm => _fsm ??= Get<IFsmModule>();
+        /// <summary>
+        /// 获取有限状态机模块。
+        /// </summary>
+        public static IFsmModule Fsm => _fsm ??= Get<IFsmModule>();
 
-    private static IFsmModule _fsm;
+        private static IFsmModule _fsm;
 
-    /// <summary>
-    /// 流程管理模块。
-    /// </summary>
-    public static IProcedureModule Procedure => _procedure ??= Get<IProcedureModule>();
+        /// <summary>
+        /// 流程管理模块。
+        /// </summary>
+        public static IProcedureModule Procedure => _procedure ??= Get<IProcedureModule>();
 
-    private static IProcedureModule _procedure;
+        private static IProcedureModule _procedure;
 
-    /// <summary>
-    /// 获取资源模块。
-    /// </summary>
-    public static IResourceModule Resource => _resource ??= Get<IResourceModule>();
+        /// <summary>
+        /// 获取资源模块。
+        /// </summary>
+        public static IResourceModule Resource => _resource ??= Get<IResourceModule>();
 
-    private static IResourceModule _resource;
+        private static IResourceModule _resource;
 
-    /// <summary>
-    /// 获取音频模块。
-    /// </summary>
-    public static IAudioModule Audio => _audio ??= Get<IAudioModule>();
+        /// <summary>
+        /// 获取音频模块。
+        /// </summary>
+        public static IAudioModule Audio => _audio ??= Get<IAudioModule>();
 
-    private static IAudioModule _audio;
+        private static IAudioModule _audio;
 
-    /// <summary>
-    /// 获取UI模块。
-    /// </summary>
-    public static UIModule UI => _ui ??= UIModule.Instance;
+        /// <summary>
+        /// 获取UI模块。
+        /// </summary>
+        public static UIModule UI => _ui ??= UIModule.Instance;
 
-    private static UIModule _ui;
+        private static UIModule _ui;
 
-    /// <summary>
-    /// 获取场景模块。
-    /// </summary>
-    public static ISceneModule Scene => _scene ??= Get<ISceneModule>();
+        /// <summary>
+        /// 获取场景模块。
+        /// </summary>
+        public static ISceneModule Scene => _scene ??= Get<ISceneModule>();
 
-    private static ISceneModule _scene;
+        private static ISceneModule _scene;
 
-    /// <summary>
-    /// 获取计时器模块。
-    /// </summary>
-    public static ITimerModule Timer => _timer ??= Get<ITimerModule>();
+        /// <summary>
+        /// 获取计时器模块。
+        /// </summary>
+        public static ITimerModule Timer => _timer ??= Get<ITimerModule>();
 
-    private static ITimerModule _timer;
+        private static ITimerModule _timer;
 
-    /// <summary>
-    /// 获取本地化模块。
-    /// </summary>
-    public static ILocalizationModule Localization => _localization ??= Get<ILocalizationModule>();
-    
-    private static ILocalizationModule _localization;
-    #endregion
-    
-    /// <summary>
-    /// 获取游戏框架模块类。
-    /// </summary>
-    /// <typeparam name="T">游戏框架模块类。</typeparam>
-    /// <returns>游戏框架模块实例。</returns>
-    private static T Get<T>() where T : class
-    {
-        T module = ModuleSystem.GetModule<T>();
+        /// <summary>
+        /// 获取本地化模块。
+        /// </summary>
+        public static ILocalizationModule Localization => _localization ??= Get<ILocalizationModule>();
 
-        Log.Assert(condition: module != null, $"{typeof(T)} is null");
+        private static ILocalizationModule _localization;
 
-        return module;
-    }
-    
-    public static void Shutdown()
-    {
-        Log.Info("GameModule Shutdown");
-            
-        _base = null;
-        _debugger = null;
-        _fsm = null;
-        _procedure = null;
-        _resource = null;
-        _audio = null;
-        _ui = null;
-        _scene = null;
-        _timer = null;
-        _localization = null;
+        /// <summary>
+        /// 获取更新驱动模块。
+        /// </summary>
+        public static IUpdateDriver UpdateDriver => _updateDriver ??= Get<IUpdateDriver>();
+
+        private static IUpdateDriver _updateDriver;
+
+        #endregion
+
+        /// <summary>
+        /// 初始化游戏模块门面，由热更入口在启动流程中调用。
+        /// </summary>
+        /// <param name="rootModule">场景中的 RootModule 实例。</param>
+        public static void Initialize(RootModule rootModule)
+        {
+            Base = rootModule;
+        }
+
+        /// <summary>
+        /// 获取游戏框架模块类。
+        /// </summary>
+        /// <typeparam name="T">游戏框架模块类。</typeparam>
+        /// <returns>游戏框架模块实例。</returns>
+        private static T Get<T>() where T : class
+        {
+            T module = ModuleSystem.GetModule<T>();
+
+            Log.Assert(condition: module != null, $"{typeof(T)} is null");
+
+            return module;
+        }
+
+        /// <summary>
+        /// 释放模块门面缓存。
+        /// </summary>
+        public static void Shutdown()
+        {
+            Log.Info("GameModule Shutdown");
+
+            _base = null;
+            _debugger = null;
+            _fsm = null;
+            _procedure = null;
+            _resource = null;
+            _audio = null;
+            _ui = null;
+            _scene = null;
+            _timer = null;
+            _localization = null;
+            _updateDriver = null;
+        }
     }
 }

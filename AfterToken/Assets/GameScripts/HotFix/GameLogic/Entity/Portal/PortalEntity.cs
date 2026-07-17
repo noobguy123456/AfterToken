@@ -1,6 +1,7 @@
 using TEngine;
 using TMPro;
 using UnityEngine;
+using GameLogic;
 
 namespace GameLogic.Portal
 {
@@ -33,6 +34,16 @@ namespace GameLogic.Portal
 
             EnsureVisualRenderer();
             UpdateVisual();
+        }
+
+        private void OnEnable()
+        {
+            PortalRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            PortalRegistry.Unregister(this);
         }
 
 private void EnsureVisualRenderer()
@@ -86,11 +97,11 @@ private void EnsureVisualRenderer()
             if (_config == null) return "???";
             switch (_config.portalType)
             {
-                case PortalType.ReturnToLobby:
+                case PortalType.RETURN_TO_LOBBY:
                     return "返回大厅";
-                case PortalType.NextLevel:
+                case PortalType.NEXT_LEVEL:
                     return $"关卡 {_config.targetLevelId}";
-                case PortalType.CustomScene:
+                case PortalType.CUSTOM_SCENE:
                     return string.IsNullOrEmpty(_config.targetSceneName)
                         ? "未知场景"
                         : _config.targetSceneName.Replace("BattleScene_", "关卡 ");

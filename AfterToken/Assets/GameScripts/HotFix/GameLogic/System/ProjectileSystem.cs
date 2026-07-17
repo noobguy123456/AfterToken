@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using UnityEngine;
 using TEngine;
 using Cysharp.Threading.Tasks;
@@ -26,6 +26,7 @@ namespace GameLogic
         private readonly List<GameObject> _allProjectiles = new List<GameObject>();
         private readonly Dictionary<int, EnemyEntity> _enemyMap = new Dictionary<int, EnemyEntity>();
         private bool _preloaded;
+        private CancellationTokenSource _initCts;
 
         private void Awake()
         {
@@ -48,6 +49,10 @@ namespace GameLogic
             _eventMgr.Clear();
             Instance = null;
 
+            _initCts?.Cancel();
+            _initCts?.Dispose();
+            _initCts = null;
+
             foreach (var go in _allProjectiles)
             {
                 if (go != null)
@@ -60,16 +65,23 @@ namespace GameLogic
             _projectilePool.Clear();
         }
 
-        private async UniTaskVoid Start()
+        private void Start()
         {
-            await PreloadProjectilesAsync(5);
+            _initCts = new CancellationTokenSource();
+            InitializeAsync(_initCts.Token).Forget();
         }
 
-        private async UniTask PreloadProjectilesAsync(int count)
+        private async UniTask InitializeAsync(CancellationToken cancellationToken)
+        {
+            await PreloadProjectilesAsync(5, cancellationToken);
+        }
+
+        private async UniTask PreloadProjectilesAsync(int count, CancellationToken cancellationToken)
         {
             for (int i = 0; i < count; i++)
             {
-                var go = await TryLoadProjectilePrefab();
+                cancellationToken.ThrowIfCancellationRequested();
+                var go = await TryLoadProjectilePrefab(cancellationToken);
                 if (go != null)
                 {
                     go.SetActive(false);
@@ -81,9 +93,9 @@ namespace GameLogic
             _preloaded = true;
         }
 
-        private async UniTask<GameObject> TryLoadProjectilePrefab()
+        private async UniTask<GameObject> TryLoadProjectilePrefab(CancellationToken cancellationToken)
         {
-            var go = await GameModule.Resource.LoadGameObjectAsync("Projectile_Normal", _projectileRoot);
+            var go = await GameModule.Resource.LoadGameObjectAsync("Projectile_Normal", _projectileRoot, cancellationToken);
             if (go == null)
             {
                 // 占位：动态创建一个简单飞行物
@@ -116,16 +128,7 @@ namespace GameLogic
 
         private void OnEnemySpawned(int enemyId, int configId)
         {
-            // 延迟一帧查找，确保 EnemyEntity 已初始化
-            FindEnemyAndCache(enemyId).Forget();
-        }
-
-        private async UniTaskVoid FindEnemyAndCache(int enemyId)
-        {
-            await UniTask.Yield();
-            var enemy = GameObject.FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None)
-                .FirstOrDefault(e => e.GetInstanceID() == enemyId);
-            if (enemy != null)
+            if (EnemyRegistry.TryGet(enemyId, out var enemy))
             {
                 _enemyMap[enemyId] = enemy;
             }

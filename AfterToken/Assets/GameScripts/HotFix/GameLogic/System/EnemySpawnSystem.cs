@@ -1,3 +1,4 @@
+using System.Threading;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using TEngine;
@@ -27,11 +28,12 @@ namespace GameLogic
 
         private void Start()
         {
-            SpawnEnemiesAsync().Forget();
+            SpawnEnemiesAsync(this.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private async UniTask SpawnEnemiesAsync()
+        private async UniTask SpawnEnemiesAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             Vector2 spawnCenter = PlayerSystem.Instance?.SpawnPosition ?? Vector2.zero;
             var enemyCfg = LoadEnemyConfig(_enemyConfigId);
             if (enemyCfg == null)
@@ -51,11 +53,11 @@ namespace GameLogic
                 float angle = i * (360f / _enemyCount) * Mathf.Deg2Rad;
                 Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _spawnRadius;
 
-                var go = await GameModule.Resource.LoadGameObjectAsync(prefabAddress, transform);
+                var go = await GameModule.Resource.LoadGameObjectAsync(prefabAddress, transform, cancellationToken);
                 if (go == null && prefabAddress != "Enemy")
                 {
                     Log.Warning($"[EnemySpawnSystem] 加载敌人预制体 {prefabAddress} 失败，回退到 Enemy");
-                    go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform);
+                    go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform, cancellationToken);
                 }
                 if (go == null)
                 {
@@ -72,7 +74,7 @@ namespace GameLogic
 
                 GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), _enemyConfigId);
 
-                await UniTask.Yield();
+                await UniTask.Yield(cancellationToken);
             }
         }
 

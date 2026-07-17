@@ -57,6 +57,7 @@ namespace GameLogic
         private void InitializeBattleSystems()
         {
             _battleRoot = new GameObject("BattleRoot");
+            SingletonSystem.Retain(_battleRoot, null);
 
             _battleRoot.AddComponent<InputSystem>();
             _battleRoot.AddComponent<PlayerSystem>();
@@ -136,7 +137,7 @@ namespace GameLogic
 
             if (_battleRoot != null)
             {
-                Object.Destroy(_battleRoot);
+                SingletonSystem.Release(_battleRoot, null);
                 _battleRoot = null;
             }
         }

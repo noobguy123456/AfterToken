@@ -1,26 +1,5 @@
-namespace GameLogic
+﻿namespace GameLogic
 {
-    /// <summary>
-    /// 传送门类型常量。
-    /// </summary>
-    public static class PortalType
-    {
-        public const string ReturnToLobby = "portal_return_lobby";
-        public const string NextLevel = "portal_next_level";
-        public const string CustomScene = "portal_custom_scene";
-    }
-
-    /// <summary>
-    /// 传送门出现条件常量。
-    /// </summary>
-    public static class PortalSpawnCondition
-    {
-        public const string None = "none";
-        public const string AllEnemiesDefeated = "all_enemies_defeated";
-        public const string BossDefeated = "boss_defeated";
-        public const string ItemRequired = "item_required";
-    }
-
     /// <summary>
     /// 传送门配置（对 Luban 生成配置的运行时适配）。
     /// </summary>

@@ -56,6 +56,16 @@ namespace GameLogic
             EnsureRigidbody();
         }
 
+        private void OnEnable()
+        {
+            EnemyRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            EnemyRegistry.Unregister(this);
+        }
+
         /// <summary>
         /// 确保刚体配置与玩家一致：Dynamic、无重力、冻结旋转。
         /// </summary>
@@ -176,6 +186,7 @@ namespace GameLogic
                 GameModule.Fsm.DestroyFsm(_fsm);
                 _fsm = null;
             }
+            EnemyRegistry.Unregister(this);
         }
 
         /// <summary>

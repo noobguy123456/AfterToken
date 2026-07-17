@@ -53,7 +53,8 @@ namespace GameLogic
         [SerializeField] private float _reloadingSpinSpeed = 360f;
 
         private bool _pendingFirstFrameRefresh = true;
-        private int _readyPollFrames = 60;
+        private const int READY_POLL_FRAMES = 60;
+        private int _readyPollFrames = READY_POLL_FRAMES;
         private Image _crosshairImage;
         private CrosshairStyle _currentStyle;
         private CrosshairStyle _preReloadStyle;
@@ -69,7 +70,6 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             InitializeCrosshair();
-            EnsureBarSliders();
             RefreshAll();
         }
 
@@ -413,84 +413,10 @@ namespace GameLogic
 
         #endregion
 
-        /// <summary>
-        /// 确保血条与体力条 Slider 存在；若 Prefab 中未配置则运行时动态创建。
-        /// </summary>
-        private void EnsureBarSliders()
-        {
-            var hudRoot = FindChildComponent<RectTransform>("m_rect_HudRoot");
-            if (hudRoot == null) return;
 
-            if (_sliderHp == null)
-            {
-                _sliderHp = CreateBarSlider(hudRoot, "m_slider_Hp", new Color(0.85f, 0.2f, 0.2f));
-                _sliderHp.transform.SetSiblingIndex(0);
-            }
-
-            if (_sliderStamina == null)
-            {
-                _sliderStamina = CreateBarSlider(hudRoot, "m_slider_Stamina", new Color(0.2f, 0.75f, 0.25f));
-                _sliderStamina.transform.SetSiblingIndex(1);
-            }
-        }
-
-        /// <summary>
-        /// 创建一个简单的水平进度条 Slider。
-        /// </summary>
-        private Slider CreateBarSlider(RectTransform parent, string name, Color fillColor)
-        {
-            var sliderGo = new GameObject(name, typeof(RectTransform));
-            var sliderRect = sliderGo.GetComponent<RectTransform>();
-            sliderRect.SetParent(parent, false);
-            sliderRect.sizeDelta = new Vector2(200f, 16f);
-            sliderRect.anchoredPosition = new Vector2(10f, name == "m_slider_Hp" ? -40f : -60f);
-
-            var slider = sliderGo.AddComponent<Slider>();
-            slider.transition = Selectable.Transition.None;
-            slider.interactable = false;
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            slider.value = 1f;
-            slider.direction = Slider.Direction.LeftToRight;
-
-            // Background
-            var bgGo = new GameObject("Background", typeof(RectTransform));
-            var bgRect = bgGo.GetComponent<RectTransform>();
-            bgRect.SetParent(sliderRect, false);
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.sizeDelta = Vector2.zero;
-            var bgImage = bgGo.AddComponent<Image>();
-            bgImage.color = new Color(0.1f, 0.1f, 0.1f, 0.7f);
-
-            // Fill Area
-            var fillAreaGo = new GameObject("Fill Area", typeof(RectTransform));
-            var fillAreaRect = fillAreaGo.GetComponent<RectTransform>();
-            fillAreaRect.SetParent(sliderRect, false);
-            fillAreaRect.anchorMin = Vector2.zero;
-            fillAreaRect.anchorMax = Vector2.one;
-            fillAreaRect.sizeDelta = Vector2.zero;
-
-            // Fill
-            var fillGo = new GameObject("Fill", typeof(RectTransform));
-            var fillRect = fillGo.GetComponent<RectTransform>();
-            fillRect.SetParent(fillAreaRect, false);
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = Vector2.one;
-            fillRect.sizeDelta = Vector2.zero;
-            var fillImage = fillGo.AddComponent<Image>();
-            fillImage.color = fillColor;
-
-            slider.fillRect = fillRect;
-            slider.targetGraphic = fillImage;
-
-            return slider;
-        }
 
         private void RefreshAll()
         {
-            EnsureTextComponents();
-
             var playerSystem = PlayerSystem.Instance;
             if (playerSystem != null)
             {
@@ -519,18 +445,5 @@ namespace GameLogic
 
         }
 
-        /// <summary>
-        /// 运行时兜底：如果文本/Slider 组件在脚本生成阶段未拿到，按路径再查找一次。
-        /// 用于应对 Domain Reload 后旧实例字段丢失、Prefab 结构变化等边界情况。
-        /// </summary>
-        private void EnsureTextComponents()
-        {
-            if (_textHp == null) _textHp = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Hp");
-            if (_textAmmo == null) _textAmmo = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Ammo");
-            if (_textWeapon == null) _textWeapon = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Weapon");
-            if (_sliderHp == null) _sliderHp = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Hp");
-            if (_sliderStamina == null) _sliderStamina = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Stamina");
-            if (_rectCrosshair == null) _rectCrosshair = FindChildComponent<RectTransform>("m_rect_Crosshair");
-        }
     }
 }

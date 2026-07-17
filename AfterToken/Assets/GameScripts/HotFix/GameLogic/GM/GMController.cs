@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using GameLogic;
 using TEngine;
 using UnityEngine;
 
@@ -247,12 +248,15 @@ namespace GameLogic.GM
 
             _commands["killall"] = args =>
             {
-                var enemies = FindObjectsByType<EnemyEntity>(FindObjectsSortMode.None);
+                var enemies = EnemyRegistry.All;
+                int killCount = 0;
                 foreach (var enemy in enemies)
                 {
+                    if (enemy == null) continue;
                     enemy.TakeDamage(999999, Vector2.zero);
+                    killCount++;
                 }
-                LogToConsole($"杀死 {enemies.Length} 个敌人");
+                LogToConsole($"杀死 {killCount} 个敌人");
             };
 
             _commands["spawn"] = args =>
@@ -260,7 +264,7 @@ namespace GameLogic.GM
                 if (!TryParseInt(args, 0, out var enemyId)) return;
                 var playerPos = PlayerSystem.Instance?.GetPlayerPosition() ?? Vector3.zero;
                 var offset = new Vector3(UnityEngine.Random.Range(-2f, 2f), UnityEngine.Random.Range(-2f, 2f), 0);
-                SpawnEnemyAsync(enemyId, playerPos + offset).Forget();
+                SpawnEnemyAsync(enemyId, playerPos + offset).Forget();;
             };
 
             _commands["time"] = args =>

@@ -1,5 +1,4 @@
 using TMPro;
-using UnityEngine;
 
 namespace GameLogic
 {
@@ -12,31 +11,19 @@ namespace GameLogic
     {
         private TextMeshProUGUI _promptText;
 
+        #region 脚本工具生成的代码
+
+        protected override void ScriptGenerator()
+        {
+            _promptText = FindChildComponent<TextMeshProUGUI>("m_text_Prompt");
+        }
+
+        #endregion
+
         protected override void OnCreate()
         {
             base.OnCreate();
-            BuildUI();
-        }
-
-        private void BuildUI()
-        {
-            var rt = rectTransform;
-            if (rt == null) return;
-
-            var go = new GameObject("PromptText");
-            go.transform.SetParent(rt, false);
-
-            var rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0, -120);
-            rect.sizeDelta = new Vector2(600, 60);
-
-            _promptText = go.AddComponent<TextMeshProUGUI>();
-            _promptText.alignment = TextAlignmentOptions.Center;
-            _promptText.fontSize = 28;
-            _promptText.color = Color.white;
-            _promptText.text = string.Empty;
+            SetPrompt(string.Empty);
         }
 
         /// <summary>

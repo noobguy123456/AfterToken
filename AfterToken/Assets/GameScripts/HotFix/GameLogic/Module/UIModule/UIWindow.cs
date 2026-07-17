@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using TEngine;
 using UnityEngine;
@@ -52,22 +53,22 @@ namespace GameLogic
         /// <summary>
         /// 窗口名称。
         /// </summary>
-        public string WindowName { private set; get; }
+        public string WindowName { get; private set; }
 
         /// <summary>
         /// 窗口层级。
         /// </summary>
-        public int WindowLayer { private set; get; }
+        public int WindowLayer { get; private set; }
 
         /// <summary>
         /// 资源定位地址。
         /// </summary>
-        public string AssetName { private set; get; }
+        public string AssetName { get; private set; }
 
         /// <summary>
         /// 是否为全屏窗口。
         /// </summary>
-        public virtual bool FullScreen { private set; get; } = false;
+        public virtual bool FullScreen { get; private set; } = false;
 
         /// <summary>
         /// 由 UI Prefab 上的 <see cref="UIWindowTimeScale"/> 组件提供的 Inspector 配置值。
@@ -85,7 +86,7 @@ namespace GameLogic
         /// <summary>
         /// 是内部资源无需AB加载。
         /// </summary>
-        public bool FromResources { private set; get; }
+        public bool FromResources { get; private set; }
         
         /// <summary>
         /// 隐藏窗口关闭时间。
@@ -234,11 +235,13 @@ namespace GameLogic
         /// 是否加载完毕。
         /// </summary>
         internal bool IsLoadDone = false;
-        
+
         /// <summary>
         /// UI是否销毁。
         /// </summary>
         internal bool IsDestroyed = false;
+
+        private CancellationTokenSource _loadCts;
         
         /// <summary>
         /// UI是否隐藏标志位。
@@ -324,27 +327,39 @@ namespace GameLogic
             }
         }
 
-        internal async UniTaskVoid InternalLoad(string location, Action<UIWindow> prepareCallback, bool isAsync, System.Object[] userDatas)
+        internal async UniTask InternalLoadAsync(string location, Action<UIWindow> prepareCallback, System.Object[] userDatas)
         {
             _prepareCallback = prepareCallback;
             this._userDatas = userDatas;
-            if (!FromResources)
+            _loadCts ??= new CancellationTokenSource();
+            var token = _loadCts.Token;
+            try
             {
-                if (isAsync)
+                GameObject uiInstance;
+                if (!FromResources)
                 {
-                    var uiInstance = await UIModule.Resource.LoadGameObjectAsync(location, parent: UIModule.UIRoot);
-                    Handle_Completed(uiInstance);
+                    uiInstance = await UIModule.Resource.LoadGameObjectAsync(
+                        location,
+                        parent: UIModule.UIRoot,
+                        cancellationToken: token);
                 }
                 else
                 {
-                    var uiInstance = UIModule.Resource.LoadGameObject(location, parent: UIModule.UIRoot);
-                    Handle_Completed(uiInstance);
+                    var request = Resources.LoadAsync<GameObject>(location);
+                    await request.ToUniTask(cancellationToken: token);
+                    uiInstance = Object.Instantiate(request.asset as GameObject, UIModule.UIRoot);
                 }
+
+                Handle_Completed(uiInstance);
             }
-            else
+            catch (OperationCanceledException)
             {
-                GameObject panel = Object.Instantiate(Resources.Load<GameObject>(location), UIModule.UIRoot);
-                Handle_Completed(panel);
+                // 窗口在加载过程中被销毁，静默处理。
+            }
+            finally
+            {
+                _loadCts?.Dispose();
+                _loadCts = null;
             }
         }
 
@@ -458,6 +473,10 @@ namespace GameLogic
 
             // 注销回调函数
             _prepareCallback = null;
+
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = null;
 
             OnDestroy();
 
@@ -591,7 +610,7 @@ namespace GameLogic
             IsHide = false;
             if (HideTimerId > 0)
             {
-                ModuleSystem.GetModule<ITimerModule>().RemoveTimer(HideTimerId);
+                GameModule.Timer.RemoveTimer(HideTimerId);
                 HideTimerId = 0;
             }
         }

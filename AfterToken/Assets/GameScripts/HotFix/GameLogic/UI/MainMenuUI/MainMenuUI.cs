@@ -133,7 +133,7 @@ namespace GameLogic
             if (_settingsButton != null)
             {
                 _settingsButton.onClick.RemoveAllListeners();
-                _settingsButton.onClick.AddListener(() => GameModule.UI.ShowUI<SettingsUI>());
+                _settingsButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<SettingsUI>());
             }
         }
     }

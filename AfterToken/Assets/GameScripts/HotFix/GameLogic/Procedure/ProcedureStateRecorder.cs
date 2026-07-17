@@ -8,14 +8,14 @@ namespace GameLogic
     /// </summary>
     public static class ProcedureStateRecorder
     {
-        private const string LastProcedureKey = "ProcedureStateRecorder.LastProcedure";
+        private const string LAST_PROCEDURE_KEY = "ProcedureStateRecorder.LastProcedure";
 
         /// <summary>
         /// 记录当前流程名称。
         /// </summary>
         public static void Record(string procedureName)
         {
-            PlayerPrefs.SetString(LastProcedureKey, procedureName);
+            PlayerPrefs.SetString(LAST_PROCEDURE_KEY, procedureName);
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace GameLogic
         /// </summary>
         public static string GetLastProcedure()
         {
-            return PlayerPrefs.GetString(LastProcedureKey, null);
+            return PlayerPrefs.GetString(LAST_PROCEDURE_KEY, null);
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace GameLogic
         /// </summary>
         public static void Clear()
         {
-            PlayerPrefs.DeleteKey(LastProcedureKey);
+            PlayerPrefs.DeleteKey(LAST_PROCEDURE_KEY);
         }
     }
 }

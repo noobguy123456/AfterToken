@@ -78,12 +78,8 @@ namespace GameLogic
                     GameObject go = SingletonSystem.GetGameObject(instName);
                     if (go == null)
                     {
-                        go = GameObject.Find($"/{instName}");
-                        if (go == null)
-                        {
-                            go = new GameObject(instName);
-                            go.transform.position = Vector3.zero;
-                        }
+                        go = new GameObject(instName);
+                        go.transform.position = Vector3.zero;
                     }
 
                     if (go != null)

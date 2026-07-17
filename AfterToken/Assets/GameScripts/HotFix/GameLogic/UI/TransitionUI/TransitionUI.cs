@@ -6,7 +6,6 @@ namespace GameLogic
 {
     /// <summary>
     /// 全屏转场遮罩 UI。
-    /// 默认灰色渐变，后续替换为正式转场资源。
     /// </summary>
     [Window(UILayer.System, location: "TransitionUI", fullScreen: true)]
     public class TransitionUI : UIWindow
@@ -14,34 +13,20 @@ namespace GameLogic
         private CanvasGroup _canvasGroup;
         private Image _overlayImage;
 
+        #region 脚本工具生成的代码
+
+        protected override void ScriptGenerator()
+        {
+            _overlayImage = FindChildComponent<Image>("m_img_Overlay");
+            _canvasGroup = FindChildComponent<CanvasGroup>("m_img_Overlay");
+        }
+
+        #endregion
+
         protected override void OnCreate()
         {
             base.OnCreate();
             FixFullScreenCanvas();
-            BuildUI();
-        }
-
-        private void BuildUI()
-        {
-            var rt = rectTransform;
-            if (rt == null) return;
-
-            var go = new GameObject("Overlay");
-            go.transform.SetParent(rt, false);
-
-            var rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            _overlayImage = go.AddComponent<Image>();
-            _overlayImage.color = new Color(0.15f, 0.15f, 0.15f, 0f);
-            _overlayImage.raycastTarget = true;
-
-            _canvasGroup = go.AddComponent<CanvasGroup>();
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.blocksRaycasts = false;
         }
 
         /// <summary>

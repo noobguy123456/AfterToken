@@ -86,19 +86,19 @@ namespace GameLogic
         /// 窗口的实例资源对象。
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public virtual GameObject gameObject { protected set; get; }
+        public virtual GameObject gameObject { get; protected set; }
 
         /// <summary>
         /// 窗口位置组件。
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public virtual Transform transform { protected set; get; }
+        public virtual Transform transform { get; protected set; }
 
         /// <summary>
         /// 窗口矩阵位置组件。
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public virtual RectTransform rectTransform { protected set; get; }
+        public virtual RectTransform rectTransform { get; protected set; }
 
         /// <summary>
         /// UI类型。
@@ -108,7 +108,7 @@ namespace GameLogic
         /// <summary>
         /// 资源是否准备完毕。
         /// </summary>
-        public bool IsPrepare { protected set; get; }
+        public bool IsPrepare { get; protected set; }
 
         /// <summary>
         /// UI子组件列表。
@@ -394,13 +394,9 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 创建UIWidget通过资源定位地址。
+        /// 创建UIWidget通过资源定位地址（已废弃，请使用 <see cref="CreateWidgetByPathAsync{T}"/>）。
         /// </summary>
-        /// <param name="parentTrans">资源父节点。</param>
-        /// <param name="assetLocation">资源定位地址。</param>
-        /// <param name="visible">是否可见。</param>
-        /// <typeparam name="T">UIWidget。</typeparam>
-        /// <returns>UIWidget实例。</returns>
+        [Obsolete("请使用 CreateWidgetByPathAsync<T>")]
         public T CreateWidgetByPath<T>(Transform parentTrans, string assetLocation, bool visible = true) where T : UIWidget, new()
         {
             GameObject goInst = UIModule.Resource.LoadGameObject(assetLocation, parent: parentTrans);

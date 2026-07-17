@@ -74,6 +74,11 @@ namespace GameLogic
         public float DamageIndicatorAngle => _damageIndicatorAngle;
         public bool IsDamageIndicatorActive => _damageIndicatorTimer < _damageIndicatorDuration;
 
+        /// <summary>
+        /// 当前主相机（供其他系统查询，替代 Camera.main）。
+        /// </summary>
+        public Camera MainCamera => _mainCamera;
+
         private void Awake()
         {
             Instance = this;

@@ -29,10 +29,10 @@ namespace GameLogic
 
         private void HideLauncherUI()
         {
-            var loadUI = GameObject.Find("LoadUpdateUI");
+            var loadUI = SingletonSystem.GetGameObject("LoadUpdateUI");
             if (loadUI != null) Object.DestroyImmediate(loadUI);
 
-            var tipsUI = GameObject.Find("LoadTipsUI");
+            var tipsUI = SingletonSystem.GetGameObject("LoadTipsUI");
             if (tipsUI != null) Object.DestroyImmediate(tipsUI);
         }
     }

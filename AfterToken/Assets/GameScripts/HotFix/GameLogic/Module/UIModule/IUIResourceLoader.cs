@@ -37,7 +37,7 @@ namespace GameLogic
     /// </summary>
     public class UIResourceLoader : IUIResourceLoader
     {
-        private readonly IResourceModule _resourceLoaderImp = ModuleSystem.GetModule<IResourceModule>();
+        private readonly IResourceModule _resourceLoaderImp = GameModule.Resource;
 
         /// <summary>
         /// 同步加载游戏物体并实例化。

@@ -21,7 +21,7 @@ namespace GameLogic
         [Header("瞄准设置")]
         [SerializeField] private AimMode _aimMode = AimMode.Hold;
 
-        public readonly WeaponInstance[] _slots = new WeaponInstance[MAX_WEAPON_SLOTS];
+        public WeaponInstance[] Slots { get; private set; }
         private int _currentSlot = 0;
         private IWeaponOwner _owner;
         private int[] _defaultWeaponIds;
@@ -35,6 +35,7 @@ namespace GameLogic
         private void Awake()
         {
             Instance = this;
+            Slots = new WeaponInstance[MAX_WEAPON_SLOTS];
 
             _eventMgr.AddEvent<Vector2>(IBattleInputEvent_Event.OnMoveInput, OnMoveInput);
             _eventMgr.AddEvent(IBattleInputEvent_Event.OnFirePressed, OnFirePressed);
@@ -53,8 +54,8 @@ namespace GameLogic
 
             for (int i = 0; i < MAX_WEAPON_SLOTS; i++)
             {
-                _slots[i]?.Dispose();
-                _slots[i] = null;
+                Slots[i]?.Dispose();
+                Slots[i] = null;
             }
         }
 
@@ -108,7 +109,7 @@ namespace GameLogic
             }
         }
 
-        public WeaponInstance CurrentWeapon => _slots[_currentSlot];
+        public WeaponInstance CurrentWeapon => Slots[_currentSlot];
         public int CurrentSlotIndex => _currentSlot;
         public bool IsAiming => _isAiming;
         public bool IsFiring => _isFiring;
@@ -120,7 +121,7 @@ namespace GameLogic
         public WeaponInstance GetWeaponInSlot(int slot)
         {
             if (slot < 0 || slot >= MAX_WEAPON_SLOTS) return null;
-            return _slots[slot];
+            return Slots[slot];
         }
 
         /// <summary>
@@ -145,8 +146,8 @@ namespace GameLogic
                 return;
             }
 
-            _slots[slot]?.Dispose();
-            _slots[slot] = new WeaponInstance(config);
+            Slots[slot]?.Dispose();
+            Slots[slot] = new WeaponInstance(config);
             GameEvent.Get<IWeaponEvent>().OnWeaponEquipped(_owner?.OwnerId ?? 0, slot, weaponConfigId);
         }
 
