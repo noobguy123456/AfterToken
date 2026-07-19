@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
@@ -156,6 +156,8 @@ namespace GameLogic
             }
 
             GameModule.UI.CloseAll();
+            // 兜底：任何流程切换都从干净的时间状态开始，防止暂停请求（死亡/设置/轮盘）跨流程泄漏。
+            GamePauseManager.Reset();
 
             try
             {

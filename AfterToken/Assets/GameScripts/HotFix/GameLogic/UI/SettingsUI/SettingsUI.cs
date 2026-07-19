@@ -25,9 +25,10 @@ namespace GameLogic
 
         protected override void ScriptGenerator()
         {
-            _sensitivitySlider = FindChildComponent<Slider>("m_slider_Sensitivity");
-            _sensitivityValueText = FindChildComponent<TextMeshProUGUI>("m_text_SensitivityValue");
-            _closeButton = FindChildComponent<Button>("m_btn_Close");
+            // FindChildComponent 基于 transform.Find（不递归），控件均位于 m_rect_ContentRoot 下，必须写完整路径。
+            _sensitivitySlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_slider_Sensitivity");
+            _sensitivityValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_text_SensitivityValue");
+            _closeButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_Close");
         }
 
         #endregion

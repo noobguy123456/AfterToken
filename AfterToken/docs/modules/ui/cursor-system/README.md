@@ -82,15 +82,16 @@ Windows 下从菜单/设置等 UI 返回战斗时，即使代码设置了 `Curso
 
 ### 解决方案
 
-`CursorManager` 采用两层保障：
+`CursorManager` 采用三层保障：
 
-1. **延迟确认**：在 `ApplyCursorState` 隐藏分支中，设置隐藏/锁定后延迟一帧再次强制设置 `Cursor.visible = false` 与 `Cursor.lockState = Locked`，给 Unity/Windows 一个状态同步的机会。
+1. **逐帧重试**：在 `ApplyCursorState` 隐藏分支中，设置隐藏/锁定后约 0.5 秒内逐帧无条件重设 `Cursor.visible = false` 与 `Cursor.lockState = Locked`（`Cursor.visible`/`lockState` 读回的是 Unity 侧标志而非 OS 真实状态，无法据此判断生效与否，只能多次重设给 Unity/Windows 状态同步的机会）。期间任何新的光标显示请求会取消重试。
 2. **焦点补偿**：订阅 `Application.focusChanged` 事件，当窗口重新获得焦点且当前应处于战斗状态（`Locked` 模式 + 无 UI 请求显示光标）时，再次调用 `ApplyCursorState()`。
+3. **取消令牌**：每次 `ApplyCursorState` 取消上一次未完成的应用，避免连续调用导致状态竞争。
 
 ### 代码要点
 
 ```csharp
-private async void ApplyCursorState()
+private async UniTaskVoid ApplyCursorState()
 {
     // ... 取消上一次延迟应用 ...
 
@@ -109,15 +110,22 @@ private async void ApplyCursorState()
             Cursor.lockState = CursorLockMode.Locked;
         }
 
-        // 延迟一帧再次确认
-        try { await UniTask.Yield(ct); }
-        catch (OperationCanceledException) { return; }
-
-        if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
+        // 约 0.5 秒逐帧重试（读回不可靠，只能无条件重设）
+        try
         {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
+            for (int i = 0; i < 30; i++)
+            {
+                await UniTask.Yield(ct);
+                if (_showRefCount != 0) return;  // 已有新的显示请求
+
+                Cursor.visible = false;
+                if (_currentMode == GameCursorLockMode.Locked)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                }
+            }
         }
+        catch (OperationCanceledException) { return; }
     }
 }
 ```

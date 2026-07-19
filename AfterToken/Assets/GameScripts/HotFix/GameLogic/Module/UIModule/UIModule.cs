@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -262,7 +262,7 @@ namespace GameLogic
         /// <returns>打开窗口操作句柄。</returns>
         public void ShowUIAsync<T>(params System.Object[] userDatas) where T : UIWindow , new()
         {
-            ShowUIImp<T>(true, userDatas);
+            ShowUIImp<T>(userDatas);
         }
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace GameLogic
         /// <returns>打开窗口操作句柄。</returns>
         public void ShowUIAsync(Type type, params System.Object[] userDatas)
         {
-            ShowUIImp(type, true, userDatas);
+            ShowUIImp(type, userDatas);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using TEngine;
@@ -437,12 +437,13 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 通过UI类型来创建widget。
+        /// 通过UI类型来创建widget（已废弃，请使用 <see cref="CreateWidgetByTypeAsync{T}"/>）。
         /// </summary>
         /// <param name="parentTrans">资源父节点。</param>
         /// <param name="visible">是否可见。</param>
         /// <typeparam name="T">UIWidget。</typeparam>
         /// <returns>UIWidget实例。</returns>
+        [Obsolete("请使用 CreateWidgetByTypeAsync<T>")]
         public T CreateWidgetByType<T>(Transform parentTrans, bool visible = true) where T : UIWidget, new()
         {
             return CreateWidgetByPath<T>(parentTrans, typeof(T).Name, visible);
@@ -461,7 +462,7 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 调整图标数量。
+        /// 调整图标数量（已废弃，请使用 <see cref="AsyncAdjustIconNum{T}"/>）。
         /// </summary>
         /// <remarks>常用于Icon创建。</remarks>
         /// <param name="listIcon">存放Icon的列表。</param>
@@ -470,6 +471,7 @@ namespace GameLogic
         /// <param name="prefab">资产副本。</param>
         /// <param name="assetPath">资产地址。</param>
         /// <typeparam name="T">图标类型。</typeparam>
+        [Obsolete("请使用 AsyncAdjustIconNum<T>")]
         public void AdjustIconNum<T>(List<T> listIcon, int number, Transform parentTrans, GameObject prefab = null, string assetPath = "")
             where T : UIWidget, new()
         {

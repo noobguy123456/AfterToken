@@ -36,6 +36,16 @@ namespace GameLogic
             Apply();
         }
 
+        /// <summary>
+        /// 清空所有时间缩放请求并恢复正常时间。
+        /// 仅在流程切换等需要强制恢复的场景调用（兜底防泄漏），日常使用请保持 Push/Pop 成对。
+        /// </summary>
+        public static void Reset()
+        {
+            _timeScaleRequests.Clear();
+            Time.timeScale = 1f;
+        }
+
         private static void Apply()
         {
             if (_timeScaleRequests.Count == 0)

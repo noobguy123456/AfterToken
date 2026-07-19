@@ -79,7 +79,7 @@ namespace GameLogic
         {
             _defaultCursorTexture = texture;
             _defaultHotSpot = hotSpot;
-            ApplyCursorState();
+            ApplyCursorState().Forget();
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace GameLogic
         {
             _currentCursorTexture = texture;
             _currentHotSpot = hotSpot;
-            ApplyCursorState();
+            ApplyCursorState().Forget();
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace GameLogic
             _showRefCount++;
             if (_showRefCount == 1)
             {
-                ApplyCursorState();
+                ApplyCursorState().Forget();
             }
         }
 
@@ -119,7 +119,7 @@ namespace GameLogic
 
             if (_showRefCount == 0)
             {
-                ApplyCursorState();
+                ApplyCursorState().Forget();
             }
         }
 
@@ -130,7 +130,7 @@ namespace GameLogic
         public void ForceHideCursor()
         {
             _showRefCount = 0;
-            ApplyCursorState();
+            ApplyCursorState().Forget();
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace GameLogic
         public void ForceShowCursor()
         {
             _showRefCount = 1;
-            ApplyCursorState();
+            ApplyCursorState().Forget();
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace GameLogic
         public void SetLockMode(GameCursorLockMode mode)
         {
             _currentMode = mode;
-            ApplyCursorState();
+            ApplyCursorState().Forget();
         }
 
         /// <summary>
@@ -217,22 +217,32 @@ namespace GameLogic
                     // Free 模式下保持当前 lockState（可能是 Locked），等显示时再由 visible 分支解锁并延迟一帧，
                     // 避免 Windows 在不可见时提前解锁导致显示光标时仍锁在中心。
 
-                    // 延迟一帧再次确认，解决 Windows 下从 UI 返回战斗时光标未立即隐藏/锁定的问题。
-                    // 当游戏窗口尚未获得焦点或鼠标不在窗口内时，首次设置可能不生效；
-                    // 窗口重新激活后会由 Application.focusChanged 再次触发 ApplyCursorState。
+                    // Windows 下隐藏/锁定可能不会立即生效（窗口未捕获鼠标时设置会被忽略），
+                    // 仅延迟一帧重试不足以覆盖该场景（已知问题：从设置/菜单返回战斗后光标仍可见）。
+                    // Cursor.visible / lockState 读回的是 Unity 侧标志而非 OS 真实状态，无法据此判断是否生效，
+                    // 因此在接下来约 0.5 秒内逐帧无条件重设，期间任何新的光标请求都会取消本次重试。
                     try
                     {
-                        await UniTask.Yield(ct);
+                        for (int i = 0; i < 30; i++)
+                        {
+                            await UniTask.Yield(ct);
+
+                            if (_showRefCount != 0)
+                            {
+                                // 已有新的显示请求，交由最新一次 ApplyCursorState 处理。
+                                return;
+                            }
+
+                            Cursor.visible = false;
+                            if (_currentMode == GameCursorLockMode.Locked)
+                            {
+                                Cursor.lockState = CursorLockMode.Locked;
+                            }
+                        }
                     }
                     catch (OperationCanceledException)
                     {
                         return;
-                    }
-
-                    if (_showRefCount == 0 && _currentMode == GameCursorLockMode.Locked)
-                    {
-                        Cursor.visible = false;
-                        Cursor.lockState = CursorLockMode.Locked;
                     }
                 }
 

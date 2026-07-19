@@ -8,8 +8,9 @@ namespace GameLogic
     /// <summary>
     /// 命中反馈与受击方向指示 UI。
     /// 由 HitFeedbackSystem 驱动，负责显示命中标记和 8 方向受击指示。
+    /// 属于战斗 HUD 层级（UILayer.UI），必须低于设置/死亡等弹窗（UILayer.Top），避免遮挡交互界面。
     /// </summary>
-    [Window(UILayer.System, false, "HitFeedbackUI", false)]
+    [Window(UILayer.UI, location: "HitFeedbackUI", fullScreen: false)]
     public class HitFeedbackUI : UIWindow
     {
         #region 脚本工具生成的代码

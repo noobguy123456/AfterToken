@@ -41,6 +41,13 @@
 - 交互键：`E`
 - 已扩展 `InputSystem` 与 `IBattleInputEvent.OnInteractPressed()`。
 
+## 死亡与传送的判定
+
+- **死亡优先（第一道闸）**：`PortalSystem.OnInteractPressed` 在响应交互前检查 `PlayerSystem.Instance?.GetPlayerEntity()?.IsDead`，玩家已死亡时直接忽略交互——死亡后必须走死亡确认（Restart / Back to Lobby），不允许通过传送门绕过。
+- **转场中止（第二道闸）**：`PortalSystem.ExecuteTransition` 入口同样先查死亡；`PortalTransitionMgr.PlayAsync` 在转场渐暗完成后、执行场景切换前再次判定 `IsPlayerDead`——若玩家在转场期间死亡，则渐出、关闭 TransitionUI 并 `PortalPlayerState.Clear()` 清理已保存状态，放弃本次传送（覆盖「活着按 E、转场途中死亡」的竞态）。
+- **时间状态兜底**：`GameApp.ChangeProcedure<T>()` 在每次流程切换时调用 `GamePauseManager.Reset()`，清空全部 `timeScale` 请求并恢复 `Time.timeScale = 1`，防止死亡暂停（`PushTimeScale(0)`）等状态跨流程泄漏。
+- 背景：曾出现「死亡瞬间按 E 触发传送 → 新场景 timeScale=0 冻结、无法操作」的 bug（2026-07-19 修复）；随后补「死亡后仍能触发传送」的判定漏洞（同日修复）。
+
 ## 快速使用
 
 1. 在 `portal.xlsx` 中新增一行配置。

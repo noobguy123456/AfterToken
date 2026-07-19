@@ -126,30 +126,54 @@ namespace GameLogic.Portal
         {
             if (portal?.Config == null) return;
 
+            // 死亡判定第二道闸：已死亡的玩家不允许传送（第一道闸在 OnInteractPressed）。
+            if (IsPlayerDead())
+            {
+                return;
+            }
+
             var config = portal.Config;
             if (config.keepPlayerState)
             {
                 PortalPlayerState.Save(PlayerSystem.Instance, WeaponSystem.Instance);
             }
 
-            PortalTransitionMgr.PlayAsync(config.transitionType, config.transitionDuration, () =>
-            {
-                switch (config.portalType)
+            PortalTransitionMgr.PlayAsync(
+                config.transitionType,
+                config.transitionDuration,
+                IsPlayerDead,
+                () =>
                 {
-                    case PortalType.RETURN_TO_LOBBY:
-                        GameApp.ChangeProcedure<ProcedureLobby>();
-                        break;
-                    case PortalType.NEXT_LEVEL:
-                        SwitchToNextLevel(config.targetLevelId);
-                        break;
-                    case PortalType.CUSTOM_SCENE:
-                        SwitchToCustomScene(config.targetSceneName);
-                        break;
-                    default:
-                        Log.Error($"[PortalSystem] Unknown portal type: {config.portalType}");
-                        break;
-                }
-            }).Forget();;
+                    // 转场期间玩家死亡，传送中止：清理已保存的玩家状态，避免污染死亡确认后的重开。
+                    PortalPlayerState.Clear();
+                },
+                () =>
+                {
+                    switch (config.portalType)
+                    {
+                        case PortalType.RETURN_TO_LOBBY:
+                            GameApp.ChangeProcedure<ProcedureLobby>();
+                            break;
+                        case PortalType.NEXT_LEVEL:
+                            SwitchToNextLevel(config.targetLevelId);
+                            break;
+                        case PortalType.CUSTOM_SCENE:
+                            SwitchToCustomScene(config.targetSceneName);
+                            break;
+                        default:
+                            Log.Error($"[PortalSystem] Unknown portal type: {config.portalType}");
+                            break;
+                    }
+                }).Forget();;
+        }
+
+        /// <summary>
+        /// 玩家是否已死亡（玩家实体不存在时视为不可传送）。
+        /// </summary>
+        private static bool IsPlayerDead()
+        {
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            return player == null || player.IsDead;
         }
 
         private void OnEnemySpawned(int enemyId, int configId)
@@ -166,6 +190,14 @@ namespace GameLogic.Portal
 
         private void OnInteractPressed()
         {
+            // 死亡判定优先：玩家已死亡时必须走死亡确认（Restart / Back to Lobby），
+            // 禁止通过传送门绕过，否则会带着 timeScale=0 的暂停状态进入下一场景。
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            if (player == null || player.IsDead)
+            {
+                return;
+            }
+
             if (_currentPortal != null && _currentPortal.IsActivated)
             {
                 _currentPortal.TryInteract();

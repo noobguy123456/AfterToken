@@ -60,7 +60,7 @@ docs/
 | `LoadingUI` | `Assets/AssetRaw/UI/LoadingUI/LoadingUI.prefab` | `UILayer.System` |
 | `BattleMainUI` | `Assets/AssetRaw/UI/BattleMainUI/BattleMainUI.prefab` | HUD |
 | `DamageNumberUI` | `Assets/AssetRaw/UI/DamageNumberUI/DamageNumberUI.prefab` | 伤害飘字 |
-| `HitFeedbackUI` | `Assets/AssetRaw/UI/HitFeedbackUI/HitFeedbackUI.prefab` | `UILayer.System` |
+| `HitFeedbackUI` | `Assets/AssetRaw/UI/HitFeedbackUI/HitFeedbackUI.prefab` | 战斗 HUD 层（`UILayer.UI`），不得高于弹窗 |
 | `WeaponWheelUI` | `Assets/AssetRaw/UI/WeaponWheelUI/WeaponWheelUI.prefab` | 武器轮盘 |
 | `SniperScopeUI` | `Assets/AssetRaw/UI/SniperScopeUI/SniperScopeUI.prefab` | 狙击镜 |
 | `TransitionUI` | `Assets/AssetRaw/UI/TransitionUI/TransitionUI.prefab` | 全屏转场 |
