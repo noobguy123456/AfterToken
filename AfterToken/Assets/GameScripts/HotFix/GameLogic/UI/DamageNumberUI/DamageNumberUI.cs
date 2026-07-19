@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using TEngine;
 using UnityEngine;
@@ -32,11 +32,27 @@ namespace GameLogic
         private readonly Queue<TextMeshProUGUI> _pool = new Queue<TextMeshProUGUI>();
         private readonly List<ActiveNumber> _activeNumbers = new List<ActiveNumber>();
 
-        private class ActiveNumber
+        // struct 避免每个飘字产生一次堆分配；列表元素修改后需写回（见 UpdateNumbers）。
+        private struct ActiveNumber
         {
             public TextMeshProUGUI Text;
             public float Timer;
             public Vector2 StartPos;
+        }
+
+        private const int MAX_CACHED_DAMAGE = 999;
+        private static readonly string[] _damageTextCache = new string[MAX_CACHED_DAMAGE + 1];
+
+        /// <summary>
+        /// 获取伤害数值文本。常见数值走缓存，避免每次命中都产生字符串分配。
+        /// </summary>
+        private static string GetDamageText(int damage)
+        {
+            if ((uint)damage <= MAX_CACHED_DAMAGE)
+            {
+                return _damageTextCache[damage] ??= damage.ToString();
+            }
+            return damage.ToString();
         }
 
         protected override void OnCreate()
@@ -89,7 +105,7 @@ namespace GameLogic
             }
 
             txt.gameObject.SetActive(true);
-            txt.text = damage.ToString();
+            txt.text = GetDamageText(damage);
             txt.color = isCritical ? new Color(1, 0.5f, 0, 1) : Color.white;
             txt.fontSize = isCritical ? 32 : 24;
 
@@ -131,6 +147,9 @@ namespace GameLogic
                 var c = item.Text.color;
                 c.a = 1 - t;
                 item.Text.color = c;
+
+                // ActiveNumber 为 struct，修改 Timer 后必须写回列表，否则飘字永不结束。
+                _activeNumbers[i] = item;
             }
         }
 

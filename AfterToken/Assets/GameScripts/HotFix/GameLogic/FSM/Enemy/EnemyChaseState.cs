@@ -23,6 +23,18 @@ namespace GameLogic
         private const float SEPARATION_RADIUS = 0.6f;
         private const float SEPARATION_WEIGHT = 0.6f;
 
+        // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的 params 数组与结果数组分配。
+        private static readonly int EnemyMask = LayerMask.GetMask("Enemy");
+        private static readonly int ObstacleMask = LayerMask.GetMask("Obstacle");
+        private static readonly Collider2D[] _separationResults = new Collider2D[16];
+        // Unity 6 新物理查询 API：ContactFilter2D 替代废弃的 OverlapCircleNonAlloc；useTriggers 与原默认行为一致。
+        private static readonly ContactFilter2D SeparationFilter = new ContactFilter2D
+        {
+            useTriggers = true,
+            useLayerMask = true,
+            layerMask = EnemyMask,
+        };
+
         protected override void OnEnterState(IFsm<EnemyEntity> fsm)
         {
             _currentPath = null;
@@ -127,14 +139,17 @@ namespace GameLogic
         /// </summary>
         private Vector2 ApplySeparation(Vector2 desiredDirection)
         {
-            var neighbors = Physics2D.OverlapCircleAll(Owner.transform.position, SEPARATION_RADIUS, LayerMask.GetMask("Enemy"));
-            if (neighbors.Length <= 1) return desiredDirection;
+            // OverlapCircle（Unity 6 非分配版 API）+ 静态缓冲：结果即刻消费，不产生每帧数组分配；
+            // 缓冲 16 个对于 0.6m 分离半径足够（超出部分仅影响分离向量的精度，不影响功能）。
+            int hitCount = Physics2D.OverlapCircle(Owner.transform.position, SEPARATION_RADIUS, SeparationFilter, _separationResults);
+            if (hitCount <= 1) return desiredDirection;
 
             Vector2 separation = Vector2.zero;
             int count = 0;
             Vector2 ownerPos = Owner.transform.position;
-            foreach (var col in neighbors)
+            for (int i = 0; i < hitCount; i++)
             {
+                var col = _separationResults[i];
                 if (col == null || col.gameObject == Owner.gameObject) continue;
                 Vector2 away = ownerPos - (Vector2)col.transform.position;
                 float dist = away.magnitude;
@@ -152,7 +167,7 @@ namespace GameLogic
 
         private bool HasLineOfSight(Vector2 from, Vector2 to)
         {
-            return Physics2D.Linecast(from, to, LayerMask.GetMask("Obstacle")).collider == null;
+            return Physics2D.Linecast(from, to, ObstacleMask).collider == null;
         }
     }
 }

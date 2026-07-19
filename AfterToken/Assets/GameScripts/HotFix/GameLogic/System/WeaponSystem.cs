@@ -289,6 +289,20 @@ namespace GameLogic
         {
             var weapon = CurrentWeapon;
             if (weapon == null) return;
+
+            // 弹匣为空时按开火键自动换弹。
+            // Reload 内部已去重（换弹中/满弹匣直接返回），连发模式按住不放不会重复触发；
+            // 单发模式的本次开火意图在此消费，避免换弹完成后意外击发一发。
+            if (weapon.CurrentAmmo <= 0)
+            {
+                if (weapon.Config.fireMode != FireMode.Auto)
+                {
+                    _firePending = false;
+                }
+                weapon.Reload(_owner?.OwnerId ?? 0);
+                return;
+            }
+
             if (!weapon.CanFire(Time.time)) return;
 
             if (_owner == null) return;

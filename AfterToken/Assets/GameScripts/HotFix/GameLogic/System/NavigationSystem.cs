@@ -19,6 +19,7 @@ namespace GameLogic.Navigation
         private INavigationGridBuilder _gridBuilder;
 
         private readonly Dictionary<int, PathCacheEntry> _pathCache = new();
+        private readonly List<int> _keysToRemove = new List<int>();
         private int _frameCounter;
 
         private void Awake()
@@ -116,15 +117,15 @@ namespace GameLogic.Navigation
             if (_frameCounter % 60 != 0) return;
 
             float now = Time.time;
-            var keysToRemove = new List<int>();
+            _keysToRemove.Clear();
             foreach (var pair in _pathCache)
             {
                 if (now - pair.Value.Timestamp > 2f)
                 {
-                    keysToRemove.Add(pair.Key);
+                    _keysToRemove.Add(pair.Key);
                 }
             }
-            foreach (var key in keysToRemove)
+            foreach (var key in _keysToRemove)
             {
                 _pathCache.Remove(key);
             }

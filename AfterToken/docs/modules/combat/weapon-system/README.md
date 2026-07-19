@@ -19,7 +19,7 @@
 - 武器配置目前为硬编码，后续替换为 Luban `TbWeapon`。
 - 开火后根据弹道类型分发到 `BallisticSystem`。
 - 辅助瞄准支持普通瞄准和火箭锁定两种模式。
-- **自动换弹**：`WeaponInstance.Fire()` 在弹匣打空后自动调用 `Reload()`。
+- **自动换弹**：`WeaponInstance.Fire()` 在弹匣打空后自动调用 `Reload()`；`WeaponSystem.TryFire()` 在弹匣为空时按开火键同样自动触发 `Reload()`（单发模式的本次开火意图被消费，换弹完成后不会意外击发；连发模式按住开火则换弹完成后自动继续射击）。
 - **换弹状态事件**：`IWeaponEvent.OnReloadStateChanged(ownerId, isReloading)` 在换弹开始/完成时广播，供 UI 展示换弹准星等反馈。
 
 ## 换弹中断

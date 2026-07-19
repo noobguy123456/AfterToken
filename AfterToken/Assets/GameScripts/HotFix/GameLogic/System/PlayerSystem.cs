@@ -176,12 +176,16 @@ namespace GameLogic
             // 更新黑板意图（由 Driver 根据输入和当前状态计算）
             PlayerStateMachineDriver.Instance.UpdateContext(_playerEntity.Context);
 
-            // 体力恢复：未死亡且未闪避时恢复
+            // 体力恢复：未死亡且未闪避时恢复；仅在数值实际变化时派发事件，避免恢复期间每帧无效派发。
             if (!_playerEntity.IsDead && !_playerEntity.IsDodging && _currentStamina < _maxStamina)
             {
-                _currentStamina += Mathf.RoundToInt(_staminaRecoveryRate * Time.deltaTime);
-                if (_currentStamina > _maxStamina) _currentStamina = _maxStamina;
-                GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+                int newStamina = _currentStamina + Mathf.RoundToInt(_staminaRecoveryRate * Time.deltaTime);
+                if (newStamina > _maxStamina) newStamina = _maxStamina;
+                if (newStamina != _currentStamina)
+                {
+                    _currentStamina = newStamina;
+                    GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
+                }
             }
 
             // 同步能否闪避到黑板
