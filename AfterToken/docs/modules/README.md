@@ -35,6 +35,7 @@ docs/modules/
 |---|---|---|
 | `ballistic-system` | [README](./combat/ballistic-system/README.md) | [progress](./combat/ballistic-system/progress.md) |
 | `battle-system` | [README](./combat/battle-system/README.md) | [progress](./combat/battle-system/progress.md) |
+| `pickup-system` | [README](./combat/pickup-system/README.md) | [progress](./combat/pickup-system/progress.md) |
 | `camera-system` | [README](./combat/camera-system/README.md) | [progress](./combat/camera-system/progress.md) |
 | `enemy-system` | [README](./combat/enemy-system/README.md) | [progress](./combat/enemy-system/progress.md) |
 | `input-system` | [README](./combat/input-system/README.md) | [progress](./combat/input-system/progress.md) |
@@ -65,6 +66,8 @@ docs/modules/
 | 模块 | README | 进度 |
 |---|---|---|
 | `cross-play-link` | [README](./shared/cross-play-link/README.md) | [progress](./shared/cross-play-link/progress.md) |
+| `item-system` | [README](./shared/item-system/README.md) | [progress](./shared/item-system/progress.md) |
+| `inventory-system` | [README](./shared/inventory-system/README.md) | [progress](./shared/inventory-system/progress.md) |
 | `shared-systems` | [README](./shared/shared-systems/README.md) | [progress](./shared/shared-systems/progress.md) |
 | `unlock-system` | [README](./shared/unlock-system/README.md) | [progress](./shared/unlock-system/progress.md) |
 

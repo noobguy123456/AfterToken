@@ -54,7 +54,7 @@
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、狙击镜，待抖动 |
 | 敌人系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、FSM（Idle/Chase/Attack/Dead）已跑通；自研 A* 寻路系统框架已完成并接入 `EnemyChaseState`；待 Play Mode 验证与 `TbEnemy` 配置接入 |
-| 掉落与拾取系统 | ⏳ | P1 | 敌人系统、共享层 | `docs/modules/combat/pickup-system/`（新增） | 敌人死亡掉落、PickupEntity、拾取（从敌人系统拆分） |
+| 掉落与拾取系统 | 🟡 | P1 | 敌人系统、共享层 | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入包已完成；待 Play Mode 验证 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P0 | 配置表系统、事件系统 | `docs/modules/combat/level-system/` | 硬编码表，待波次/胜负/配置化 |
 | 奖励系统 | ⏳ | P1 | 共享层 | `docs/modules/combat/reward-system/` | 战斗奖励分发 |
@@ -81,7 +81,8 @@
 |------|------|--------|-----------|----------|------|
 | 玩家档案系统 | ⏳ | P1 | - | `docs/modules/shared/player-profile-system/`（新增） | 等级、经验、解锁（从共享数据层拆分） |
 | 货币系统 | ⏳ | P1 | - | `docs/modules/shared/currency-system/`（新增） | 金币、钻石、体力（从共享数据层拆分） |
-| 背包系统 | ⏳ | P1 | - | `docs/modules/shared/inventory-system/`（新增） | 物品管理（从共享数据层拆分） |
+| 背包系统 | 🟡 | P1 | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库（内存态）已完成；UI prefab 待生成，待 Play Mode 验证 |
+| 道具系统 | 🟡 | P1 | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
 | 解锁系统 | ⏳ | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | 内容解锁条件与校验 |
 | 跨玩法联动 | ⏳ | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 战斗奖励 → 经营资源 → 战斗强化 |
 

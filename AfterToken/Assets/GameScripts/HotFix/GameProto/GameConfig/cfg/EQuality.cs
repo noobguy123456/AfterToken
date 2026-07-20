@@ -17,25 +17,21 @@ namespace GameConfig.cfg
     public enum EQuality
     {
         /// <summary>
-        /// 白色
-        /// </summary>
-        White = 0,
-        /// <summary>
-        /// 绿色
-        /// </summary>
-        Green = 1,
-        /// <summary>
         /// 蓝色
         /// </summary>
-        Blue = 2,
+        Blue = 0,
         /// <summary>
         /// 紫色
         /// </summary>
-        Purple = 3,
+        Purple = 1,
         /// <summary>
-        /// 橙色
+        /// 黄色
         /// </summary>
-        Orange = 4,
+        Yellow = 2,
+        /// <summary>
+        /// 红色
+        /// </summary>
+        Red = 3,
     }
 
 } 

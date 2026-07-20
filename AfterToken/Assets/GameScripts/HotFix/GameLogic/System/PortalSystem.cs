@@ -152,6 +152,8 @@ namespace GameLogic.Portal
                     switch (config.portalType)
                     {
                         case PortalType.RETURN_TO_LOBBY:
+                            // 胜利结算：临时背包整体转入仓库，随后由大厅流程统一清空
+                            Warehouse.AddAll(RunInventory.Items);
                             GameApp.ChangeProcedure<ProcedureLobby>();
                             break;
                         case PortalType.NEXT_LEVEL:

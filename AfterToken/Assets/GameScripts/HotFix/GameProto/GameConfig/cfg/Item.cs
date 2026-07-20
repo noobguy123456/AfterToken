@@ -32,6 +32,9 @@ public sealed partial class Item : Luban.BeanBase
         {if (_obj.TryGetValue("expireTime", out var _j)) { ExpireTime = (long)_j; } else { ExpireTime = null; } }
         BatchUseable = (bool)_obj.GetValue("batchUseable");
         { var __json0 = _obj.GetValue("exchangeList"); ExchangeList = new System.Collections.Generic.List<cfg.ItemExchange>((__json0 as JArray).Count); foreach(JToken __e0 in __json0) { cfg.ItemExchange __v0;  __v0 = global::GameConfig.cfg.ItemExchange.DeserializeItemExchange(__e0);  ExchangeList.Add(__v0); }   }
+        ItemType = (cfg.EItemType)(int)_obj.GetValue("itemType");
+        Icon = (string)_obj.GetValue("icon");
+        StackLimit = (int)_obj.GetValue("stackLimit");
     }
 
     public static Item DeserializeItem(JToken _buf)
@@ -75,6 +78,18 @@ public sealed partial class Item : Luban.BeanBase
     /// 兑换列表
     /// </summary>
     public readonly System.Collections.Generic.List<cfg.ItemExchange> ExchangeList;
+    /// <summary>
+    /// 道具类型
+    /// </summary>
+    public readonly cfg.EItemType ItemType;
+    /// <summary>
+    /// 图标资源地址
+    /// </summary>
+    public readonly string Icon;
+    /// <summary>
+    /// 堆叠上限
+    /// </summary>
+    public readonly int StackLimit;
 
 
     public const int __ID__ = -230799747;
@@ -97,6 +112,9 @@ public sealed partial class Item : Luban.BeanBase
         + "expireTime:" + ExpireTime + ","
         + "batchUseable:" + BatchUseable + ","
         + "exchangeList:" + Luban.StringUtil.CollectionToString(ExchangeList) + ","
+        + "itemType:" + ItemType + ","
+        + "icon:" + Icon + ","
+        + "stackLimit:" + StackLimit + ","
         + "}";
     }
 }

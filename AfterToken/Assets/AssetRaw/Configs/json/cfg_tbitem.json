@@ -12,7 +12,10 @@
         "id": 10001,
         "num": 2
       }
-    ]
+    ],
+    "itemType": 0,
+    "icon": "",
+    "stackLimit": 99
   },
   {
     "id": 10001,
@@ -31,7 +34,10 @@
         "id": 10002,
         "num": 3
       }
-    ]
+    ],
+    "itemType": 0,
+    "icon": "",
+    "stackLimit": 99
   },
   {
     "id": 10002,
@@ -54,6 +60,27 @@
         "id": 10003,
         "num": 1
       }
-    ]
+    ],
+    "itemType": 0,
+    "icon": "",
+    "stackLimit": 50
+  },
+  {
+    "id": 10003,
+    "name": "王者之剑",
+    "desc": "传说材料",
+    "price": 1000,
+    "quality": 3,
+    "upgradeToItemId": 0,
+    "batchUseable": false,
+    "exchangeList": [
+      {
+        "id": 10001,
+        "num": 1
+      }
+    ],
+    "itemType": 0,
+    "icon": "",
+    "stackLimit": 10
   }
 ]

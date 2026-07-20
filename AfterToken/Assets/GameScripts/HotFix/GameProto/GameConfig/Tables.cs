@@ -49,6 +49,10 @@ public partial class Tables
     /// 传送门表
     /// </summary>
     public cfg.TbPortal TbPortal {get; }
+    /// <summary>
+    /// 背包容量表
+    /// </summary>
+    public cfg.TbInventoryConfig TbInventoryConfig {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -62,6 +66,7 @@ public partial class Tables
         TbDrop = new cfg.TbDrop(loader("cfg_tbdrop"));
         TbBuff = new cfg.TbBuff(loader("cfg_tbbuff"));
         TbPortal = new cfg.TbPortal(loader("cfg_tbportal"));
+        TbInventoryConfig = new cfg.TbInventoryConfig(loader("cfg_tbinventoryconfig"));
         ResolveRef();
     }
     
@@ -76,6 +81,7 @@ public partial class Tables
         TbDrop.ResolveRef(this);
         TbBuff.ResolveRef(this);
         TbPortal.ResolveRef(this);
+        TbInventoryConfig.ResolveRef(this);
     }
 }
 

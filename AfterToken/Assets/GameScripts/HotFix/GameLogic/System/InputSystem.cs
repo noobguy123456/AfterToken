@@ -19,6 +19,7 @@ namespace GameLogic
         [SerializeField] private KeyCode _dodgeKey = KeyCode.Space;
         [SerializeField] private KeyCode _interactKey = KeyCode.E;
         [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
+        [SerializeField] private KeyCode _bagKey = KeyCode.B;
         [SerializeField] private float _wheelTimeScale = 0.2f;
 
         private Camera _mainCamera;
@@ -67,6 +68,7 @@ namespace GameLogic
             HandleDodgeInput();
             HandleCrosshairStyleInput();
             HandleInteractInput();
+            HandleBagInput();
         }
 
         private void HandleMoveInput()
@@ -222,6 +224,21 @@ namespace GameLogic
                 else
                 {
                     GameModule.UI.ShowUIAsync<SettingsUI>();
+                }
+            }
+        }
+
+        private void HandleBagInput()
+        {
+            if (Input.GetKeyDown(_bagKey))
+            {
+                if (GameModule.UI.HasWindow<BattleBagUI>())
+                {
+                    GameModule.UI.CloseUI<BattleBagUI>();
+                }
+                else
+                {
+                    GameModule.UI.ShowUIAsync<BattleBagUI>();
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿using TEngine;
+using TEngine;
 using UnityEngine;
 
 namespace GameLogic
@@ -33,6 +33,8 @@ namespace GameLogic
         {
             if (_isDead) return;
             _isDead = true;
+            // 死亡即丢失关卡临时背包
+            RunInventory.Clear();
             GamePauseManager.PushTimeScale(0f);
             CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
             CursorManager.Instance?.ForceShowCursor();

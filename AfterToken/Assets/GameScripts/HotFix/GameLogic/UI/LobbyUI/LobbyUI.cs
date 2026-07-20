@@ -16,6 +16,7 @@ namespace GameLogic
         private RectTransform _levelListRoot;
         private Button _levelButtonTemplate;
         private Button _backButton;
+        private Button _warehouseButton;
 
         private readonly List<GameObject> _levelButtonInstances = new List<GameObject>();
 
@@ -26,6 +27,7 @@ namespace GameLogic
             _levelListRoot = FindChildComponent<RectTransform>("m_rect_LevelList");
             _levelButtonTemplate = FindChildComponent<Button>("m_rect_LevelList/m_btn_LevelTemplate");
             _backButton = FindChildComponent<Button>("m_btn_Back");
+            _warehouseButton = FindChildComponent<Button>("m_btn_Warehouse");
         }
         #endregion
 
@@ -58,6 +60,12 @@ namespace GameLogic
             {
                 _backButton.onClick.RemoveAllListeners();
                 _backButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureMainMenu>());
+            }
+
+            if (_warehouseButton != null)
+            {
+                _warehouseButton.onClick.RemoveAllListeners();
+                _warehouseButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<WarehouseUI>());
             }
         }
 

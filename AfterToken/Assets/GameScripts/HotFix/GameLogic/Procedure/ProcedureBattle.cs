@@ -67,6 +67,7 @@ namespace GameLogic
             _battleRoot.AddComponent<ProjectileSystem>();
             _battleRoot.AddComponent<BattleSystem>();
             _battleRoot.AddComponent<EnemySpawnSystem>();
+            _battleRoot.AddComponent<DropSystem>();
             _battleRoot.AddComponent<HitFeedbackSystem>();
             _battleRoot.AddComponent<PoolSystem>();
             _battleRoot.AddComponent<NavigationSystem>();
