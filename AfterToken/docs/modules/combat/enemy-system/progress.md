@@ -24,14 +24,14 @@
 - [x] `PathResult.Failed` 改为共享只读实例，减少 GC
 - [x] `EnemyChaseState` fallback 移动统一使用 `elapse` 参数
 - [x] 清理 `NavigationSystem` 未使用的分帧队列 dead code
+- [x] `TbEnemy` 已接入 `EnemySpawnSystem` 与 GM 刷怪
 
 ## 进行中
 - [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家
-- [ ] 敌人 AI 类型与配置接入 `TbEnemy`（移动速度、攻击范围、攻击间隔、攻击行为、寻路刷新间隔等）
-- [ ] 敌人攻击行为与伤害判定
+- [ ] 敌人攻击行为与伤害判定（攻击逻辑已写，实际伤害派发待补齐）
+- [ ] 接入 `TbWave` 波次生成逻辑
 
 ## 待办
-- [ ] 敌人掉落物 `PickupEntity`
 - [ ] 敌人攻击行为与技能
 - [ ] 精英/BOSS 差异化行为
 - [ ] 血条样式后续可接入配置（颜色、高度、宽度）
@@ -39,7 +39,7 @@
 - [ ] 动态障碍物网格更新支持
 
 ## 阻塞
-- 等待 `TbEnemy` 表数据补充；当前 FSM + 寻路系统框架已就绪，可平滑接入配置。
+- 等待 `TbWave` 表接入波次生成。
 - 寻路系统 Play Mode 验证待继续。
 
 ---

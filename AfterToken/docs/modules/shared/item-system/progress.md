@@ -1,28 +1,25 @@
-# 道具系统 进度
+# Item System 进度
 
 ## 已完成
-
-- [x] `cfg.EQuality` 改为 4 档稀有度（蓝/紫/黄/红）并重新生成
-- [x] `cfg.EItemType` 枚举（Material/Consumable）
-- [x] `cfg.Item` 扩展字段（itemType/icon/stackLimit）+ 示例数据（4 档各 1 个示例道具）
-- [x] `cfg.InventoryConfig` 新表（临时背包 12 槽 / 仓库 200 槽）
-- [x] `cfg.Drop` 示例掉落行（enemyId 9001/9002 → 示例道具）
-- [x] `ItemStack` / `RarityColors` / `ItemConfigMgr` / `DropConfigMgr` / `InventoryConfigMgr`
-- [x] `ItemSlotWidget` + `ItemSlot.prefab` 稀有度框（脚本部分）
-- [x] `ItemTooltipUI` 悬浮提示（读配置表展示名称/稀有度/类型/价格/描述，跟随鼠标）
-- [x] 修复背包不刷新：BattleBagUI/WarehouseUI 绑定路径补 `m_img_Background/` 前缀
+- [x] `cfg.Item` 扩展（`EItemType`、`EQuality`、`Icon`、`StackLimit`、`Price`、`Desc`、`ExchangeList`）
+- [x] 4 档稀有度（红/黄/紫/蓝）与 `RarityColors` 运行时颜色映射
+- [x] 稀有度边框 prefab（`RarityFrame` 资源 + `ItemSlotWidget` 动态绑定）
+- [x] `ItemConfigMgr` 业务隔离层（`Get`/`GetName`/`GetQuality`/`GetStackLimit`）
+- [x] `ItemStack` 数据结构与 `RunInventory`/`Warehouse` 堆叠逻辑
 
 ## 进行中
-
 - [ ] 无
 
 ## 待办
-
-- [ ] Play Mode 全链路人工验证
-- [ ] 道具使用效果（Consumable 使用逻辑）
-- [ ] 道具图标美术资源接入
-- [ ] 仓库持久化（依赖 save-system）
+- [ ] 道具使用效果（消耗品、材料、装备等）
+- [ ] 道具图标美术资源替换占位图
+- [ ] 配置表字段扩展（如使用冷却、使用范围、增益效果）
 
 ## 阻塞
-
 - 无
+
+---
+
+> 状态说明：
+> - 当前总状态：✅
+> - 每次更新后同步 `docs/TODO.md`

@@ -6,6 +6,10 @@
 - [ ] 命中火花/血液特效
 - [ ] 爆炸特效
 - [ ] 特效对象池接入
+- [ ] `IEffectEvent` 事件接口
+
+## 阻塞
+- 等待 `PoolSystem` 按类型拆分与 `ProjectileVisualSystem` 落地。
 
 ---
 

@@ -8,6 +8,7 @@
 
 ## 阻塞
 - 依赖共享层 `CurrencySystem` / `InventorySystem` / `PlayerProfileSystem` 实现。
+- 依赖 `IBattleResultEvent` 事件接口。
 
 ---
 

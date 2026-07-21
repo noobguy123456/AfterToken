@@ -11,22 +11,23 @@
 - [x] 弹匣为空自动换弹
 - [x] 换弹状态事件 `OnReloadStateChanged`
 - [x] 切换武器中断当前武器换弹
+- [x] `TbWeapon` 配置已接入（`WeaponConfigMgr` 从 Luban 表读取）
+- [x] 硬编码 `WeaponConfigMgr` 已替换为 Luban 表驱动
 
 ## 进行中
-- [ ] 接入 Luban `TbWeapon` 配置
-- [ ] 替换硬编码 `WeaponConfigMgr`
+- [ ] 无
 
 ## 待办
 - [ ] 武器切换动画
-- [ ] 武器开火/换弹/切换音效
+- [ ] 武器开火/换弹/切换音效（依赖 `audio-system`）
 - [ ] 武器特殊效果（如激光指示、追踪导弹）
 - [ ] 换弹过程可被冲刺/受击等动作打断/加速（视玩法需求）
 
 ## 阻塞
-- 等待 `TbWeapon` 表数据补充与 `WeaponConfigMgr` 替换完成。
+- 无
 
 ---
 
 > 状态说明：
-> - 当前总状态：🟡
+> - 当前总状态：✅
 > - 每次更新后同步 `docs/TODO.md`

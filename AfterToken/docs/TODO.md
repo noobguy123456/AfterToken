@@ -39,7 +39,7 @@
 | LoadingUI 与场景过渡 | ✅ | - | - | `docs/modules/ui/loading-system/` | `GameplayProcedureBase` 统一加载 |
 | 命中反馈 | ✅ | - | - | `docs/modules/ui/hit-feedback-system/` | 伤害飘字、受击指示、命中标记 |
 | 光标系统 | ✅ | - | - | `docs/modules/ui/cursor-system/` | 显示/隐藏、锁定模式、自定义光标纹理 |
-| 设置 UI | ⏳ | P2 | 共享层部分完成 | `docs/modules/ui/settings-ui/` | 音量、画质、操作设置（新增模块） |
+| 设置 UI | 🟡 | P2 | 存档系统 | `docs/modules/ui/settings-ui/` | 灵敏度滑块已可用；音量、画质、操作设置持久化待补充 |
 | 经营 UI | ⏳ | P2 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | SimulationMainUI、建筑/资源/订单 Widget |
 
 ### 战斗系统
@@ -47,23 +47,23 @@
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
 | 输入系统 | ✅ | - | - | `docs/modules/combat/input-system/` | 移动、瞄准、开火、换弹、切枪、闪避、武器轮盘 |
-| 玩家系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM + 体力系统 + HP/体力条 HUD；`TbPlayer` 已接入；Play Mode 基础切换已初步确认，待后续新状态调试 |
-| 武器系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/weapon-system/` | 武器槽、开火、换弹、辅助瞄准，待 `TbWeapon/TbBullet` |
+| 玩家系统 | ✅ | - | - | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM + 体力系统 + HP/体力条 HUD；`TbPlayer` 已接入并应用属性 |
+| 武器系统 | ✅ | - | - | `docs/modules/combat/weapon-system/` | 武器槽、开火、换弹、辅助瞄准；`TbWeapon` 已通过 `WeaponConfigMgr` 接入 |
 | 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线 |
 | 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、狙击镜，待抖动 |
-| 敌人系统 | 🟡 | P0 | 配置表系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、FSM（Idle/Chase/Attack/Dead）已跑通；自研 A* 寻路系统框架已完成并接入 `EnemyChaseState`；待 Play Mode 验证与 `TbEnemy` 配置接入 |
-| 掉落与拾取系统 | 🟡 | P1 | 敌人系统、共享层 | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入包已完成；待 Play Mode 验证 |
+| 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；待 Play Mode 验证绕过障碍物、攻击伤害判定接入 |
+| 掉落与拾取系统 | ✅ | - | - | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入临时背包已完成 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
-| 关卡系统 | 🟡 | P0 | 配置表系统、事件系统 | `docs/modules/combat/level-system/` | 硬编码表，待波次/胜负/配置化 |
+| 关卡系统 | 🟡 | P1 | 事件系统 | `docs/modules/combat/level-system/` | `TbLevel` 已接入；硬编码表已替换；待波次/胜负/配置化 |
 | 奖励系统 | ⏳ | P1 | 共享层 | `docs/modules/combat/reward-system/` | 战斗奖励分发 |
 
 ### 场景系统
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 传送门系统 | 🟡 | P1 | 关卡系统、事件系统、输入系统 | `docs/modules/scene/portal-system/` | 基础版完成：配置表、核心逻辑、UI、转场、场景摆放、编译通过；已新增 L01/L02/L03 三个测试战斗场景并配置传送门，门上显示目的地；待 Play Mode 验证 |
+| 传送门系统 | ✅ | - | - | `docs/modules/scene/portal-system/` | 配置表、核心逻辑、UI、转场、场景摆放、死亡判定防护已完成 |
 
 ### 基础设施
 
@@ -81,10 +81,12 @@
 |------|------|--------|-----------|----------|------|
 | 玩家档案系统 | ⏳ | P1 | - | `docs/modules/shared/player-profile-system/`（新增） | 等级、经验、解锁（从共享数据层拆分） |
 | 货币系统 | ⏳ | P1 | - | `docs/modules/shared/currency-system/`（新增） | 金币、钻石、体力（从共享数据层拆分） |
-| 背包系统 | 🟡 | P1 | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库（内存态）已完成；UI prefab 待生成，待 Play Mode 验证 |
-| 道具系统 | 🟡 | P1 | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
+| 背包系统 | ✅ | - | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库（内存态）已完成；仓库持久化待 `save-system` |
+| 道具系统 | ✅ | - | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
 | 解锁系统 | ⏳ | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | 内容解锁条件与校验 |
 | 跨玩法联动 | ⏳ | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 战斗奖励 → 经营资源 → 战斗强化 |
+| 存档系统 | ⏳ | P1 | - | `docs/modules/shared/save-system/`（新增） | 本地 JSON/PlayerPrefs 存档（新增模块） |
+| 设置系统 | 🟡 | P2 | 存档系统 | `docs/modules/shared/settings-system/`（新增） | 灵敏度已可用；音量、画质、操作设置持久化待 `save-system` |
 
 ### 模拟经营系统
 
@@ -104,17 +106,16 @@
 |------|------|--------|-----------|----------|------|
 | 资源管线 | ✅ | - | - | `docs/modules/pipeline/asset-pipeline/` | YooAsset 收集器、SimulateBuild |
 | 热更管线 | 🟡 | P1 | - | `docs/modules/pipeline/hotfix-pipeline/` | HybridCLR 环境、DLL 加载，待 AOT 元数据补充验证 |
-| **Luban 配置表系统** | 🟡 | **P0** | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON，`weapon`/`level`/`player`/`battle`（Enemy/Wave/Drop）已定义并接入，新增流程文档已补充；待 `buff` / `item` 修复 / YooAsset 收集器配置 |
+| **Luban 配置表系统** | ✅ | - | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON；`weapon`/`level`/`player`/`enemy`/`drop`/`item`/`inventory`/`portal` 已定义并接入业务；`buff`/`wave` 数据已存在但尚未接入业务系统 |
 | 编辑器工具 | ✅ | - | - | `docs/modules/pipeline/editor-tools/` | BattleSceneSetup、Force Recompile、TMP Migration |
 
 ### 全局与支撑系统
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 存档系统 | ⏳ | P1 | 共享系统 | `docs/modules/shared/save-system/`（新增） | 本地 JSON/PlayerPrefs 存档（新增模块） |
 | 设置系统 | ⏳ | P2 | 存档系统 | `docs/modules/shared/settings-system/`（新增） | 音量、画质、操作设置持久化（新增模块） |
 | 性能优化 | ⏳ | P3 | - | `docs/modules/pipeline/performance-optimization/`（新增） | Draw Call、GC、对象池、Atlas、分帧（新增模块） |
-| GM / 调试工具 | ⏳ | P3 | - | `docs/modules/pipeline/gm-tools/`（新增） | 无敌、跳关、刷怪、显示碰撞盒（新增模块） |
+| GM / 调试工具 | 🟡 | P3 | - | `docs/modules/pipeline/gm-tools/`（新增） | 编辑器/Development Build 中已提供 `GMController` 控制台与面板（无敌、刷怪、跳关、改时间、重载配置）；显示碰撞盒等工具待补充 |
 
 ---
 
@@ -122,34 +123,35 @@
 
 ```
 Luban 配置表数据补充
-    ├── 阻塞 → 玩家系统（TbPlayer）、武器系统（TbWeapon）、敌人系统（TbEnemy）、关卡系统（TbWave）
-    └── 间接阻塞 → 战斗闭环验证
+    ├── 已完成 → 玩家系统（TbPlayer）、武器系统（TbWeapon/TbLevel/TbItem/TbEnemy/TbDrop/TbInventory/TbPortal）
+    ├── 数据已存在但业务未接入 → TbWave（波次生成）、TbBuff（Buff 系统）
+    └── 间接阻塞 → 关卡波次/胜负、战斗 Buff 系统
 
 事件系统完善（ILevelEvent / IBattleResultEvent / 共享事件）
     ├── 阻塞 → 战斗系统结果事件
     ├── 阻塞 → 关卡系统波次/胜负
     └── 阻塞 → 奖励系统、跨玩法联动
 
-敌人 AI / FSM 基础框架已完成
-    ├── 仍待接入 `TbEnemy` 配置表
-    └── 仍待更优生成逻辑与波次/掉落联动
+敌人 AI / FSM / 寻路框架已完成
+    ├── `TbEnemy` 已接入 `EnemySpawnSystem`
+    └── 仍待更优生成逻辑与 `TbWave` 波次/掉落联动
 
-共享系统（Currency / Inventory / PlayerProfile）
-    ├── 阻塞 → 奖励系统
-    ├── 阻塞 → 跨玩法联动
-    └── 阻塞 → 经营系统消耗/产出
+共享系统（Currency / Inventory / PlayerProfile / Save）
+    ├── 背包/道具已实现（内存态）
+    ├── 阻塞 → 奖励系统、跨玩法联动、经营系统消耗/产出
+    └── 待实现 → 存档系统、货币系统、玩家档案系统
 ```
 
 ---
 
 ## 四、本周聚焦（M1 第一阶段）
 
-1. **补充 Luban 战斗表数据**：`TbPlayer`/`TbEnemy`/`TbWave`/`TbDrop`/`TbBuff`；修复 `item.xlsx` 中 `ItemExchange`/`EQuality` 定义并注册 `cfg.TbItem`。
-2. **替换硬编码配置**：`WeaponConfigMgr` → `TbWeapon`，`LevelConfigMgr` → `TbLevel`。
-3. **补齐事件接口**：`ILevelEvent`、`IBattleResultEvent`、共享层事件接口。
-4. **实现敌人 AI / FSM**：Idle / Chase / Attack / Dead，接入 `TbEnemy`。
-5. **实现关卡波次与胜负判定**：接入 `TbWave`，触发 `IBattleResultEvent`。
-6. **Play Mode 验证**：`MainMenu → Lobby → Battle` 跑通，无明显报错。
+1. **接入 `TbWave` 波次生成**：替换 `EnemySpawnSystem` 硬编码参数，按关卡配置驱动多波次敌人刷新。
+2. **补齐事件接口**：`ILevelEvent`、`IBattleResultEvent`、共享层事件接口。
+3. **实现关卡胜负判定**：全灭敌人/生存目标触发 `IBattleResultEvent`，并打开结算/传送门。
+4. **实现奖励系统**：战斗胜利奖励分发，临时背包转入仓库。
+5. **实现共享层持久化**：`SaveSystem` → `CurrencySystem` / `PlayerProfileSystem` / `SettingsSystem` 持久化。
+6. **Play Mode 验证**：`MainMenu → Lobby → Battle → 返回/下一关` 跑通，无明显报错。
 
 ---
 
@@ -158,7 +160,7 @@ Luban 配置表数据补充
 | 事项 | 状态 | 说明 | 计划完成里程碑 |
 |------|------|------|----------------|
 | Play Mode 全流程验证 | ⏳ | MainMenu → Lobby → Battle，需在线验证 | M1 |
-| 配置表热更验证 | ⏳ | 修改配置后重新导表，YooAsset SimulateBuild 正常 | M1 |
+| 配置表热更验证 | 🟡 | 修改配置后重新导表已通过；YooAsset 收集器包含 `AssetRaw/Configs/json/` 与 SimulateBuild 运行时加载待验证 | M1 |
 | 真机构建流程 | ⏳ | YooAsset 真实包、HybridCLR 出包 | M5 |
 | AOT 泛型补充验证 | ⏳ | 打包后无 ExecutionEngineException | M5 |
 
@@ -186,4 +188,4 @@ Luban 配置表数据补充
 | 2026-07-08 | 修复 Portal UI 不可见问题：Prefab `RectTransform.localScale` 归一化并保留 `Canvas`；portal 提示改为英文；Lobby 关卡按钮改为 `Stage X`；运行 TMP 迁移工具将 7 个 UI Prefab 的 Legacy Text 迁移为 `TextMeshProUGUI`；防御性修复 `CursorManager` 窗口切换异常处理；更新 `tengine-dev` skill 与文档；待 Play Mode 最终验证 |
 | 2026-07-19 | 修复多个 UI bug：PlayerDeathUI/SettingsUI 按钮无响应（根因 `UIModule.ShowUIImp` 参数污染与 `FindChildComponent` 路径缺前缀）、关闭设置后光标不隐藏（逐帧重试策略）、HitFeedbackUI 遮挡弹窗（层级改为 UILayer.UI）、死亡瞬间传送门导致新场景冻结（PortalSystem 死亡判定 + GamePauseManager.Reset 兜底）；性能 GC 治理：敌人追击态分离检测改非分配物理 API、伤害飘字文本缓存与 struct 写回、寻路缓存复用 List、体力事件仅在数值变化时派发；新增空弹匣按开火键自动换弹；更新 `portal-system` / `cursor-system` / `weapon-system` 文档与日报 |
 | 2026-07-20 | 新增道具系统、背包系统与掉落拾取系统：Luban 新增 `cfg.EItemType` / `cfg.TbInventoryConfig` / `cfg.Drop`，扩展 `cfg.Item`；实现 `ItemStack` / `RunInventory` / `Warehouse` / `DropSystem` / `PickupEntity` / `ItemConfigMgr` / `DropConfigMgr` / `InventoryConfigMgr`；新增 `BattleBagUI` / `WarehouseUI` / `ItemSlot` prefab；完成敌人死亡掉落 → 拾取入临时背包 → 胜利转仓库 / 死亡清空 / 回大厅清空的闭环；新建 `item-system` / `inventory-system` / `pickup-system` 模块文档并更新 `docs/TODO.md` / `docs/modules/README.md` / `CONTEXT.md` |
-| 2026-07-21 | 修复背包系统 bug：`BattleBagUI` / `WarehouseUI` 的 `ScriptGenerator` 绑定路径补 `m_img_Background/` 前缀；新增 `ItemTooltipUI` 悬浮提示窗，由 `ItemSlotHoverHandler` 转发鼠标悬停事件，展示道具名称/稀有度/类型/价格/描述；修复 `BattleBagUI` 打开时未暂停时间且未隐藏准星的问题（新增 `TimeScaleWhenVisible` 与 `CrosshairUpdater.SetVisible`）；给 `BattleBagUI` 添加 `m_btn_Close` 关闭按钮并支持再次按 B 键关闭（`InputSystem.HandleBagInput` 提到 `TimeScale` 判断之前）；背包默认显示全部容量格子（含空槽位）；ESC 键统一关闭当前最上层 UI（`InputSystem.HandleEscapeInput` + `WarehouseUI.OnUpdate`）|
+| 2026-07-21 | 代码审查与文档同步：基于 `Assets/GameScripts` 代码确认 `TbPlayer`/`TbWeapon`/`TbEnemy`/`TbLevel`/`TbItem`/`TbDrop`/`TbInventory`/`TbPortal` 已接入业务；`TbWave`/`TbBuff` 数据已存在但业务未接入；更新 `docs/TODO.md` 与相关模块 `progress.md`；新增 `save-system`/`currency-system`/`player-profile-system`/`settings-system` 模块规划文档 |

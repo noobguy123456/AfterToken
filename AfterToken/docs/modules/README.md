@@ -26,6 +26,7 @@ docs/modules/
 | `cursor-system` | [README](./ui/cursor-system/README.md) | [progress](./ui/cursor-system/progress.md) |
 | `hit-feedback-system` | [README](./ui/hit-feedback-system/README.md) | [progress](./ui/hit-feedback-system/progress.md) |
 | `loading-system` | [README](./ui/loading-system/README.md) | [progress](./ui/loading-system/progress.md) |
+| `settings-ui` | [README](./ui/settings-ui/README.md) | [progress](./ui/settings-ui/progress.md) |
 | `simulation-ui` | [README](./ui/simulation-ui/README.md) | [progress](./ui/simulation-ui/progress.md) |
 | `ui-prefab-workflow` | [README](./ui/ui-prefab-workflow/README.md) | [progress](./ui/ui-prefab-workflow/progress.md) |
 
@@ -66,8 +67,12 @@ docs/modules/
 | 模块 | README | 进度 |
 |---|---|---|
 | `cross-play-link` | [README](./shared/cross-play-link/README.md) | [progress](./shared/cross-play-link/progress.md) |
+| `currency-system` | [README](./shared/currency-system/README.md) | [progress](./shared/currency-system/progress.md) |
 | `item-system` | [README](./shared/item-system/README.md) | [progress](./shared/item-system/progress.md) |
 | `inventory-system` | [README](./shared/inventory-system/README.md) | [progress](./shared/inventory-system/progress.md) |
+| `player-profile-system` | [README](./shared/player-profile-system/README.md) | [progress](./shared/player-profile-system/progress.md) |
+| `save-system` | [README](./shared/save-system/README.md) | [progress](./shared/save-system/progress.md) |
+| `settings-system` | [README](./shared/settings-system/README.md) | [progress](./shared/settings-system/progress.md) |
 | `shared-systems` | [README](./shared/shared-systems/README.md) | [progress](./shared/shared-systems/progress.md) |
 | `unlock-system` | [README](./shared/unlock-system/README.md) | [progress](./shared/unlock-system/progress.md) |
 
