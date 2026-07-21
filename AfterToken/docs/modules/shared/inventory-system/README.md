@@ -15,8 +15,8 @@
 | `GameLogic/Item/RunInventory.cs` | 关卡临时背包（静态）。`TryAdd / Clear / Items / UsedSlots / MaxSlots` |
 | `GameLogic/Item/Warehouse.cs` | 玩家仓库（静态，本期内存态）。`TryAdd / AddAll / Items / UsedSlots / MaxSlots` |
 | `GameLogic/IEvent/IItemEvent.cs` | 事件接口：`OnItemPickedUp / OnTempInventoryChanged / OnWarehouseChanged / OnInventoryFull` |
-| `GameLogic/UI/BattleBagUI/` | 战斗内临时背包面板（B 键开关），显示 `当前容量/最大容量` 与格子 |
-| `GameLogic/UI/WarehouseUI/` | 仓库面板（大厅 LobbyUI 的 Warehouse 按钮进入），含关闭按钮 |
+| `GameLogic/UI/BattleBagUI/` | 战斗内临时背包面板（B 键开关），显示 `当前容量/最大容量` 与全部容量格子（空槽位以深灰框占位）；打开时隐藏准星、暂停时间，含关闭按钮，再按 B 键可关闭 |
+| `GameLogic/UI/WarehouseUI/` | 仓库面板（大厅 LobbyUI 的 Warehouse 按钮进入），含关闭按钮；大厅中按 ESC 可关闭 |
 
 ## 生命周期规则
 

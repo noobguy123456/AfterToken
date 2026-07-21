@@ -49,9 +49,9 @@ namespace GameLogic
 
         private void Update()
         {
-            // 设置面板等暂停 UI 打开时，Time.timeScale 为 0。
-            // 此时只处理全局输入（如关闭设置面板），避免战斗输入穿透到游戏场景导致相机/角色抖动。
-            HandleSettingsInput();
+            // 暂停 UI 打开时，Time.timeScale 可能为 0。
+            // ESC 作为全局关闭键，始终响应；其他战斗输入在暂停时跳过。
+            HandleEscapeInput();
 
             if (Time.timeScale <= Mathf.Epsilon)
             {
@@ -213,19 +213,34 @@ namespace GameLogic
             }
         }
 
-        private void HandleSettingsInput()
+        /// <summary>
+        /// ESC 键全局处理：优先关闭当前最上层可关闭 UI；没有任何 UI 打开时打开设置面板。
+        /// 与 UI 内部关闭按钮不冲突（关闭按钮直接调用 CloseUI）。
+        /// </summary>
+        private void HandleEscapeInput()
         {
-            if (Input.GetKeyDown(_settingsKey))
+            if (!Input.GetKeyDown(_settingsKey))
             {
-                if (GameModule.UI.HasWindow<SettingsUI>())
-                {
-                    GameModule.UI.CloseUI<SettingsUI>();
-                }
-                else
-                {
-                    GameModule.UI.ShowUIAsync<SettingsUI>();
-                }
+                return;
             }
+
+            // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
+            // 顺序：SettingsUI > BattleBagUI（后续可扩展 WeaponWheelUI 等）
+            if (TryCloseUI<SettingsUI>()) return;
+            if (TryCloseUI<BattleBagUI>()) return;
+
+            // 没有可关闭 UI 时打开设置面板
+            GameModule.UI.ShowUIAsync<SettingsUI>();
+        }
+
+        private bool TryCloseUI<T>() where T : UIWindow, new()
+        {
+            if (GameModule.UI.HasWindow<T>())
+            {
+                GameModule.UI.CloseUI<T>();
+                return true;
+            }
+            return false;
         }
 
         private void HandleBagInput()

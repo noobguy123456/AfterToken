@@ -53,6 +53,16 @@ namespace GameLogic
             AddUIEvent(IItemEvent_Event.OnWarehouseChanged, OnWarehouseChanged);
         }
 
+        protected override void OnUpdate()
+        {
+            base.OnUpdate();
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                GameModule.UI.CloseUI<WarehouseUI>();
+            }
+        }
+
         protected override void OnDestroy()
         {
             ItemTooltipUI.HideTooltip();

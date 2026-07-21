@@ -11,6 +11,14 @@ namespace GameLogic
     public static class RarityColors
     {
         /// <summary>
+        /// 获取空槽位默认颜色（深灰，无稀有度）。
+        /// </summary>
+        public static Color GetDefault()
+        {
+            return new Color(0.2f, 0.2f, 0.2f, 1f);
+        }
+
+        /// <summary>
         /// 获取稀有度对应颜色：蓝 / 紫 / 黄 / 红。
         /// </summary>
         public static Color Get(EQuality quality)

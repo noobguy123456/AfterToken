@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using TEngine;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GameLogic
 {
@@ -12,9 +13,16 @@ namespace GameLogic
     [Window(UILayer.Top, location: "BattleBagUI", fullScreen: false)]
     public class BattleBagUI : UIWindow
     {
+        /// <summary>
+        /// 背包打开时暂停游戏进程（不影响声音）。
+        /// 若 UI Prefab 上挂了 UIWindowTimeScale，Inspector 值可覆盖此处默认值。
+        /// </summary>
+        public override float TimeScaleWhenVisible => InspectorTimeScale ?? 0f;
+
         private TextMeshProUGUI _capacityText;
         private RectTransform _slotRoot;
         private GameObject _slotTemplate;
+        private Button _closeButton;
 
         private readonly List<ItemSlotWidget> _slots = new List<ItemSlotWidget>();
 
@@ -26,6 +34,7 @@ namespace GameLogic
             _capacityText = FindChildComponent<TextMeshProUGUI>("m_img_Background/m_text_Capacity");
             _slotRoot = FindChildComponent<RectTransform>("m_img_Background/m_rect_SlotRoot");
             _slotTemplate = FindChild("m_img_Background/m_rect_SlotRoot/m_item_Slot")?.gameObject;
+            _closeButton = FindChildComponent<Button>("m_img_Background/m_btn_Close");
         }
 
         #endregion
@@ -35,6 +44,7 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             CursorManager.Instance?.ShowCursor();
+            CrosshairUpdater.Instance?.SetVisible(false);
             Refresh();
         }
 
@@ -42,11 +52,18 @@ namespace GameLogic
         {
             base.RegisterEvent();
             AddUIEvent<int, int>(IItemEvent_Event.OnTempInventoryChanged, OnTempInventoryChanged);
+
+            if (_closeButton != null)
+            {
+                _closeButton.onClick.RemoveAllListeners();
+                _closeButton.onClick.AddListener(() => GameModule.UI.CloseUI<BattleBagUI>());
+            }
         }
 
         protected override void OnDestroy()
         {
             ItemTooltipUI.HideTooltip();
+            CrosshairUpdater.Instance?.SetVisible(true);
             CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }
@@ -59,10 +76,11 @@ namespace GameLogic
         private void Refresh()
         {
             var items = RunInventory.Items;
+            var maxSlots = RunInventory.MaxSlots;
 
             if (_capacityText != null)
             {
-                _capacityText.text = $"Capacity: {RunInventory.UsedSlots}/{RunInventory.MaxSlots}";
+                _capacityText.text = $"Capacity: {RunInventory.UsedSlots}/{maxSlots}";
             }
 
             if (_slotRoot == null || _slotTemplate == null)
@@ -70,8 +88,8 @@ namespace GameLogic
                 return;
             }
 
-            // 格子数量与背包内容对齐
-            while (_slots.Count < items.Count)
+            // 格子数量始终与最大容量对齐，空槽位显示为空
+            while (_slots.Count < maxSlots)
             {
                 var widget = CreateWidgetByPrefab<ItemSlotWidget>(_slotTemplate, _slotRoot);
                 if (widget == null)
@@ -84,11 +102,15 @@ namespace GameLogic
 
             for (int i = 0; i < _slots.Count; i++)
             {
-                bool active = i < items.Count;
-                _slots[i].gameObject.SetActive(active);
-                if (active)
+                bool hasItem = i < items.Count;
+                _slots[i].gameObject.SetActive(true);
+                if (hasItem)
                 {
                     _slots[i].SetItem(items[i]);
+                }
+                else
+                {
+                    _slots[i].SetEmpty();
                 }
             }
         }

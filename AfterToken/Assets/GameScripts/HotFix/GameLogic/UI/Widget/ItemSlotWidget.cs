@@ -41,6 +41,7 @@ namespace GameLogic
                     _icon.SetSprite(iconLocation);
                 }
                 // 无图标配置时保持占位白图
+                _icon.color = Color.white;
             }
 
             if (_countText != null)
@@ -55,6 +56,34 @@ namespace GameLogic
                 hover = gameObject.AddComponent<ItemSlotHoverHandler>();
             }
             hover.ItemId = stack.ItemId;
+        }
+
+        /// <summary>
+        /// 清空格子显示为空槽位（保留稀有度框默认颜色，无图标/数量/悬浮提示）。
+        /// </summary>
+        public void SetEmpty()
+        {
+            if (_rarityFrame != null)
+            {
+                _rarityFrame.color = RarityColors.GetDefault();
+            }
+
+            if (_icon != null)
+            {
+                _icon.sprite = null;
+                _icon.color = new Color(1, 1, 1, 0);
+            }
+
+            if (_countText != null)
+            {
+                _countText.text = string.Empty;
+            }
+
+            var hover = gameObject.GetComponent<ItemSlotHoverHandler>();
+            if (hover != null)
+            {
+                hover.ItemId = 0;
+            }
         }
     }
 }

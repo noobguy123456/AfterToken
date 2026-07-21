@@ -50,6 +50,18 @@ namespace GameLogic
             _canvas = canvas;
         }
 
+        /// <summary>
+        /// 设置准星节点是否可见。
+        /// 打开背包/设置等需要系统光标的 UI 时，应隐藏准星避免与系统鼠标并存。
+        /// </summary>
+        public void SetVisible(bool visible)
+        {
+            if (_crosshair != null)
+            {
+                _crosshair.gameObject.SetActive(visible);
+            }
+        }
+
         private void Update()
         {
             // 游戏暂停（Time.timeScale = 0）时，鼠标位移不应再驱动准星，
