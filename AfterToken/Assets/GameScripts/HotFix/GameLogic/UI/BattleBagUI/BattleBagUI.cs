@@ -22,9 +22,10 @@ namespace GameLogic
 
         protected override void ScriptGenerator()
         {
-            _capacityText = FindChildComponent<TextMeshProUGUI>("m_text_Capacity");
-            _slotRoot = FindChildComponent<RectTransform>("m_rect_SlotRoot");
-            _slotTemplate = FindChild("m_rect_SlotRoot/m_item_Slot")?.gameObject;
+            // FindChildComponent 基于 transform.Find（不递归），内容节点均在 m_img_Background 下，必须写完整路径。
+            _capacityText = FindChildComponent<TextMeshProUGUI>("m_img_Background/m_text_Capacity");
+            _slotRoot = FindChildComponent<RectTransform>("m_img_Background/m_rect_SlotRoot");
+            _slotTemplate = FindChild("m_img_Background/m_rect_SlotRoot/m_item_Slot")?.gameObject;
         }
 
         #endregion
@@ -45,6 +46,7 @@ namespace GameLogic
 
         protected override void OnDestroy()
         {
+            ItemTooltipUI.HideTooltip();
             CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }

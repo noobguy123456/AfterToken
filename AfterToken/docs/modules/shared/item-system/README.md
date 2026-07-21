@@ -34,3 +34,4 @@
 
 - 图标字段 `icon` 已预留（YooAsset location，走 `SetSprite` 缓存池）；当前为占位白图 + 稀有度染色。
 - `stackLimit` 未配置或异常时按 1 处理（`ItemConfigMgr.GetStackLimit` 兜底）。
+- **悬浮提示**：`ItemSlotWidget.SetItem` 会为格子挂 `ItemSlotHoverHandler`（转发鼠标进入/离开），`ItemTooltipUI`（UILayer.Tips，跟随鼠标）展示配置表信息：名称/稀有度（染色）/类型/价格/描述。提示内容可后续完善，数据均来自 `ItemConfigMgr`。

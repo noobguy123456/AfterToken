@@ -9,6 +9,8 @@
 - [x] `cfg.Drop` 示例掉落行（enemyId 9001/9002 → 示例道具）
 - [x] `ItemStack` / `RarityColors` / `ItemConfigMgr` / `DropConfigMgr` / `InventoryConfigMgr`
 - [x] `ItemSlotWidget` + `ItemSlot.prefab` 稀有度框（脚本部分）
+- [x] `ItemTooltipUI` 悬浮提示（读配置表展示名称/稀有度/类型/价格/描述，跟随鼠标）
+- [x] 修复背包不刷新：BattleBagUI/WarehouseUI 绑定路径补 `m_img_Background/` 前缀
 
 ## 进行中
 

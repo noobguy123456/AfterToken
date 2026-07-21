@@ -24,10 +24,11 @@ namespace GameLogic
 
         protected override void ScriptGenerator()
         {
-            _capacityText = FindChildComponent<TextMeshProUGUI>("m_text_Capacity");
-            _slotRoot = FindChildComponent<RectTransform>("m_rect_SlotRoot");
-            _slotTemplate = FindChild("m_rect_SlotRoot/m_item_Slot")?.gameObject;
-            _closeButton = FindChildComponent<Button>("m_btn_Close");
+            // FindChildComponent 基于 transform.Find（不递归），内容节点均在 m_img_Background 下，必须写完整路径。
+            _capacityText = FindChildComponent<TextMeshProUGUI>("m_img_Background/m_text_Capacity");
+            _slotRoot = FindChildComponent<RectTransform>("m_img_Background/m_rect_SlotRoot");
+            _slotTemplate = FindChild("m_img_Background/m_rect_SlotRoot/m_item_Slot")?.gameObject;
+            _closeButton = FindChildComponent<Button>("m_img_Background/m_btn_Close");
         }
 
         #endregion
@@ -50,6 +51,12 @@ namespace GameLogic
         {
             base.RegisterEvent();
             AddUIEvent(IItemEvent_Event.OnWarehouseChanged, OnWarehouseChanged);
+        }
+
+        protected override void OnDestroy()
+        {
+            ItemTooltipUI.HideTooltip();
+            base.OnDestroy();
         }
 
         private void OnWarehouseChanged()

@@ -65,3 +65,33 @@ _Avoid_: UI 层（仅指 UI，表现层还包括场景实体）。
 系统层通过 `GameEvent` 与表现层解耦。
 
 _Avoid_: Manager（旧称，项目统一用 System）。
+
+## 道具（Item）
+
+可通过掉落、拾取获得并存放于背包的配置化物品，配置来自 Luban `cfg.Item`。含稀有度、类型、图标、堆叠上限等字段。
+
+_Avoid_: 物品（口语可混用，正式文档统一用“道具”）。
+
+## 稀有度（Rarity）
+
+道具的品质等级，共 4 档：`蓝(Blue) < 紫(Purple) < 黄(Yellow) < 红(Red)`（`cfg.EQuality`）。世界掉落物染色与 UI 稀有度框共用 `RarityColors` 颜色映射。
+
+_Avoid_: 品质（`cfg.EQuality` 的历史注释用词，文档统一用“稀有度”）。
+
+## 临时背包（Run Inventory）
+
+一局战斗生命周期内的背包（`RunInventory`），槽位制容量由 `cfg.InventoryConfig` 配置。传送门跨战斗场景保留；死亡清空；经“返回大厅”传送门离开时全部转入仓库。
+
+_Avoid_: 战斗背包（仅指战斗场景，临时背包可跨多个战斗场景）。
+
+## 仓库（Warehouse）
+
+玩家长期持有的背包（`Warehouse`），容量较大且由配置表决定。当前为内存态，持久化由 save-system 模块统一实现。
+
+_Avoid_: 行囊（同义，文档统一用“仓库”）。
+
+## 掉落物（Pickup）
+
+敌人死亡后按掉落表（`cfg.Drop`）在场景中生成的可拾取实体（`PickupEntity`），玩家触碰后进入临时背包；背包满时留在原地。
+
+_Avoid_: 战利品（指代结算概念，不指场景实体）。

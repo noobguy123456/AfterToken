@@ -65,6 +65,10 @@ docs/
 | `SniperScopeUI` | `Assets/AssetRaw/UI/SniperScopeUI/SniperScopeUI.prefab` | 狙击镜 |
 | `TransitionUI` | `Assets/AssetRaw/UI/TransitionUI/TransitionUI.prefab` | 全屏转场 |
 | `InteractionPromptUI` | `Assets/AssetRaw/UI/InteractionPromptUI/InteractionPromptUI.prefab` | 交互提示 |
+| `BattleBagUI` | `Assets/AssetRaw/UI/BattleBagUI/BattleBagUI.prefab` | 战斗临时背包（B 键开关） |
+| `WarehouseUI` | `Assets/AssetRaw/UI/WarehouseUI/WarehouseUI.prefab` | 玩家仓库 |
+| `ItemTooltipUI` | `Assets/AssetRaw/UI/ItemTooltipUI/ItemTooltipUI.prefab` | 道具悬浮提示（`UILayer.Tips`） |
+| `ItemSlot`（Widget） | `Assets/AssetRaw/UI/ItemSlot/ItemSlot.prefab` | 道具稀有度框，配合 `ItemSlotWidget` 使用 |
 
 ## 文档路由
 

@@ -47,6 +47,14 @@ namespace GameLogic
             {
                 _countText.text = stack.Count > 1 ? stack.Count.ToString() : string.Empty;
             }
+
+            // 悬浮提示：挂上/更新转发器，鼠标进入时由 ItemTooltipUI 显示配置表信息
+            var hover = gameObject.GetComponent<ItemSlotHoverHandler>();
+            if (hover == null)
+            {
+                hover = gameObject.AddComponent<ItemSlotHoverHandler>();
+            }
+            hover.ItemId = stack.ItemId;
         }
     }
 }
