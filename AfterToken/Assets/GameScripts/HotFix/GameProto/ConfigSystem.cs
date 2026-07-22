@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using GameConfig;
@@ -47,6 +47,11 @@ namespace GameLogic
             "cfg_tbdrop",
             "cfg_tbbuff",
             "cfg_tbportal",
+            "cfg_tbinventoryconfig",
+            "cfg_tbcamera",
+            "cfg_tbballistic",
+            "cfg_tbuiconfig",
+            "cfg_tbpickup",
         };
 
         /// <summary>

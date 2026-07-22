@@ -39,10 +39,10 @@ namespace GameLogic
         private async UniTask DespawnAsync()
         {
             await UniTask.Delay(1000, cancellationToken: Owner.GetCancellationTokenOnDestroy());
-            if (Owner != null)
+            if (Owner != null && Owner.IsDead)
             {
                 GameEvent.Get<IEnemyEvent>().OnEnemyDied(Owner.GetInstanceID());
-                Object.Destroy(Owner.gameObject);
+                Owner.Recycle();
             }
         }
     }

@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 CD /d %~dp0
 
 :: =====================================================
-:: Path configuration (based on E:\U3D_project\AfterToken\Tools\Luban)
+:: Path configuration (based on D:\U3D_project\AfterToken\Tools\Luban)
 :: =====================================================
 :: Script:    AfterToken\AfterToken\Configs\GameConfig
 :: Code root: AfterToken\AfterToken
@@ -28,7 +28,7 @@ echo [Luban] Data output: %DATA_OUT%
 :: Check Luban.exe
 if not exist "%LUBAN_EXE%" (
     echo [Luban] Error: %LUBAN_EXE% not found
-    echo [Luban] Please extract Luban to E:\U3D_project\AfterToken\Tools\Luban
+    echo [Luban] Please extract Luban to D:\U3D_project\AfterToken\Tools\Luban
     if not defined AI_MODE pause
     exit /b 1
 )

@@ -9,8 +9,8 @@ namespace GameLogic
     public class EnemyEntity : MonoBehaviour, IDamageable
     {
         [SerializeField] private int _configId;
-        [SerializeField] private int _maxHp = 50;
-        [SerializeField] private int _hp = 50;
+        [SerializeField] private int _maxHp;
+        [SerializeField] private int _hp;
         [SerializeField] private Animator _animator;
         [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Rigidbody2D _rb;
@@ -37,6 +37,12 @@ namespace GameLogic
         public int AttackDamage { get; private set; }
         public float AttackRange { get; private set; }
         public float AttackInterval { get; private set; }
+        public float PathRefreshInterval { get; private set; }
+
+        /// <summary>
+        /// 对象池标识。死亡回收时用于归还到对应池中。
+        /// </summary>
+        public string PoolKey { get; set; }
 
         /// <summary>
         /// 敌人状态机黑板。
@@ -80,7 +86,38 @@ namespace GameLogic
             _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
 
-        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval)
+        /// <summary>
+        /// 重置物理状态，用于对象池复用时恢复碰撞体和刚体。
+        /// </summary>
+        private void ResetPhysics()
+        {
+            EnsureRigidbody();
+            _rb.linearVelocity = Vector2.zero;
+            _rb.bodyType = RigidbodyType2D.Dynamic;
+
+            var colliders = GetComponentsInChildren<Collider2D>();
+            foreach (var col in colliders)
+            {
+                col.enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// 回收敌人对象到对象池；未配置池时直接销毁。
+        /// </summary>
+        public void Recycle()
+        {
+            if (!string.IsNullOrEmpty(PoolKey) && PoolSystem.Instance != null)
+            {
+                PoolSystem.Instance.Recycle(PoolKey, gameObject);
+            }
+            else
+            {
+                Object.Destroy(gameObject);
+            }
+        }
+
+        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval, float pathRefreshInterval = 0.3f)
         {
             _configId = configId;
             _maxHp = maxHp;
@@ -89,10 +126,12 @@ namespace GameLogic
             AttackDamage = attackDamage;
             AttackRange = attackRange;
             AttackInterval = attackInterval;
+            PathRefreshInterval = pathRefreshInterval;
 
             Context = new EnemyStateContext();
             Context.IsDead = false;
 
+            ResetPhysics();
             EnsureHealthBar();
             UpdateHealthBar();
             CreateFsm();
@@ -223,6 +262,16 @@ namespace GameLogic
             }
 
             var whiteSprite = PlaceholderSpriteProvider.GetWhiteSprite4();
+
+            // 确保 Prefab 中已有的 SpriteRenderer 也有 sprite，防止美术未指定时无法显示。
+            if (_healthBarBackground != null && _healthBarBackground.sprite == null)
+            {
+                _healthBarBackground.sprite = whiteSprite;
+            }
+            if (_healthBarFill != null && _healthBarFill.sprite == null)
+            {
+                _healthBarFill.sprite = whiteSprite;
+            }
 
             if (_healthBarBackground == null)
             {

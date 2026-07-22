@@ -13,6 +13,8 @@
 - [x] 切换武器中断当前武器换弹
 - [x] `TbWeapon` 配置已接入（`WeaponConfigMgr` 从 Luban 表读取）
 - [x] 硬编码 `WeaponConfigMgr` 已替换为 Luban 表驱动
+- [x] 武器切换冷却从 `TbPlayer` 读取，不再硬编码
+- [x] 辅助瞄准参数（半径/角度/锁定距离/角度/时间）从 `TbWeapon` 读取，不再硬编码
 
 ## 进行中
 - [ ] 无

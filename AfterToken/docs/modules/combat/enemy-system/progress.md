@@ -25,6 +25,11 @@
 - [x] `EnemyChaseState` fallback 移动统一使用 `elapse` 参数
 - [x] 清理 `NavigationSystem` 未使用的分帧队列 dead code
 - [x] `TbEnemy` 已接入 `EnemySpawnSystem` 与 GM 刷怪
+- [x] `EnemyEntity` 血量等属性默认值已移除，统一由 `Initialize` 从 `TbEnemy` 注入
+- [x] **敌人对象池**：`EnemySpawnSystem` 使用 `PoolSystem` 预加载并复用敌人；`EnemyEntity` 死亡后回池；`EnemyEntity` 复用时自动恢复物理状态
+- [x] **血条进入 Prefab**：`Assets/AssetRaw/Prefabs/Enemy.prefab` 已包含 `HealthBarRoot/Background/Fill` 节点，运行时优先使用 Prefab 节点，无 sprite 时自动补白色占位 Sprite
+- [x] **`TbEnemy` 新增 `pathRefreshInterval` 字段**：`EnemyChaseState` 路径刷新间隔可配置，并按玩家距离动态缩放（近快远慢）
+- [x] **A* 寻路减少分配**：`PathResult` 池化、`ReconstructPath` 复用 List、`SmoothPath` 改为原地平滑
 
 ## 进行中
 - [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家
@@ -34,8 +39,7 @@
 ## 待办
 - [ ] 敌人攻击行为与技能
 - [ ] 精英/BOSS 差异化行为
-- [ ] 血条样式后续可接入配置（颜色、高度、宽度）
-- [ ] 寻路系统性能调优：分帧调度、缓存失效策略、格子大小调优
+- [ ] 寻路系统性能调优：分帧调度、缓存失效策略、格子大小调优（A* 分配与频率已优化）
 - [ ] 动态障碍物网格更新支持
 
 ## 阻塞

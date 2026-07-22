@@ -114,7 +114,7 @@
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
 | 设置系统 | ⏳ | P2 | 存档系统 | `docs/modules/shared/settings-system/`（新增） | 音量、画质、操作设置持久化（新增模块） |
-| 性能优化 | ⏳ | P3 | - | `docs/modules/pipeline/performance-optimization/`（新增） | Draw Call、GC、对象池、Atlas、分帧（新增模块） |
+| 性能优化 | 🟡 | P3 | - | `docs/modules/pipeline/performance-optimization/`（新增） | A* 分配、敌人对象池、爆炸非分配查询已落地；画质/血条 Draw Call/构建加速待继续 |
 | GM / 调试工具 | 🟡 | P3 | - | `docs/modules/pipeline/gm-tools/`（新增） | 编辑器/Development Build 中已提供 `GMController` 控制台与面板（无敌、刷怪、跳关、改时间、重载配置）；显示碰撞盒等工具待补充 |
 
 ---
@@ -188,4 +188,7 @@ Luban 配置表数据补充
 | 2026-07-08 | 修复 Portal UI 不可见问题：Prefab `RectTransform.localScale` 归一化并保留 `Canvas`；portal 提示改为英文；Lobby 关卡按钮改为 `Stage X`；运行 TMP 迁移工具将 7 个 UI Prefab 的 Legacy Text 迁移为 `TextMeshProUGUI`；防御性修复 `CursorManager` 窗口切换异常处理；更新 `tengine-dev` skill 与文档；待 Play Mode 最终验证 |
 | 2026-07-19 | 修复多个 UI bug：PlayerDeathUI/SettingsUI 按钮无响应（根因 `UIModule.ShowUIImp` 参数污染与 `FindChildComponent` 路径缺前缀）、关闭设置后光标不隐藏（逐帧重试策略）、HitFeedbackUI 遮挡弹窗（层级改为 UILayer.UI）、死亡瞬间传送门导致新场景冻结（PortalSystem 死亡判定 + GamePauseManager.Reset 兜底）；性能 GC 治理：敌人追击态分离检测改非分配物理 API、伤害飘字文本缓存与 struct 写回、寻路缓存复用 List、体力事件仅在数值变化时派发；新增空弹匣按开火键自动换弹；更新 `portal-system` / `cursor-system` / `weapon-system` 文档与日报 |
 | 2026-07-20 | 新增道具系统、背包系统与掉落拾取系统：Luban 新增 `cfg.EItemType` / `cfg.TbInventoryConfig` / `cfg.Drop`，扩展 `cfg.Item`；实现 `ItemStack` / `RunInventory` / `Warehouse` / `DropSystem` / `PickupEntity` / `ItemConfigMgr` / `DropConfigMgr` / `InventoryConfigMgr`；新增 `BattleBagUI` / `WarehouseUI` / `ItemSlot` prefab；完成敌人死亡掉落 → 拾取入临时背包 → 胜利转仓库 / 死亡清空 / 回大厅清空的闭环；新建 `item-system` / `inventory-system` / `pickup-system` 模块文档并更新 `docs/TODO.md` / `docs/modules/README.md` / `CONTEXT.md` |
-| 2026-07-21 | 代码审查与文档同步：基于 `Assets/GameScripts` 代码确认 `TbPlayer`/`TbWeapon`/`TbEnemy`/`TbLevel`/`TbItem`/`TbDrop`/`TbInventory`/`TbPortal` 已接入业务；`TbWave`/`TbBuff` 数据已存在但业务未接入；更新 `docs/TODO.md` 与相关模块 `progress.md`；新增 `save-system`/`currency-system`/`player-profile-system`/`settings-system` 模块规划文档 |
+| 2026-07-21 | 修复代码中硬编码的玩家/敌人/武器数值：`PlayerEntity` 移速/闪避属性移除默认值；`PlayerSystem` fallback 集中为常量；`EnemyEntity` / `EnemySpawnSystem` 移除血量/数量/半径默认值；`AimAssistSystem` 辅助瞄准与锁定参数从 `TbWeapon` 读取；`WeaponSystem` 切换冷却从 `TbPlayer` 读取；同步在 `weapon.xlsx` / `player.xlsx` 添加新字段并更新 JSON 数据与 Luban 生成代码 |
+| 2026-07-22 | 将剩余硬编码数值全部配置化：扩展 `TbPlayer` 动画名；新增 `TbCamera`（相机参数）、`TbBallistic`（弹道全局参数）、`TbUiConfig`（伤害数字/命中标记/受击指示器/Loading 文本）、`TbPickup`（拾取物半径/缩放/排序）；业务代码 `PlayerEntity` / `CameraSystem` / `BallisticSystem` / `DamageNumberUI` / `HitFeedbackUI` / `LoadingUI` / `PickupEntity` / `WeaponSystem` 改为读取配置；同步更新 Excel/JSON/生成代码/文档；`GameLogic.csproj` 编译通过 |
+| 2026-07-22 | 性能优化与敌人系统收尾：A* 寻路 `PathResult` 池化、路径平滑原地优化、`EnemyChaseState` 路径刷新间隔通过 `TbEnemy.pathRefreshInterval` 配置并动态缩放；敌人接入 `PoolSystem` 预加载/回池；爆炸范围伤害改为非分配物理查询；敌人血条节点纳入 `Enemy.prefab` 由前端直接调整；同步更新敌人系统/飞行物系统/对象池/Luban/TODO 文档 |
+| 2026-07-22 | 清理 Luban 配置工程中的临时 Python 脚本（`generate_cs.py` / `update_config.py` / `update_item_text.py`），统一使用 `gen_code_bin_to_project.bat` 作为标准配置生成流程；同步更新 `luban-config-system` 与 `06-ConfigSystem` 文档 |

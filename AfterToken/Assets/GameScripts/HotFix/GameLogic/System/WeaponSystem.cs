@@ -15,9 +15,6 @@ namespace GameLogic
 
         public const int MAX_WEAPON_SLOTS = 3;
 
-        [Header("武器切换")]
-        [SerializeField] private float _weaponSwitchCooldown = 0.3f;
-
         [Header("瞄准设置")]
         [SerializeField] private AimMode _aimMode = AimMode.Hold;
 
@@ -204,7 +201,30 @@ namespace GameLogic
 
         private bool CanSwitch()
         {
-            return Time.time - _lastSwitchTime >= _weaponSwitchCooldown;
+            return Time.time - _lastSwitchTime >= PlayerConfigWeaponSwitchCooldown;
+        }
+
+        /// <summary>
+        /// 从玩家配置读取武器切换冷却（兜底 0.3s）。
+        /// </summary>
+        private static float PlayerConfigWeaponSwitchCooldown
+        {
+            get
+            {
+                try
+                {
+                    var cfg = ConfigSystem.Instance?.Tables?.TbPlayer?.GetOrDefault(1);
+                    if (cfg != null && cfg.WeaponSwitchCooldown > 0)
+                    {
+                        return cfg.WeaponSwitchCooldown;
+                    }
+                }
+                catch
+                {
+                    // ignored
+                }
+                return 0.3f;
+            }
         }
 
         private void OnFirePressed()
@@ -257,9 +277,18 @@ namespace GameLogic
             GameEvent.Get<IWeaponEvent>().OnAimStateChanged(_owner?.OwnerId ?? 0, _isAiming);
 
             // 更新相机 FOV
+            float defaultFov = 60f;
+            try
+            {
+                defaultFov = ConfigSystem.Instance?.Tables?.TbCamera?.GetOrDefault(1)?.DefaultFov ?? 60f;
+            }
+            catch
+            {
+                // ignored
+            }
             float targetFov = _isAiming && CurrentWeapon != null
                 ? CurrentWeapon.Config.aimFov
-                : 60f;
+                : defaultFov;
             GameEvent.Get<ICameraEvent>().OnAimFovChanged(targetFov);
 
             // 狙击枪开镜时打开瞄准镜 UI

@@ -24,9 +24,13 @@ namespace GameLogic
         #endregion
 
         [Header("飘字动画")]
-        [SerializeField] private int _poolSize = 16;
-        [SerializeField] private float _fadeDuration = 0.8f;
-        [SerializeField] private float _moveOffset = 40f;
+        private int _poolSize;
+        private float _fadeDuration;
+        private float _moveOffset;
+        private Color _normalColor;
+        private Color _criticalColor;
+        private int _normalFontSize;
+        private int _criticalFontSize;
 
         private static DamageNumberUI _instance;
         private readonly Queue<TextMeshProUGUI> _pool = new Queue<TextMeshProUGUI>();
@@ -58,9 +62,48 @@ namespace GameLogic
         protected override void OnCreate()
         {
             base.OnCreate();
+            LoadUiConfig();
             FixFullScreenCanvas();
             _instance = this;
             InitializePool();
+        }
+
+        private void LoadUiConfig()
+        {
+            try
+            {
+                var uiConfig = ConfigSystem.Instance?.Tables?.TbUiConfig?.GetOrDefault(1);
+                if (uiConfig != null)
+                {
+                    _poolSize = uiConfig.DamageNumberPoolSize;
+                    _fadeDuration = uiConfig.DamageNumberFadeDuration;
+                    _moveOffset = uiConfig.DamageNumberMoveOffset;
+                    _normalColor = ToUnityColor(uiConfig.DamageNumberNormalColor);
+                    _criticalColor = ToUnityColor(uiConfig.DamageNumberCriticalColor);
+                    _normalFontSize = uiConfig.DamageNumberNormalFontSize;
+                    _criticalFontSize = uiConfig.DamageNumberCriticalFontSize;
+                    return;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            // 配置缺失时的兜底值。
+            _poolSize = 16;
+            _fadeDuration = 0.8f;
+            _moveOffset = 40f;
+            _normalColor = Color.white;
+            _criticalColor = new Color(1, 0.5f, 0, 1);
+            _normalFontSize = 24;
+            _criticalFontSize = 32;
+        }
+
+        private static Color ToUnityColor(GameConfig.cfg.Color c)
+        {
+            if (c == null) return Color.white;
+            return new Color(c.R, c.G, c.B, c.A);
         }
 
         protected override void OnDestroy()
@@ -106,8 +149,8 @@ namespace GameLogic
 
             txt.gameObject.SetActive(true);
             txt.text = GetDamageText(damage);
-            txt.color = isCritical ? new Color(1, 0.5f, 0, 1) : Color.white;
-            txt.fontSize = isCritical ? 32 : 24;
+            txt.color = isCritical ? _criticalColor : _normalColor;
+            txt.fontSize = isCritical ? _criticalFontSize : _normalFontSize;
 
             var rt = txt.rectTransform;
             rt.anchoredPosition = localPos;

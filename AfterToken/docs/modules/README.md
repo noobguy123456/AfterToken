@@ -97,6 +97,7 @@ docs/modules/
 | `hotfix-pipeline` | [README](./pipeline/hotfix-pipeline/README.md) | [progress](./pipeline/hotfix-pipeline/progress.md) |
 | `config-system`（配置表系统总览） | [README](./pipeline/config-system/README.md) | [progress](./pipeline/config-system/progress.md) |
 | `luban-config-system`（Luban 详细配置） | [README](./pipeline/luban-config-system/README.md) | [progress](./pipeline/luban-config-system/progress.md) |
+| `performance-optimization`（性能优化） | [README](./pipeline/performance-optimization/README.md) | [progress](./pipeline/performance-optimization/progress.md) |
 
 ## 文件模板
 

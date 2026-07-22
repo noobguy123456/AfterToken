@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "tracerRadius": 0.05,
+    "tracerStartWidth": 0.1,
+    "tracerEndWidth": 0.05,
+    "tracerTailLength": 0.5,
+    "maxActiveTracers": 30,
+    "hitLayers": "Enemy,Obstacle",
+    "tracerStartColor": {
+      "r": 1.0,
+      "g": 0.9,
+      "b": 0.2,
+      "a": 0.9
+    },
+    "tracerEndColor": {
+      "r": 1.0,
+      "g": 0.6,
+      "b": 0.0,
+      "a": 0.3
+    }
+  }
+]

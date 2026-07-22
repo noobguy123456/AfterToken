@@ -22,16 +22,16 @@ namespace GameLogic
         private IFsm<PlayerEntity> _playerFsm;
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
 
-        private int _maxHp = 100;
-        private int _currentHp = 100;
+        private int _maxHp;
+        private int _currentHp;
 
         public int CurrentHp => _currentHp;
         public int MaxHp => _maxHp;
 
-        private int _maxStamina = 100;
-        private int _currentStamina = 100;
-        private int _dodgeStaminaCost = 25;
-        private float _staminaRecoveryRate = 30f; // 每秒恢复体力
+        private int _maxStamina;
+        private int _currentStamina;
+        private int _dodgeStaminaCost;
+        private float _staminaRecoveryRate;
 
         public int CurrentStamina => _currentStamina;
         public int MaxStamina => _maxStamina;
@@ -42,6 +42,19 @@ namespace GameLogic
         public Vector2 SpawnPosition => _spawnPoint != null ? (Vector2)_spawnPoint.position : Vector2.zero;
 
         private GameConfig.cfg.Player _playerConfig;
+
+        #region Fallback Defaults
+
+        // 当 TbPlayer 配置缺失时的兜底值。正常流程应始终能从配置表读取，此处兜底仅用于容错。
+        private const int DEFAULT_MAX_HP = 100;
+        private const int DEFAULT_MAX_STAMINA = 100;
+        private const int DEFAULT_DODGE_STAMINA_COST = 25;
+        private const float DEFAULT_STAMINA_RECOVERY_RATE = 30f;
+        private const float DEFAULT_MOVE_SPEED = 5f;
+        private const float DEFAULT_DODGE_SPEED = 15f;
+        private const float DEFAULT_DODGE_DURATION = 0.4f;
+
+        #endregion
 
         /// <summary>
         /// 设置玩家最大血量（需在创建玩家前调用）。
@@ -270,7 +283,10 @@ namespace GameLogic
             }
             else
             {
-                _maxHp = levelMaxHp > 0 ? levelMaxHp : _maxHp;
+                _maxHp = levelMaxHp > 0 ? levelMaxHp : DEFAULT_MAX_HP;
+                _maxStamina = DEFAULT_MAX_STAMINA;
+                _dodgeStaminaCost = DEFAULT_DODGE_STAMINA_COST;
+                _staminaRecoveryRate = DEFAULT_STAMINA_RECOVERY_RATE;
             }
 
             _currentHp = _maxHp;
@@ -283,12 +299,15 @@ namespace GameLogic
         private void ApplyPlayerConfig(PlayerEntity entity)
         {
             if (entity == null) return;
-            if (_playerConfig == null) return;
 
-            entity.BaseMoveSpeed = _playerConfig.MoveSpeed;
-            entity.MoveSpeed = _playerConfig.MoveSpeed;
-            entity.DodgeSpeed = _playerConfig.DodgeSpeed;
-            entity.DodgeDuration = _playerConfig.DodgeDuration;
+            float moveSpeed = _playerConfig?.MoveSpeed ?? DEFAULT_MOVE_SPEED;
+            float dodgeSpeed = _playerConfig?.DodgeSpeed ?? DEFAULT_DODGE_SPEED;
+            float dodgeDuration = _playerConfig?.DodgeDuration ?? DEFAULT_DODGE_DURATION;
+
+            entity.BaseMoveSpeed = moveSpeed;
+            entity.MoveSpeed = moveSpeed;
+            entity.DodgeSpeed = dodgeSpeed;
+            entity.DodgeDuration = dodgeDuration;
         }
 
         /// <summary>

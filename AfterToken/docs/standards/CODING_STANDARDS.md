@@ -277,7 +277,8 @@ Unity 对象销毁后 `== null` 已被重载，优先使用 `== null` 而非 `is
 
 ## 6. 核心编码红线
 
-1. **异步优先**：所有 IO / 资源 / 网络 / 耗时操作用 `UniTask`，禁止 `Task`、`Coroutine`、同步加载。
+1. **配置优先**：新增功能前，先在 `Configs/GameConfig/` 设计并落地相关 Luban 配置表（Excel 源数据 + 生成 JSON/C#），禁止在业务代码中写死数值、动画名、颜色、层级等可配置项。详细流程见 `docs/modules/pipeline/luban-config-system/ADDING-NEW-CONFIG.md`。
+2. **异步优先**：所有 IO / 资源 / 网络 / 耗时操作用 `UniTask`，禁止 `Task`、`Coroutine`、同步加载。
 2. **模块访问**：使用 `GameModule.XXX`，禁止直接 `ModuleSystem.GetModule<T>()`。
 3. **资源必须释放**：
    - `LoadAssetAsync` 对应 `UnloadAsset`。
@@ -375,3 +376,49 @@ namespace GameLogic
 
 - 若本文档与 `repowiki/zh/content/开发者指南/代码规范与标准.md`、`naming-rules.md` 或其他历史文档冲突，**以本文档为准**。
 - 旧代码中的不一致（`m_` 字段前缀、`private set; get;` 顺序、公共字段命名等）按 [迁移计划](./MIGRATION_PLAN.md) 逐步改造，不在单次提交中大规模重写。
+
+## 11. 配置表（Luban）开发规范
+
+### 11.1 配置优先原则
+
+1. **新功能先设计配置表**：任何涉及数值、表现参数、动画名、颜色、层级、文本格式、Prefab 路径等可变更内容的新功能，必须先完成 Luban 配置表设计，再编写业务代码。
+2. **禁止新增硬编码**：除极少量纯算法常量（如 `0.001f` 阈值、数学/物理常量）外，禁止在业务代码中新增写死数值。
+3. **已有硬编码逐步迁移**：发现旧代码中的硬编码应优先迁移到配置表，并在 `docs/framework/06-ConfigSystem.md` 与相关模块文档中同步更新。
+
+### 11.2 配置工程路径
+
+| 内容 | 相对路径 | 本机绝对路径 |
+|---|---|---|
+| Luban 配置工程 | `Configs/GameConfig/` | `D:\U3D_project\AfterToken\AfterToken\Configs\GameConfig` |
+| Luban 主程序 | `Tools/Luban/Luban.exe` | `D:\U3D_project\AfterToken\Tools\Luban\Luban.exe` |
+| 生成脚本 | `Configs/GameConfig/gen_code_bin_to_project.bat` | `D:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.bat` |
+| 生成代码输出 | `Assets/GameScripts/HotFix/GameProto/GameConfig/` | `D:\U3D_project\AfterToken\AfterToken\Assets\GameScripts\HotFix\GameProto\GameConfig` |
+| 生成数据输出 | `Assets/AssetRaw/Configs/json/` | `D:\U3D_project\AfterToken\AfterToken\Assets\AssetRaw\Configs\json` |
+
+### 11.3 生成与同步
+
+修改配置后必须执行：
+
+```bash
+D:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.bat
+```
+
+生成结果包括：
+1. C# 代码覆盖到 `Assets/GameScripts/HotFix/GameProto/GameConfig/`。
+2. JSON 数据覆盖到 `Assets/AssetRaw/Configs/json/`。
+3. 桥接文件 `ConfigSystem.cs` / `ExternalTypeUtil.cs` 被复制到 `Assets/GameScripts/HotFix/GameProto/`。
+
+> 在无法运行 Luban.exe 的环境中，允许手动同步 Excel、JSON、生成代码和 `GameProto.csproj` 编译项，但需保证四者一致，并在可运行 Luban 后重新执行脚本验证。
+
+### 11.4 新增表检查清单
+
+- [ ] 在 `__beans__.xlsx` 中定义 bean 结构。
+- [ ] 在 `__tables__.xlsx` 中注册 `cfg.TbXxx`。
+- [ ] 创建或扩展数据 `.xlsx` 并填写数据行。
+- [ ] 生成代码后确认 `cfg/TbXxx.cs` 和 `cfg/Xxx.cs` 已生成（或手动同步）。
+- [ ] 将 `cfg_tbx.json` 加入 `Assets/AssetRaw/Configs/json/`。
+- [ ] 在 `ConfigSystem.cs` 的 `_tableFiles` 中注册 JSON 文件名。
+- [ ] 在 `GameProto.csproj` 中新增 `Compile Include`（非通配符项目）。
+- [ ] 在 `Tables.cs` 中新增表属性与加载/Resolve 调用。
+- [ ] 业务代码改为读取配置，保留兜底值防止配置缺失。
+- [ ] 更新 `docs/framework/06-ConfigSystem.md` 与 `docs/modules/pipeline/luban-config-system/README.md`。

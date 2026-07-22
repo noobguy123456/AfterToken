@@ -8,7 +8,8 @@
     "attackDamage": 5,
     "attackRange": 1.5,
     "attackInterval": 1,
-    "prefab": "Enemy"
+    "prefab": "Enemy",
+    "pathRefreshInterval": 0.3
   },
   {
     "id": 9002,
@@ -19,6 +20,7 @@
     "attackDamage": 15,
     "attackRange": 2,
     "attackInterval": 1.2,
-    "prefab": "Enemy_Assault"
+    "prefab": "Enemy_Assault",
+    "pathRefreshInterval": 0.3
   }
 ]

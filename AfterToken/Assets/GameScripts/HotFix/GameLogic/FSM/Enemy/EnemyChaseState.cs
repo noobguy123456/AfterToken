@@ -17,11 +17,12 @@ namespace GameLogic
         private PathResult _currentPath;
         private int _currentWaypointIndex;
         private float _pathRefreshTimer;
-        private const float PATH_REFRESH_INTERVAL = 0.3f;
         private const float WAYPOINT_REACHED_THRESHOLD = 0.15f;
         private const float DIRECT_CHASE_DISTANCE = 1.5f;
         private const float SEPARATION_RADIUS = 0.6f;
         private const float SEPARATION_WEIGHT = 0.6f;
+        private const float CHASE_RANGE = 8f;
+        private const float MAX_INTERVAL_SCALE = 3f; // 远距离最大倍率
 
         // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的 params 数组与结果数组分配。
         private static readonly int EnemyMask = LayerMask.GetMask("Enemy");
@@ -70,7 +71,7 @@ namespace GameLogic
             }
 
             _pathRefreshTimer += elapse;
-            if (_pathRefreshTimer >= PATH_REFRESH_INTERVAL || _currentPath == null || !_currentPath.Success)
+            if (_pathRefreshTimer >= GetDynamicRefreshInterval() || _currentPath == null || !_currentPath.Success)
             {
                 _pathRefreshTimer = 0f;
                 RefreshPath();
@@ -118,6 +119,17 @@ namespace GameLogic
 
             _currentPath = nav.FindPath(Owner.transform.position, Context.PlayerPosition);
             _currentWaypointIndex = 0;
+        }
+
+        /// <summary>
+        /// 根据与玩家的距离动态调整路径刷新间隔：近快远慢，降低成群敌人时的 A* 调用频率。
+        /// </summary>
+        private float GetDynamicRefreshInterval()
+        {
+            float baseInterval = Owner?.PathRefreshInterval ?? 0.3f;
+            float distance = Vector2.Distance(Owner.transform.position, Context.PlayerPosition);
+            float t = Mathf.Clamp01(distance / CHASE_RANGE);
+            return Mathf.Lerp(baseInterval, baseInterval * MAX_INTERVAL_SCALE, t);
         }
 
         private void MoveTowards(Vector2 direction, float elapse)

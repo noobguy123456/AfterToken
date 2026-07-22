@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "smoothTime": 0.08,
+    "defaultFov": 60,
+    "fovSmoothTime": 0.15,
+    "shakeDamping": 2.5,
+    "scopeRenderSize": 512,
+    "scopeCameraFov": 25,
+    "defaultOrthographicSize": 4
+  }
+]

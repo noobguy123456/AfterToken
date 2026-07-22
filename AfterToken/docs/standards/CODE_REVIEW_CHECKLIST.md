@@ -59,6 +59,14 @@
 - [ ] 未直接 `Instantiate(prefab)` 加载资源。
 - [ ] 未在运行时逻辑中使用 `FindObjectOfType` / `FindObjectsOfType`。
 - [ ] `Update` / `FixedUpdate` 中未直接 `new` 对象（应使用 `MemoryPool`）。
+- [ ] 未新增业务硬编码数值/动画名/颜色/层级/文本格式（应先落 Luban 配置表）。
+
+### 配置表
+
+- [ ] 新功能涉及可变更数值、动画名、颜色、层级、文本格式、Prefab 路径时，先在 `Configs/GameConfig/` 完成 Luban 配置表设计。
+- [ ] 业务代码使用 `ConfigSystem.Instance.Tables.TbXxx` 读取配置，保留兜底值。
+- [ ] 修改配置后执行 `Configs/GameConfig/gen_code_bin_to_project.bat` 重新生成代码与 JSON。
+- [ ] 新增表已同步 `ConfigSystem.cs` 的 `_tableFiles` 与 `GameProto.csproj` 的 `Compile Include`。
 
 ### 注释与文档
 

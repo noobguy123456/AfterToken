@@ -13,7 +13,7 @@
 - [x] `level.xlsx` 关卡表（2 条数据）
 - [x] `item.xlsx` 道具表（10 条数据，含 `ItemExchange` / `EQuality` / `EItemType`）
 - [x] `player.xlsx` 玩家属性表（已接入 `PlayerSystem`）
-- [x] `enemy.xlsx` 敌人属性表（已接入 `EnemySpawnSystem`）
+- [x] `enemy.xlsx` 敌人属性表（已接入 `EnemySpawnSystem`，含 `pathRefreshInterval` 字段驱动 `EnemyChaseState` 路径刷新间隔）
 - [x] `battle.xlsx` 战斗表（含 `Enemy` / `Wave` / `Drop` 三个 sheet）
 - [x] `buff.xlsx` Buff 表（数据已存在，业务未接入）
 - [x] `inventory.xlsx` 背包容量表（已接入 `InventoryConfigMgr`）

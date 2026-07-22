@@ -22,6 +22,7 @@ namespace GameLogic.Navigation
 
         private static readonly int[] Dx = { 0, 0, 1, -1 };
         private static readonly int[] Dy = { 1, -1, 0, 0 };
+        private static readonly int ObstacleLayerMask = LayerMask.GetMask("Obstacle");
 
         public AStarNavigationSystem(INavigationGridBuilder builder)
         {
@@ -85,7 +86,8 @@ namespace GameLogic.Navigation
 
             if (startIndex == endIndex)
             {
-                var directResult = new PathResult { Success = true };
+                var directResult = PathResult.Acquire();
+                directResult.Success = true;
                 directResult.Waypoints.Add(to);
                 return directResult;
             }
@@ -151,8 +153,10 @@ namespace GameLogic.Navigation
 
         private PathResult ReconstructPath(int startIndex, int endIndex, Vector2 targetWorldPos)
         {
-            var result = new PathResult { Success = true };
-            var path = new List<Vector2>();
+            var result = PathResult.Acquire();
+            result.Success = true;
+            var path = result.Waypoints;
+            path.Clear();
 
             int current = endIndex;
             while (current != -1 && current != startIndex)
@@ -175,18 +179,16 @@ namespace GameLogic.Navigation
                 path[path.Count - 1] = targetWorldPos;
             }
 
-            result.Waypoints = SmoothPath(path);
-            result.PathLength = CalculatePathLength(result.Waypoints);
+            SmoothPathInPlace(path);
+            result.PathLength = CalculatePathLength(path);
             return result;
         }
 
-        private List<Vector2> SmoothPath(List<Vector2> path)
+        private void SmoothPathInPlace(List<Vector2> path)
         {
-            if (path.Count <= 2) return path;
+            if (path.Count <= 2) return;
 
-            var smoothed = new List<Vector2> { path[0] };
             int current = 0;
-
             while (current < path.Count - 1)
             {
                 int furthest = current + 1;
@@ -201,11 +203,13 @@ namespace GameLogic.Navigation
                         break;
                     }
                 }
-                smoothed.Add(path[furthest]);
-                current = furthest;
-            }
 
-            return smoothed;
+                if (furthest > current + 1)
+                {
+                    path.RemoveRange(current + 1, furthest - current - 1);
+                }
+                current++;
+            }
         }
 
         private bool HasLineOfSight(Vector2 from, Vector2 to)
@@ -215,7 +219,7 @@ namespace GameLogic.Navigation
             if (distance < 0.001f) return true;
 
             // 使用较小的 box 检测，避免贴边被误判为阻挡
-            var hit = Physics2D.Linecast(from, to, LayerMask.GetMask("Obstacle"));
+            var hit = Physics2D.Linecast(from, to, ObstacleLayerMask);
             return hit.collider == null;
         }
 

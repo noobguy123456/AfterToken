@@ -30,12 +30,15 @@ namespace GameLogic
         #endregion
 
         [Header("伤害指示器")]
-        [SerializeField] private float _indicatorFadeSpeed = 2f;
+        private float _indicatorFadeSpeed;
+        private Color _indicatorColor;
 
         [Header("命中标记")]
-        [SerializeField] private int _hitMarkerPoolSize = 8;
-        [SerializeField] private float _hitMarkerDuration = 0.15f;
-        [SerializeField] private float _hitMarkerSize = 32f;
+        private int _hitMarkerPoolSize;
+        private float _hitMarkerDuration;
+        private float _hitMarkerSize;
+        private Color _hitMarkerNormalColor;
+        private Color _hitMarkerCriticalColor;
 
         public static HitFeedbackUI Instance { get; private set; }
 
@@ -51,10 +54,49 @@ namespace GameLogic
         protected override void OnCreate()
         {
             base.OnCreate();
+            LoadUiConfig();
             FixFullScreenCanvas();
             Instance = this;
             InitializeIndicators();
             InitializeHitMarkerPool();
+        }
+
+        private void LoadUiConfig()
+        {
+            try
+            {
+                var uiConfig = ConfigSystem.Instance?.Tables?.TbUiConfig?.GetOrDefault(1);
+                if (uiConfig != null)
+                {
+                    _indicatorFadeSpeed = uiConfig.IndicatorFadeSpeed;
+                    _indicatorColor = ToUnityColor(uiConfig.IndicatorColor);
+                    _hitMarkerPoolSize = uiConfig.HitMarkerPoolSize;
+                    _hitMarkerDuration = uiConfig.HitMarkerDuration;
+                    _hitMarkerSize = uiConfig.HitMarkerSize;
+                    _hitMarkerNormalColor = ToUnityColor(uiConfig.HitMarkerNormalColor);
+                    _hitMarkerCriticalColor = ToUnityColor(uiConfig.HitMarkerCriticalColor);
+                    return;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            // 配置缺失时的兜底值。
+            _indicatorFadeSpeed = 2f;
+            _indicatorColor = new Color(1, 0, 0, 1);
+            _hitMarkerPoolSize = 8;
+            _hitMarkerDuration = 0.15f;
+            _hitMarkerSize = 32f;
+            _hitMarkerNormalColor = new Color(1, 0, 0, 1);
+            _hitMarkerCriticalColor = new Color(1, 0.5f, 0, 1);
+        }
+
+        private static Color ToUnityColor(GameConfig.cfg.Color c)
+        {
+            if (c == null) return Color.white;
+            return new Color(c.R, c.G, c.B, c.A);
         }
 
         protected override void OnDestroy()
@@ -69,7 +111,7 @@ namespace GameLogic
             {
                 if (_directionIndicators[i] != null)
                 {
-                    _directionIndicators[i].color = new Color(1, 0, 0, 0);
+                    _directionIndicators[i].color = new Color(_indicatorColor.r, _indicatorColor.g, _indicatorColor.b, 0);
                 }
             }
         }
@@ -166,7 +208,7 @@ namespace GameLogic
             int index = Mathf.RoundToInt(angle / 45f) % 8;
             if (index >= 0 && index < _directionIndicators.Length && _directionIndicators[index] != null)
             {
-                _directionIndicators[index].color = new Color(1, 0, 0, 1);
+                _directionIndicators[index].color = _indicatorColor;
             }
         }
 
@@ -192,7 +234,7 @@ namespace GameLogic
             }
 
             marker.gameObject.SetActive(true);
-            marker.color = isCritical ? new Color(1, 0.5f, 0, 1) : new Color(1, 0, 0, 1);
+            marker.color = isCritical ? _hitMarkerCriticalColor : _hitMarkerNormalColor;
             marker.rectTransform.anchoredPosition = localPos;
 
             _activeHitMarkers.Add(new ActiveHitMarker

@@ -79,6 +79,7 @@ namespace GameLogic.Navigation
                     return entry.Result;
                 }
                 _pathCache.Remove(cacheKey);
+                PathResult.Release(entry.Result);
             }
 
             var result = _navigator.FindPath(from, to);
@@ -103,6 +104,10 @@ namespace GameLogic.Navigation
         public void Rebuild()
         {
             _navigator?.Rebuild();
+            foreach (var entry in _pathCache.Values)
+            {
+                PathResult.Release(entry.Result);
+            }
             _pathCache.Clear();
         }
 
@@ -127,7 +132,10 @@ namespace GameLogic.Navigation
             }
             foreach (var key in _keysToRemove)
             {
-                _pathCache.Remove(key);
+                if (_pathCache.Remove(key, out var entry))
+                {
+                    PathResult.Release(entry.Result);
+                }
             }
         }
 

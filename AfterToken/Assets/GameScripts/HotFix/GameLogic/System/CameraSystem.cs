@@ -34,22 +34,23 @@ namespace GameLogic
 
         [Header("跟随")]
         [SerializeField] private CameraFollowMode _followMode = CameraFollowMode.Hard;
-        [SerializeField] private float _smoothTime = 0.08f;
+        private float _smoothTime;
         [SerializeField] private float _lookAheadFactor = 0f;
         [SerializeField] private Vector3 _offset = new Vector3(0, 0, -10f);
 
         [Header("瞄准 FOV")]
-        [SerializeField] private float _defaultFov = 60f;
-        [SerializeField] private float _fovSmoothTime = 0.15f;
+        private float _defaultFov;
+        private float _fovSmoothTime;
 
-        private float _defaultOrthographicSize = 4f;
+        private float _defaultOrthographicSize;
         private float _currentOrthographicSizeVelocity;
 
         [Header("震动")]
-        [SerializeField] private float _shakeDamping = 2.5f;
+        private float _shakeDamping;
 
         [Header("狙击镜")]
-        [SerializeField] private int _scopeRenderSize = 512;
+        private int _scopeRenderSize;
+        private float _scopeCameraFov;
 
         private Camera _mainCamera;
         private Camera _scopeCamera;
@@ -84,8 +85,11 @@ namespace GameLogic
             Instance = this;
 
             _mainCamera = GetComponent<Camera>();
+
+            LoadCameraConfig();
+
             _targetFov = _defaultFov;
-            _defaultOrthographicSize = _mainCamera != null ? _mainCamera.orthographicSize : 4f;
+            _defaultOrthographicSize = _mainCamera != null ? _mainCamera.orthographicSize : _defaultOrthographicSize;
 
             CreateScopeCamera();
 
@@ -94,6 +98,38 @@ namespace GameLogic
             _eventMgr.AddEvent<float, float>(ICameraEvent_Event.OnCameraShake, OnCameraShake);
             _eventMgr.AddEvent<float>(ICameraEvent_Event.OnAimFovChanged, OnAimFovChanged);
             _eventMgr.AddEvent<float, float>(IHitFeedbackEvent_Event.OnDamageIndicator, OnDamageIndicator);
+        }
+
+        private void LoadCameraConfig()
+        {
+            try
+            {
+                var cameraConfig = ConfigSystem.Instance?.Tables?.TbCamera?.GetOrDefault(1);
+                if (cameraConfig != null)
+                {
+                    _smoothTime = cameraConfig.SmoothTime;
+                    _defaultFov = cameraConfig.DefaultFov;
+                    _fovSmoothTime = cameraConfig.FovSmoothTime;
+                    _shakeDamping = cameraConfig.ShakeDamping;
+                    _scopeRenderSize = cameraConfig.ScopeRenderSize;
+                    _scopeCameraFov = cameraConfig.ScopeCameraFov;
+                    _defaultOrthographicSize = cameraConfig.DefaultOrthographicSize;
+                    return;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            // 配置缺失时的兜底值。
+            _smoothTime = 0.08f;
+            _defaultFov = 60f;
+            _fovSmoothTime = 0.15f;
+            _shakeDamping = 2.5f;
+            _scopeRenderSize = 512;
+            _scopeCameraFov = 25f;
+            _defaultOrthographicSize = 4f;
         }
 
         private void OnDestroy()
@@ -119,8 +155,8 @@ namespace GameLogic
 
             _scopeCamera = go.AddComponent<Camera>();
             _scopeCamera.CopyFrom(_mainCamera);
-            _scopeCamera.fieldOfView = 25f;
-            _scopeCamera.orthographicSize = _defaultOrthographicSize * (25f / _defaultFov);
+            _scopeCamera.fieldOfView = _scopeCameraFov;
+            _scopeCamera.orthographicSize = _defaultOrthographicSize * (_scopeCameraFov / _defaultFov);
             _scopeCamera.clearFlags = CameraClearFlags.SolidColor;
             _scopeCamera.backgroundColor = Color.black;
 
@@ -154,7 +190,7 @@ namespace GameLogic
             _targetFov = targetFov;
 
             // 狙击枪开镜时启用狙击镜相机
-            bool isSniperScope = Mathf.Abs(targetFov - 25f) < 0.1f;
+            bool isSniperScope = Mathf.Abs(targetFov - _scopeCameraFov) < 0.1f;
             if (_scopeCamera != null)
             {
                 _scopeCamera.enabled = isSniperScope;

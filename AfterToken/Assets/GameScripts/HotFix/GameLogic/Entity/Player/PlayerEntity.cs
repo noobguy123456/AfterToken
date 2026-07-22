@@ -16,10 +16,10 @@ namespace GameLogic
 
         public Vector2 MoveDirection { get; private set; }
         public Vector2 AimPosition { get; private set; }
-        public float BaseMoveSpeed { get; set; } = 5f;
-        public float MoveSpeed { get; set; } = 5f;
-        public float DodgeSpeed { get; set; } = 15f;
-        public float DodgeDuration { get; set; } = 0.4f;
+        public float BaseMoveSpeed { get; set; }
+        public float MoveSpeed { get; set; }
+        public float DodgeSpeed { get; set; }
+        public float DodgeDuration { get; set; }
         public bool IsMoving => MoveDirection.sqrMagnitude > 0.001f;
         public bool IsDead { get; private set; }
         public bool IsDodging { get; private set; }
@@ -54,14 +54,14 @@ namespace GameLogic
         /// </summary>
         public void PlayAnimation(string stateName)
         {
-            // TODO: 接入 TbPlayerAnimation 配置表
+            var playerConfig = ConfigSystem.Instance?.Tables?.TbPlayer?.GetOrDefault(1);
             string animName = stateName switch
             {
-                "Idle" => "Player_Idle",
-                "Move" => "Player_Run",
-                "Dodge" => "Player_Roll",
-                "Reload" => "Player_Reload",
-                "Dead" => "Player_Dead",
+                "Idle" => playerConfig?.IdleAnim ?? "Player_Idle",
+                "Move" => playerConfig?.MoveAnim ?? "Player_Run",
+                "Dodge" => playerConfig?.DodgeAnim ?? "Player_Roll",
+                "Reload" => playerConfig?.ReloadAnim ?? "Player_Reload",
+                "Dead" => playerConfig?.DeadAnim ?? "Player_Dead",
                 _ => null
             };
 

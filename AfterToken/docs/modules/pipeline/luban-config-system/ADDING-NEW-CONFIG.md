@@ -258,7 +258,7 @@ cfg.TbDrop     | Drop       | Drop@battle.xlsx
 修改完配置后，必须执行：
 
 ```bash
-E:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.bat
+D:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.bat
 ```
 
 该脚本会：
@@ -293,3 +293,82 @@ E:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.
 
 6. **数据文件从第四行开始**
    - 第 1 行 `##var`，第 2 行 `##type`，第 3 行 `##` 注释，第 4 行起真实数据。
+
+> 最新变更：`player.xlsx` 已扩展 `weaponSwitchCooldown`、`idleAnim`、`moveAnim`、`dodgeAnim`、`reloadAnim`、`deadAnim` 等字段；新增 `camera.xlsx`、`ballistic.xlsx`、`ui_config.xlsx`、`pickup.xlsx` 单条全局配置表；`enemy.xlsx` 已扩展 `pathRefreshInterval` 字段。详见 `docs/framework/06-ConfigSystem.md`。
+> 历史遗留的临时 Python 脚本（`generate_cs.py`、`update_config.py`、`update_item_text.py`）已清理，统一使用 `gen_code_bin_to_project.bat`。
+
+---
+
+## 六、新增字段/表完整检查清单
+
+在新增或修改配置时，按以下清单逐项确认，避免漏改导致运行时找不到字段或加载失败。
+
+### 情况 A：在现有 bean 中新增字段
+
+- [ ] 在 `__beans__.xlsx` 的目标 bean 下新增字段行（`name` / `type` / `comment`）。
+- [ ] 在对应数据 `.xlsx` 中新增一列：
+  - 第 1 行 `##var` 加入字段名（小写驼峰）。
+  - 第 2 行 `##type` 加入字段类型。
+  - 第 3 行 `##` 加入中文注释。
+  - 第 4 行起填入数据。
+- [ ] 运行 `Configs/GameConfig/gen_code_bin_to_project.bat` 重新生成。
+- [ ] 检查生成的 `cfg/Xxx.cs` 中是否包含新字段。
+- [ ] 检查生成的 `cfg_tbxxx.json` 是否包含新字段数据。
+- [ ] 业务代码改为读取新字段，保留兜底值防止配置缺失。
+- [ ] 同步更新 `docs/framework/06-ConfigSystem.md` 与相关模块文档。
+
+### 情况 B：新增独立配置表
+
+- [ ] 在 `__beans__.xlsx` 中定义新的 bean（`full_name` / `comment` / `group`），并列出所有字段。
+- [ ] 在 `__tables__.xlsx` 中注册 `cfg.TbXxx`（`value_type` 与 bean 名一致，`input` 指向数据文件）。
+- [ ] 创建新的数据 `.xlsx`，包含 `##var` / `##type` / `##` 三行表头及数据。
+- [ ] 运行 `Configs/GameConfig/gen_code_bin_to_project.bat` 重新生成。
+- [ ] 检查是否生成了 `cfg/Xxx.cs`、`cfg/TbXxx.cs`、`cfg_tbxxx.json`。
+- [ ] 检查 `ConfigSystem.cs` 的 `_tableFiles` 是否已自动包含 `cfg_tbxxx`（由生成脚本复制桥接文件时处理）。
+- [ ] 检查 `GameProto.csproj` 是否包含新生成的 `.cs` 文件（通配符项目通常自动包含，非通配符需手动添加）。
+- [ ] 检查 `Tables.cs` 是否已生成 `TbXxx` 属性与加载/Resolve 调用。
+- [ ] 业务代码通过 `ConfigSystem.Instance.Tables.TbXxx.Get(id)` 访问。
+- [ ] 同步更新 `docs/framework/06-ConfigSystem.md` 与相关模块文档。
+
+### 情况 C：新增枚举
+
+- [ ] 在 `__enums__.xlsx` 中定义枚举（`full_name` / `flags` / `unique` / `group`），并列出枚举项。
+- [ ] 在 `__beans__.xlsx` 的字段中引用 `cfg.XxxType` 类型。
+- [ ] 在数据 `.xlsx` 中填入枚举项名（如 `Pistol`）。
+- [ ] 运行生成脚本并验证生成的 C# 枚举与 JSON 数据一致。
+
+---
+
+## 七、Luban 不可用时的人工同步
+
+当 `Tools/Luban/Luban.exe` 缺失或无法运行时，允许**临时**手动同步，但必须在 Luban 恢复后重新执行 `gen_code_bin_to_project.bat` 验证。
+
+以给 `cfg.Enemy` 新增 `pathRefreshInterval` 为例：
+
+1. **修改 Excel**：在 `Configs/GameConfig/Datas/enemy.xlsx` 新增 `pathRefreshInterval` 列。
+2. **修改 JSON**：在 `Assets/AssetRaw/Configs/json/cfg_tbenemy.json` 的每条记录中加入 `"pathRefreshInterval": 0.3`。
+3. **修改生成代码**：在 `Assets/GameScripts/HotFix/GameProto/GameConfig/cfg/Enemy.cs` 中：
+   - 构造函数里增加 `PathRefreshInterval = (float)_obj.GetValue("pathRefreshInterval");`。
+   - 增加 `public readonly float PathRefreshInterval;` 字段。
+   - 更新 `ToString()` 方法。
+4. **编译验证**：运行 `dotnet build GameProto.csproj --no-dependencies` 与 `dotnet build GameLogic.csproj --no-dependencies`。
+
+> 注意：手动同步只建议作为 Luban 不可用时的临时方案，长期维护应通过 `gen_code_bin_to_project.bat` 生成。
+
+---
+
+## 八、常见问题
+
+| 现象 | 可能原因 | 解决方案 |
+|------|----------|----------|
+| 运行时 `KeyNotFoundException` 或配置字段为默认值 | JSON 数据里缺少该字段 | 同步更新 JSON 数据，或在读取时增加 `GetOrDefault` / 兜底值 |
+| 编译报错 `CS1061`（字段不存在） | `__beans__.xlsx` 漏了字段，或生成代码未更新 | 检查 bean 定义，重新运行生成脚本 |
+| 生成脚本提示 `Luban.exe` 找不到 | `Tools/Luban/` 不完整 | 从 Luban Release 下载完整工具链并解压到 `D:\U3D_project\AfterToken\Tools\Luban\` |
+| 生成的 JSON 中文字段显示为乱码 | Excel 保存编码问题 | 重新保存 `.xlsx` 并确认 JSON 输出使用 UTF-8 |
+| 配置热更后运行时仍读取旧数据 | YooAsset 收集器未包含 `AssetRaw/Configs/json/` | 检查 YooAsset 收集器 `Configs` 组配置 |
+
+---
+
+> 状态说明：
+> - 当前总状态：✅
+> - 每次更新后同步 `docs/TODO.md`

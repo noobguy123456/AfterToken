@@ -1,8 +1,8 @@
 [
   {
     "id": 10000,
-    "name": "新手剑",
-    "desc": "初始武器",
+    "name": "Novice Sword",
+    "desc": "A basic sword for beginners.",
     "price": 100,
     "quality": 0,
     "upgradeToItemId": 10001,
@@ -19,8 +19,8 @@
   },
   {
     "id": 10001,
-    "name": "铁剑",
-    "desc": "进阶武器",
+    "name": "Iron Sword",
+    "desc": "A sturdy iron blade.",
     "price": 200,
     "quality": 1,
     "upgradeToItemId": 10002,
@@ -41,8 +41,8 @@
   },
   {
     "id": 10002,
-    "name": "钢剑",
-    "desc": "高级武器",
+    "name": "Steel Sword",
+    "desc": "A refined steel weapon.",
     "price": 500,
     "quality": 2,
     "upgradeToItemId": 10003,
@@ -67,8 +67,8 @@
   },
   {
     "id": 10003,
-    "name": "王者之剑",
-    "desc": "传说材料",
+    "name": "King's Sword",
+    "desc": "A legendary crafting material.",
     "price": 1000,
     "quality": 3,
     "upgradeToItemId": 0,

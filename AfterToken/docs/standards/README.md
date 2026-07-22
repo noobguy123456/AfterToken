@@ -19,10 +19,12 @@
 
 ## 快速红线
 
-1. 私有字段 `_camelCase`，常量 `UPPER_SNAKE_CASE`。
-2. 所有 IO / 资源用 `UniTask`，禁止 `Coroutine` / 同步加载。
-3. 模块访问用 `GameModule.XXX`。
-4. UI Prefab 路径：`Assets/AssetRaw/UI/{Name}/{Name}.prefab`。
-5. UI 文字使用 `TextMeshProUGUI`，节点前缀 `m_text_` / `m_tmp_`。
-6. 热更资源只放 `Assets/AssetRaw/`，不放 `Assets/Resources/`。
-7. `LoadAssetAsync` 必须对应 `UnloadAsset`。
+1. **新功能先设计配置表**：任何涉及数值、表现参数、动画名、颜色、层级、文本格式、Prefab 路径等可变更内容的新功能，先在 `Configs/GameConfig/` 完成 Luban 配置表设计，再编写业务代码；禁止新增硬编码。
+2. 私有字段 `_camelCase`，常量 `UPPER_SNAKE_CASE`。
+3. 所有 IO / 资源用 `UniTask`，禁止 `Coroutine` / 同步加载。
+4. 模块访问用 `GameModule.XXX`。
+5. UI Prefab 路径：`Assets/AssetRaw/UI/{Name}/{Name}.prefab`。
+6. UI 文字使用 `TextMeshProUGUI`，节点前缀 `m_text_` / `m_tmp_`。
+7. 热更资源只放 `Assets/AssetRaw/`，不放 `Assets/Resources/`。
+8. `LoadAssetAsync` 必须对应 `UnloadAsset`。
+9. Luban 配置工程：`Configs/GameConfig/`；生成脚本：`Configs/GameConfig/gen_code_bin_to_project.bat`；本机 Luban 主程序：`D:\U3D_project\AfterToken\Tools\Luban\Luban.exe`。

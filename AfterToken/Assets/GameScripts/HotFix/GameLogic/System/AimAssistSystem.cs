@@ -12,14 +12,21 @@ namespace GameLogic
         public static AimAssistSystem Instance { get; private set; }
 
         [Header("辅助瞄准")]
-        [SerializeField] private float _aimAssistRadius = 2f;
-        [SerializeField] private float _aimAssistMaxAngle = 15f;
+        [SerializeField] private float _aimAssistRadius;
+        [SerializeField] private float _aimAssistMaxAngle;
         [SerializeField] private LayerMask _enemyLayer;
 
         [Header("火箭锁定")]
-        [SerializeField] private float _lockOnRange = 20f;
-        [SerializeField] private float _lockOnAngle = 10f;
-        [SerializeField] private float _lockOnHoldTime = 1.5f;
+        [SerializeField] private float _lockOnRange;
+        [SerializeField] private float _lockOnAngle;
+        [SerializeField] private float _lockOnHoldTime;
+
+        // 当武器配置未提供辅助瞄准参数时的兜底值。
+        private const float DEFAULT_AIM_ASSIST_RADIUS = 2f;
+        private const float DEFAULT_AIM_ASSIST_MAX_ANGLE = 15f;
+        private const float DEFAULT_LOCK_ON_RANGE = 20f;
+        private const float DEFAULT_LOCK_ON_ANGLE = 10f;
+        private const float DEFAULT_LOCK_ON_HOLD_TIME = 1.5f;
 
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
 
@@ -73,22 +80,23 @@ namespace GameLogic
                 return direction;
             }
 
-            var target = FindBestAssistTarget(origin, direction);
+            var target = FindBestAssistTarget(origin, direction, config);
             if (target == null) return direction;
 
             Vector2 toTarget = ((Vector2)target.position - origin).normalized;
             float angle = Vector2.Angle(direction, toTarget);
-            if (angle > _aimAssistMaxAngle) return direction;
+            if (angle > config.aimAssistMaxAngle) return direction;
 
-            float t = 1 - (angle / _aimAssistMaxAngle);
+            float t = 1 - (angle / config.aimAssistMaxAngle);
             return Vector2.Lerp(direction, toTarget, t * 0.5f).normalized;
         }
 
-        private Transform FindBestAssistTarget(Vector2 origin, Vector2 direction)
+        private Transform FindBestAssistTarget(Vector2 origin, Vector2 direction, WeaponConfig config)
         {
             var enemies = EnemyRegistry.All;
             Transform best = null;
             float bestScore = float.MaxValue;
+            float radius = config?.aimAssistRadius ?? DEFAULT_AIM_ASSIST_RADIUS;
 
             foreach (var enemy in enemies)
             {
@@ -96,7 +104,7 @@ namespace GameLogic
 
                 Vector2 toEnemy = (Vector2)enemy.transform.position - origin;
                 float distance = toEnemy.magnitude;
-                if (distance > _aimAssistRadius) continue;
+                if (distance > radius) continue;
 
                 float angle = Vector2.Angle(direction, toEnemy.normalized);
                 float score = distance + angle * 0.1f;
@@ -115,20 +123,29 @@ namespace GameLogic
             var player = PlayerSystem.Instance?.GetPlayerEntity();
             if (player == null) return;
 
+            var weaponConfig = WeaponSystem.Instance?.CurrentWeapon?.Config;
+            if (weaponConfig == null)
+            {
+                ClearLockOn();
+                return;
+            }
+
             Vector2 origin = player.transform.position;
             Vector2 aimDir = ((Vector2)player.AimPosition - origin).normalized;
 
-            var target = FindLockOnTarget(origin, aimDir);
+            var target = FindLockOnTarget(origin, aimDir, weaponConfig);
             if (target == null)
             {
                 ClearLockOn();
                 return;
             }
 
+            float holdTime = weaponConfig.lockOnHoldTime > 0 ? weaponConfig.lockOnHoldTime : DEFAULT_LOCK_ON_HOLD_TIME;
+
             if (_lockedTarget == target)
             {
                 _lockTimer += Time.deltaTime;
-                if (!_isLocked && _lockTimer >= _lockOnHoldTime)
+                if (!_isLocked && _lockTimer >= holdTime)
                 {
                     _isLocked = true;
                     GameEvent.Get<IHitFeedbackEvent>()?.OnTargetLocked(target.GetInstanceID());
@@ -142,11 +159,13 @@ namespace GameLogic
             }
         }
 
-        private Transform FindLockOnTarget(Vector2 origin, Vector2 direction)
+        private Transform FindLockOnTarget(Vector2 origin, Vector2 direction, WeaponConfig config)
         {
             var enemies = EnemyRegistry.All;
             Transform best = null;
             float bestAngle = float.MaxValue;
+            float range = config?.lockOnRange > 0 ? config.lockOnRange : DEFAULT_LOCK_ON_RANGE;
+            float angleLimit = config?.lockOnAngle > 0 ? config.lockOnAngle : DEFAULT_LOCK_ON_ANGLE;
 
             foreach (var enemy in enemies)
             {
@@ -154,10 +173,10 @@ namespace GameLogic
 
                 Vector2 toEnemy = (Vector2)enemy.transform.position - origin;
                 float distance = toEnemy.magnitude;
-                if (distance > _lockOnRange) continue;
+                if (distance > range) continue;
 
                 float angle = Vector2.Angle(direction, toEnemy.normalized);
-                if (angle > _lockOnAngle) continue;
+                if (angle > angleLimit) continue;
 
                 if (angle < bestAngle)
                 {

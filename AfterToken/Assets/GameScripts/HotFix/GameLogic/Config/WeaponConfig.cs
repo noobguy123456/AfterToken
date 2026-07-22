@@ -61,6 +61,13 @@ namespace GameLogic
         public Color trackingLaserColor;
         public string lockOnSound;
 
+        // 辅助瞄准
+        public float aimAssistRadius;
+        public float aimAssistMaxAngle;
+        public float lockOnRange;
+        public float lockOnAngle;
+        public float lockOnHoldTime;
+
         // 后坐力/抖动
         public float recoilIntensity;
 
@@ -111,6 +118,11 @@ namespace GameLogic
             trackingTime = w.TrackingTime;
             trackingLaserColor = ToUnityColor(w.TrackingLaserColor);
             lockOnSound = w.LockOnSound;
+            aimAssistRadius = w.AimAssistRadius;
+            aimAssistMaxAngle = w.AimAssistMaxAngle;
+            lockOnRange = w.LockOnRange;
+            lockOnAngle = w.LockOnAngle;
+            lockOnHoldTime = w.LockOnHoldTime;
             muzzleEffect = w.MuzzleEffect;
             hitEffect = w.HitEffect;
             fireSound = w.FireSound;

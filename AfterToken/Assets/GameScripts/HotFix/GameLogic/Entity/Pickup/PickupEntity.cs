@@ -19,31 +19,36 @@ namespace GameLogic
         /// </summary>
         public static PickupEntity Spawn(int itemId, int count, Vector2 position)
         {
+            var pickupConfig = ConfigSystem.Instance?.Tables?.TbPickup?.GetOrDefault(1);
+            float colliderRadius = pickupConfig?.ColliderRadius ?? 0.4f;
+            float visualScale = pickupConfig?.VisualScale ?? 0.5f;
+            int sortingOrder = pickupConfig?.SortingOrder ?? 2;
+
             var go = new GameObject($"Pickup_{itemId}");
             go.transform.position = position;
 
             var collider = go.AddComponent<CircleCollider2D>();
             collider.isTrigger = true;
-            collider.radius = 0.4f;
+            collider.radius = colliderRadius;
 
             var pickup = go.AddComponent<PickupEntity>();
-            pickup.Initialize(itemId, count);
+            pickup.Initialize(itemId, count, visualScale, sortingOrder);
             return pickup;
         }
 
-        private void Initialize(int itemId, int count)
+        private void Initialize(int itemId, int count, float visualScale, int sortingOrder)
         {
             _itemId = itemId;
             _count = count;
 
             var visualGo = new GameObject("Visual");
             visualGo.transform.SetParent(transform, false);
-            visualGo.transform.localScale = Vector3.one * 0.5f;
+            visualGo.transform.localScale = Vector3.one * visualScale;
 
             var renderer = visualGo.AddComponent<SpriteRenderer>();
             renderer.sprite = PlaceholderSpriteProvider.GetWhiteSprite16();
             renderer.color = RarityColors.Get(ItemConfigMgr.Instance.GetQuality(itemId));
-            renderer.sortingOrder = 2;
+            renderer.sortingOrder = sortingOrder;
         }
 
         private void OnTriggerEnter2D(Collider2D other)

@@ -14,16 +14,18 @@ namespace GameLogic
 
         [Header("命中检测")]
         [SerializeField] private LayerMask _hitLayers;
-        [SerializeField] private float _tracerRadius = 0.05f;
+        private float _tracerRadius;
 
         [Header("瞄准辅助可视化")]
         [SerializeField] private LineRenderer _lockOnLaserPrefab;
 
         [Header("Tracer 表现")]
-        [SerializeField] private float _tracerStartWidth = 0.1f;
-        [SerializeField] private float _tracerEndWidth = 0.05f;
-        [SerializeField] private float _tracerTailLength = 0.5f;
-        [SerializeField] private int _maxActiveTracers = 30;
+        private float _tracerStartWidth;
+        private float _tracerEndWidth;
+        private float _tracerTailLength;
+        private int _maxActiveTracers;
+        private Color _tracerStartColor;
+        private Color _tracerEndColor;
 
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
         private readonly List<TracerVisual> _activeTracers = new List<TracerVisual>();
@@ -35,6 +37,8 @@ namespace GameLogic
         private void Awake()
         {
             Instance = this;
+
+            LoadBallisticConfig();
 
             if (_hitLayers == 0)
             {
@@ -50,6 +54,62 @@ namespace GameLogic
             _tracerMaterial = new Material(Shader.Find("Sprites/Default"));
 
             InitializeRocketLaser();
+        }
+
+        private void LoadBallisticConfig()
+        {
+            try
+            {
+                var ballisticConfig = ConfigSystem.Instance?.Tables?.TbBallistic?.GetOrDefault(1);
+                if (ballisticConfig != null)
+                {
+                    _tracerRadius = ballisticConfig.TracerRadius;
+                    _tracerStartWidth = ballisticConfig.TracerStartWidth;
+                    _tracerEndWidth = ballisticConfig.TracerEndWidth;
+                    _tracerTailLength = ballisticConfig.TracerTailLength;
+                    _maxActiveTracers = ballisticConfig.MaxActiveTracers;
+                    if (_hitLayers == 0 && !string.IsNullOrWhiteSpace(ballisticConfig.HitLayers))
+                    {
+                        _hitLayers = ParseLayerMask(ballisticConfig.HitLayers);
+                    }
+                    _tracerStartColor = ToUnityColor(ballisticConfig.TracerStartColor);
+                    _tracerEndColor = ToUnityColor(ballisticConfig.TracerEndColor);
+                    return;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+
+            // 配置缺失时的兜底值。
+            _tracerRadius = 0.05f;
+            _tracerStartWidth = 0.1f;
+            _tracerEndWidth = 0.05f;
+            _tracerTailLength = 0.5f;
+            _maxActiveTracers = 30;
+            _tracerStartColor = new Color(1f, 0.9f, 0.2f, 0.9f);
+            _tracerEndColor = new Color(1f, 0.6f, 0f, 0.3f);
+        }
+
+        private static LayerMask ParseLayerMask(string layers)
+        {
+            if (string.IsNullOrWhiteSpace(layers)) return 0;
+            var mask = 0;
+            foreach (var part in layers.Split(',', ';'))
+            {
+                var layerName = part.Trim();
+                if (string.IsNullOrEmpty(layerName)) continue;
+                var layer = LayerMask.NameToLayer(layerName);
+                if (layer >= 0) mask |= 1 << layer;
+            }
+            return mask;
+        }
+
+        private static Color ToUnityColor(GameConfig.cfg.Color c)
+        {
+            if (c == null) return Color.white;
+            return new Color(c.R, c.G, c.B, c.A);
         }
 
         private void InitializeRocketLaser()
@@ -264,8 +324,8 @@ namespace GameLogic
             lr.endWidth = _tracerEndWidth;
             lr.positionCount = 2;
             lr.material = _tracerMaterial;
-            lr.startColor = new Color(1f, 0.9f, 0.2f, 0.9f);
-            lr.endColor = new Color(1f, 0.6f, 0f, 0.3f);
+            lr.startColor = _tracerStartColor;
+            lr.endColor = _tracerEndColor;
 
             return new TracerVisual
             {

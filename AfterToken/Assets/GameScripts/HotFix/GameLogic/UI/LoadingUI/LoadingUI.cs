@@ -39,8 +39,25 @@ namespace GameLogic
             }
             if (_progressText != null)
             {
-                _progressText.text = $"Loading... {progress * 100:F0}%";
+                _progressText.text = GetLoadingText(progress);
             }
+        }
+
+        private static string GetLoadingText(float progress)
+        {
+            try
+            {
+                var format = ConfigSystem.Instance?.Tables?.TbUiConfig?.GetOrDefault(1)?.LoadingTextFormat;
+                if (!string.IsNullOrWhiteSpace(format))
+                {
+                    return string.Format(format, progress * 100);
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+            return $"Loading... {progress * 100:F0}%";
         }
     }
 }

@@ -1,4 +1,4 @@
-ho off
+@echo off
 setlocal enabledelayedexpansion
 
 :: 切换到脚本所在目录

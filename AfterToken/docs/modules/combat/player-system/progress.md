@@ -10,6 +10,7 @@
 - [x] 体力系统：恢复、闪避消耗、`CanDodge` 黑板标志
 - [x] 战斗 HUD 血条与体力条（`BattleMainUI`）
 - [x] `TbPlayer` 配置表接入（血量/体力/移速/闪避等属性）
+- [x] `PlayerEntity` 移速/闪速/闪避时长不再在代码中写死，统一由 `PlayerSystem` 从 `TbPlayer` 应用
 - [x] Play Mode 基础状态验证（Idle / Move / Dodge / Reload / Dead 已初步确认）
 
 ## 进行中

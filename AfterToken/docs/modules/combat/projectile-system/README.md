@@ -18,6 +18,7 @@
 - 所有飞行物由 `ProjectileSystem` 统一 `Update`，避免每个子弹一个 MonoBehaviour `Update`。
 - 命中后触发 `IProjectileEvent.OnProjectileHit`，交由 `BattleSystem` 计算伤害。
 - 使用对象池回收飞行物实例。
+- 爆炸范围伤害使用 `Physics2D.OverlapCircle` + 静态 `Collider2D[]` 缓冲，避免每次爆炸分配结果数组。
 
 ## 架构演进（弹幕扩展）
 

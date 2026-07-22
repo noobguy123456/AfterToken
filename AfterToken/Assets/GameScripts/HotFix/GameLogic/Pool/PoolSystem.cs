@@ -47,6 +47,18 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 预加载指定数量的对象到池中（若池不存在则创建）。
+        /// </summary>
+        public void Preload(string key, GameObject prefab, Transform parent, int count)
+        {
+            if (!_pools.TryGetValue(key, out var pool))
+            {
+                pool = new GameObjectPool(prefab, parent, count);
+                _pools[key] = pool;
+            }
+        }
+
+        /// <summary>
         /// 清空指定对象池。
         /// </summary>
         public void Clear(string key)

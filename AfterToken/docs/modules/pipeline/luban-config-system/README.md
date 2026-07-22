@@ -15,9 +15,11 @@
 
 ### 工具链状态
 
-当前 `Tools/Luban/` 已包含完整运行依赖，`gen_code_bin_to_project.bat` 可正常生成代码与 JSON 数据。
+`gen_code_bin_to_project.bat` 可正常生成代码与 JSON 数据，前提是 `Tools/Luban/` 目录下包含完整运行依赖（`Luban.exe`、`Luban.runtimeconfig.json` 等）。
 
-`Tools/Luban/` 指**仓库根目录**下的 `Tools/Luban/`（本机为 `E:\U3D_project\AfterToken\Tools\Luban`），与脚本所在目录 `Configs/GameConfig/` 相差三级 `..\..\..\`。若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到仓库根目录的 `Tools/Luban/` 下。
+`Tools/Luban/` 指**仓库根目录**下的 `Tools/Luban/`（本机为 `D:\U3D_project\AfterToken\Tools\Luban`），与脚本所在目录 `Configs/GameConfig/` 相差三级 `..\..\..`。若在新环境遇到 `hostpolicy.dll` / `Luban.runtimeconfig.json` 缺失错误，需从 Luban 官方 Release 下载完整工具链压缩包，解压后**整个文件夹**放到仓库根目录的 `Tools/Luban/` 下。
+
+> 历史遗留的 `generate_cs.py`、`update_config.py`、`update_item_text.py` 等临时 Python 脚本已清理，统一使用 `gen_code_bin_to_project.bat` 作为标准生成流程。
 
 官方地址：
 - GitHub：https://github.com/focus-creative-games/luban/releases
@@ -36,7 +38,8 @@ dotnet Tools/Luban/Luban.exe --help
 ```
 Configs/GameConfig/
 ├── luban.conf                              # Luban 主配置
-├── gen_code_bin_to_project.bat             # 客户端代码生成脚本
+├── gen_code_bin_to_project.bat             # 客户端代码生成脚本（标准模板）
+├── gen_code_bin_to_project_nobom.bat       # 客户端代码生成脚本（无 BOM 中文提示）
 ├── Defines/
 │   └── builtin.xml                         # Unity 类型映射（vector2/3/4/2int/3int）
 ├── Datas/
@@ -47,9 +50,15 @@ Configs/GameConfig/
 │   ├── weapon.xlsx                         # 武器表
 │   ├── level.xlsx                          # 关卡表
 │   ├── enemy.xlsx                          # 敌人属性表
-│   ├── item.xlsx                           # 物品表（示例数据，含复杂类型）
+│   ├── item.xlsx                           # 物品表
+│   ├── inventory.xlsx                      # 背包容量表
 │   ├── battle.xlsx                         # 战斗表（含 Wave/Drop 多个 sheet）
 │   ├── buff.xlsx                           # Buff 表
+│   ├── portal.xlsx                         # 传送门表
+│   ├── camera.xlsx                         # 相机配置表
+│   ├── ballistic.xlsx                      # 弹道全局配置表
+│   ├── ui_config.xlsx                     # UI 全局配置表
+│   └── pickup.xlsx                         # 拾取物配置表
 └── CustomTemplate/
     ├── ConfigSystem.cs                     # 配置加载器模板
     ├── ExternalTypeUtil.cs                 # Unity 类型转换工具
@@ -86,14 +95,20 @@ Configs/GameConfig/
 |-----------|-----------|-----------|---------|
 | `cfg.TbWeapon` | `Weapon` | `map` | 武器表 |
 | `cfg.TbLevel` | `Level` | `list` | 关卡表 |
-| `cfg.TbItem` | `Item` | `map` | 物品表 |
+| `cfg.TbItem` | `Item` | `map` | 物品表（含 `EQuality` / `ItemExchange` / `EItemType`） |
 | `cfg.TbPlayer` | `Player` | `map` | 玩家属性表 |
 | `cfg.TbEnemy` | `Enemy` | `map` | 敌人属性表（数据源：`enemy.xlsx`） |
 | `cfg.TbWave` | `Wave` | `list` | 波次表（数据源：`battle.xlsx#Wave`） |
 | `cfg.TbDrop` | `Drop` | `list` | 掉落表（数据源：`battle.xlsx#Drop`） |
 | `cfg.TbBuff` | `Buff` | `map` | Buff 表 |
+| `cfg.TbPortal` | `Portal` | `map` | 传送门表 |
+| `cfg.TbInventoryConfig` | `InventoryConfig` | `map` | 背包容量表 |
+| `cfg.TbCamera` | `Camera` | `map` | 相机配置表 |
+| `cfg.TbBallistic` | `Ballistic` | `map` | 弹道全局配置表 |
+| `cfg.TbUiConfig` | `UiConfig` | `map` | UI 全局配置表 |
+| `cfg.TbPickup` | `Pickup` | `map` | 拾取物配置表 |
 
-> 注意：`item.xlsx` 已注册，但引用的 `item.ItemExchange` Bean 与 `item.EQuality` 枚举仍需在 `__beans__.xlsx` / `__enums__.xlsx` 中定义。
+> 注意：`item.xlsx` 已注册，`item.ItemExchange`、`item.EQuality` 与 `item.EItemType` 枚举/Bean 已定义。
 
 ### 2.4 已定义的枚举
 
@@ -104,42 +119,62 @@ Configs/GameConfig/
 | `WeaponType` | Pistol, SMG, Rifle, Sniper, Rocket |
 | `BallisticType` | Raycast, Projectile |
 | `FireMode` | Single, Auto |
+| `EQuality` | Blue, Purple, Yellow, Red |
+| `EItemType` | Material, Consumable, Equipment, Quest, Other |
 
 ### 2.5 数据表内容
 
 #### `weapon.xlsx`
 
 - 5 把武器：1001 Pistol、1002 SMG、1003 Rifle、1004 Sniper、1005 Rocket Launcher
-- 字段与当前硬编码 `WeaponConfig` 基本一致
-- 字段数：28 个
+- 字段已覆盖：基础属性、扩散、移动系数、瞄准、弹道、辅助瞄准、火箭锁定、后坐力/抖动、资源引用
 
 #### `level.xlsx`
 
-- 2 个关卡：1 Training Ground、2 Abandoned Factory
-- 字段与当前硬编码 `LevelConfig` 一致
+- 2 个关卡：1 Training Ground L1、2 Abandoned Factory L2
+- 字段：场景名、默认武器、玩家血量、敌人数/配置/半径等
 
 #### `enemy.xlsx`
 
 - 独立敌人属性表，已从 `battle.xlsx#Enemy` 拆分出来，方便单独调整不同敌人类型。
 - 当前数据：
-  - `9001` Training Dummy：`prefab = Enemy`，`maxHp = 50`，`moveSpeed = 2`，`attackDamage = 5`，`attackRange = 1.5`，`attackInterval = 1`
-  - `9002` Assault Bot：`prefab = Enemy_Assault`，`maxHp = 80`，`moveSpeed = 3`，`attackDamage = 15`，`attackRange = 2`，`attackInterval = 1.2`
+  - `9001` Training Dummy：`prefab = Enemy`，`maxHp = 50`，`moveSpeed = 2`，`attackDamage = 5`，`attackRange = 1.5`，`attackInterval = 1`，`pathRefreshInterval = 0.3`
+  - `9002` Assault Bot：`prefab = Enemy_Assault`，`maxHp = 80`，`moveSpeed = 3`，`attackDamage = 15`，`attackRange = 2`，`attackInterval = 1.2`，`pathRefreshInterval = 0.3`
 
 #### `item.xlsx`
 
 - 10 条示例物品数据
-- 包含复杂类型：`item.EQuality`（枚举）、`item.ItemExchange`（Bean）、`datetime?`、`ref`、`list` 等
-- **当前问题**：
-  - `__tables__.xlsx` 中未注册 `cfg.TbItem`
-  - `__beans__.xlsx` 中未定义 `item.ItemExchange`
-  - `__enums__.xlsx` 中未定义 `item.EQuality`
-  - 该表直接运行会报错，需先补齐 Bean/Enum 定义或简化表结构
+- 包含复杂类型：`EQuality`（枚举）、`ItemExchange`（Bean）、`EItemType`（枚举）、列表等
+
+#### `inventory.xlsx`
+
+- 1 条配置：`tempBagCapacity = 12`，`warehouseCapacity = 200`
+
+#### `portal.xlsx`
+
+- 传送门配置，含 `portalType`、`targetLevelId`、`targetSceneName`、`keepPlayerState`、`spawnCondition` 等
+
+#### `camera.xlsx`
+
+- 单条全局配置：`smoothTime`、`defaultFov`、`fovSmoothTime`、`shakeDamping`、`scopeRenderSize`、`scopeCameraFov`、`defaultOrthographicSize`
+
+#### `ballistic.xlsx`
+
+- 单条全局配置：`tracerRadius`、`tracerStartWidth`、`tracerEndWidth`、`tracerTailLength`、`maxActiveTracers`、`hitLayers`、`tracerStartColor`、`tracerEndColor`
+
+#### `ui_config.xlsx`
+
+- 单条全局配置：伤害数字参数（池大小、渐隐时间、偏移、颜色、字体大小）、命中标记参数（池大小、持续时间、大小、颜色）、受击指示器参数（淡出速度、颜色）、Loading 文本格式
+
+#### `pickup.xlsx`
+
+- 单条全局配置：`colliderRadius`、`visualScale`、`sortingOrder`
 
 ---
 
 ## 三、生成脚本
 
-`gen_code_bin_to_project.bat` 流程（脚本内所有输出与注释已改为英文，避免中文编码导致的乱码问题）：
+`gen_code_bin_to_project.bat` 流程：
 
 1. 检查 `Tools/Luban/Luban.exe` 是否存在。
 2. 复制 `CustomTemplate/ConfigSystem.cs` → `Assets/GameScripts/HotFix/GameProto/ConfigSystem.cs`
@@ -157,11 +192,11 @@ Configs/GameConfig/
 
 | 变量 | 相对路径（基于 `Configs/GameConfig/`） | 本机绝对路径 |
 |---|---|---|
-| `LUBAN_EXE` | `..\..\..\Tools\Luban\Luban.exe` | `E:\U3D_project\AfterToken\Tools\Luban\Luban.exe` |
-| `CODE_OUT` | `..\..\Assets\GameScripts\HotFix\GameProto` | `E:\U3D_project\AfterToken\AfterToken\Assets\GameScripts\HotFix\GameProto` |
-| `DATA_OUT` | `..\..\Assets\AssetRaw\Configs\json` | `E:\U3D_project\AfterToken\AfterToken\Assets\AssetRaw\Configs\json` |
+| `LUBAN_EXE` | `..\..\..\Tools\Luban\Luban.exe` | `D:\U3D_project\AfterToken\Tools\Luban\Luban.exe` |
+| `CODE_OUT` | `..\..\Assets\GameScripts\HotFix\GameProto` | `D:\U3D_project\AfterToken\AfterToken\Assets\GameScripts\HotFix\GameProto` |
+| `DATA_OUT` | `..\..\Assets\AssetRaw\Configs\json` | `D:\U3D_project\AfterToken\AfterToken\Assets\AssetRaw\Configs\json` |
 
-> 注意：`Luban.exe` 位于**仓库根目录** `E:\U3D_project\AfterToken\Tools\Luban\`，而代码与数据输出位于**项目代码根目录** `E:\U3D_project\AfterToken\AfterToken\Assets\`。
+> 注意：`Luban.exe` 位于**仓库根目录** `D:\U3D_project\AfterToken\Tools\Luban\`，而代码与数据输出位于**项目代码根目录** `D:\U3D_project\AfterToken\AfterToken\Assets\`。
 
 ### 3.2 运行方式
 
@@ -188,7 +223,7 @@ var levelList = ConfigSystem.Instance.Tables.TbLevel.DataList;
 
 ## 五、与项目其他模块的关系
 
-- **阻塞模块**：`WeaponSystem`、`LevelSystem`、`EnemySystem`、`PlayerSystem` 等待 Luban 表替换硬编码配置。
+- **已接入模块**：`PlayerSystem`、`WeaponSystem`、`LevelSystem`、`EnemySpawnSystem`、`ItemConfigMgr`、`DropConfigMgr`、`InventoryConfigMgr`、`PortalConfigMgr`、`CameraSystem`、`BallisticSystem`、`DamageNumberUI`、`HitFeedbackUI`、`LoadingUI`、`PickupEntity`
 - **YooAsset 集成**：生成的 `.json` 文件需被 `AssetRaw/Configs/` 收集器包含。
 - **热更**：`GameProto/GameConfig/` 和 `AssetRaw/Configs/json/` 均位于热更域，支持热更。
 
@@ -199,11 +234,9 @@ var levelList = ConfigSystem.Instance.Tables.TbLevel.DataList;
 | 问题 | 优先级 | 解决方案 |
 |------|--------|----------|
 | `Tools/Luban/` 在新环境可能缺少运行时文件 | P0 | 下载完整 Luban 工具链并解压到仓库根目录 `Tools/Luban/` |
-| `item.xlsx` 引用了未定义的 Bean/Enum | P1 | 在 `__beans__.xlsx`/`__enums__.xlsx` 中定义 `ItemExchange`/`EQuality`，或简化 item 表 |
-| 未替换 `WeaponConfigMgr` / `LevelConfigMgr` | P1 | 生成代码后逐步替换 |
-| `TbEnemy` 已从 `battle.xlsx#Enemy` 拆分为独立 `enemy.xlsx`，已接入业务 | P1 | 后续新增敌人类型直接在 `enemy.xlsx` 中添加，并同步创建对应 Prefab 与 YooAsset 地址 |
-| `TbEnemy` 接入后 `9001` 的 `prefab` 字段原值为 `Enemy_Dummy`，与实际资源地址 `Enemy` 不符 | P0 | 已修正为 `Enemy`；`attackDamage` 已从 `10` 下调为 `5` |
-| `TbWave`/`TbDrop`/`TbBuff` 尚未接入业务 | P1 | 按项目需求接入波次/掉落/Buff 系统 |
+| `TbWave` 数据已存在但尚未接入业务 | P1 | 在 `EnemySpawnSystem` 中接入波次生成 |
+| `TbBuff` 数据已存在但尚未接入业务 | P1 | 实现 Buff/Debuff 系统 |
+| 配置表热更验证 | P1 | 确认 YooAsset 收集器包含 `AssetRaw/Configs/json/`，修改 Excel 后重新导表并验证运行时加载 |
 
 ---
 
@@ -222,9 +255,33 @@ var levelList = ConfigSystem.Instance.Tables.TbLevel.DataList;
 | `CustomTemplate/ConfigSystem.cs` | `LoadByteBuf` → `LoadJson`；`ByteBuf` → `string`；使用 Newtonsoft.Json 反序列化 |
 | `AssetRaw/Configs/` | 新增 `json/` 目录，YooAsset 收集器需包含该目录 |
 
-## 八、相关文档
+## 八、新增/修改字段速查
+
+### 修改现有 bean 字段
+
+1. 改 `__beans__.xlsx` 中对应 bean 的字段定义。
+2. 改数据 `.xlsx` 的 `##var` / `##type` / `##` 行与数据行。
+3. 运行 `gen_code_bin_to_project.bat`。
+4. 验证 `cfg/Xxx.cs` 与 `cfg_tbxxx.json`。
+
+### 新增表
+
+1. 在 `__beans__.xlsx` 定义 bean。
+2. 在 `__tables__.xlsx` 注册 `cfg.TbXxx`。
+3. 创建 `Datas/<file>.xlsx` 并填入数据。
+4. 运行 `gen_code_bin_to_project.bat`。
+5. 确认 `ConfigSystem.cs` 的 `_tableFiles` 已包含 `cfg_tbxxx`。
+
+### 手动同步（Luban 不可用）
+
+参见 `docs/modules/pipeline/luban-config-system/ADDING-NEW-CONFIG.md` 的“Luban 不可用时的人工同步”章节。
+
+---
+
+## 九、相关文档
 
 - 配置系统总览：`docs/framework/06-ConfigSystem.md`
+- 新增配置流程：`docs/modules/pipeline/luban-config-system/ADDING-NEW-CONFIG.md`
 - 项目开发计划：`docs/开发计划方案.md`
 - 整体 TodoList：`docs/TODO.md`
 - 武器系统：`docs/modules/combat/weapon-system/README.md`

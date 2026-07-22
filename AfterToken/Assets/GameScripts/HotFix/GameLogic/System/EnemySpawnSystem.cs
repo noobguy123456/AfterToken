@@ -10,10 +10,10 @@ namespace GameLogic
     /// </summary>
     public class EnemySpawnSystem : MonoBehaviour
     {
-        [SerializeField] private int _enemyCount = 3;
-        [SerializeField] private float _spawnRadius = 6f;
-        [SerializeField] private int _enemyConfigId = 9001;
-        [SerializeField] private int _enemyMaxHp = 50;
+        [SerializeField] private int _enemyCount;
+        [SerializeField] private float _spawnRadius;
+        [SerializeField] private int _enemyConfigId;
+        [SerializeField] private int _enemyMaxHp;
 
         /// <summary>
         /// 初始化敌人生成配置（需在 Start 前调用）。
@@ -47,35 +47,59 @@ namespace GameLogic
             int attackDamage = enemyCfg?.AttackDamage ?? 5;
             float attackRange = enemyCfg?.AttackRange ?? 1.2f;
             float attackInterval = enemyCfg?.AttackInterval ?? 0.5f;
+            float pathRefreshInterval = enemyCfg?.PathRefreshInterval ?? 0.3f;
+
+            GameObject prefab = await LoadEnemyPrefabAsync(prefabAddress, cancellationToken);
+            string poolKey = !string.IsNullOrEmpty(prefabAddress) ? prefabAddress : "Enemy_Placeholder";
+
+            if (PoolSystem.Instance != null)
+            {
+                PoolSystem.Instance.Preload(poolKey, prefab, transform, _enemyCount);
+                prefab.SetActive(false); // 隐藏作为模板的预制体本身
+            }
 
             for (int i = 0; i < _enemyCount; i++)
             {
                 float angle = i * (360f / _enemyCount) * Mathf.Deg2Rad;
                 Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _spawnRadius;
 
-                var go = await GameModule.Resource.LoadGameObjectAsync(prefabAddress, transform, cancellationToken);
-                if (go == null && prefabAddress != "Enemy")
+                GameObject go;
+                if (PoolSystem.Instance != null)
                 {
-                    Log.Warning($"[EnemySpawnSystem] 加载敌人预制体 {prefabAddress} 失败，回退到 Enemy");
-                    go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform, cancellationToken);
-                }
-                if (go == null)
-                {
-                    go = CreatePlaceholderEnemy(spawnPos);
+                    go = PoolSystem.Instance.Get(poolKey, prefab, transform);
                 }
                 else
                 {
-                    go.transform.position = spawnPos;
+                    go = Object.Instantiate(prefab, transform);
                 }
+                go.transform.position = spawnPos;
 
                 var enemy = go.GetComponent<EnemyEntity>();
                 if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
-                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval);
+                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval, pathRefreshInterval);
+                enemy.PoolKey = poolKey;
 
                 GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), _enemyConfigId);
 
                 await UniTask.Yield(cancellationToken);
             }
+        }
+
+        private async UniTask<GameObject> LoadEnemyPrefabAsync(string prefabAddress, CancellationToken cancellationToken)
+        {
+            var go = await GameModule.Resource.LoadGameObjectAsync(prefabAddress, transform, cancellationToken);
+            if (go == null && prefabAddress != "Enemy")
+            {
+                Log.Warning($"[EnemySpawnSystem] 加载敌人预制体 {prefabAddress} 失败，回退到 Enemy");
+                go = await GameModule.Resource.LoadGameObjectAsync("Enemy", transform, cancellationToken);
+            }
+            if (go == null)
+            {
+                go = CreatePlaceholderEnemy(Vector2.zero);
+                go.SetActive(false);
+                go.name = "Enemy_Placeholder_Prefab";
+            }
+            return go;
         }
 
         private GameConfig.cfg.Enemy LoadEnemyConfig(int configId)

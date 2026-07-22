@@ -28,9 +28,22 @@ namespace GameLogic
         private bool _preloaded;
         private CancellationTokenSource _initCts;
 
+        // 静态缓冲 + ContactFilter，避免爆炸 OverlapCircleAll 每命中都分配结果数组。
+        // 注意：ContactFilter2D 的 layerMask 依赖 LayerMask.GetMask，不能在 MonoBehaviour 的静态字段初始化时调用，
+        // 因此推迟到 Awake 中初始化。
+        private static readonly Collider2D[] _explosionResults = new Collider2D[32];
+        private static ContactFilter2D _enemyFilter;
+
         private void Awake()
         {
             Instance = this;
+
+            _enemyFilter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                layerMask = LayerMask.GetMask("Enemy"),
+                useTriggers = true,
+            };
 
             if (_projectileRoot == null)
             {
@@ -320,10 +333,13 @@ namespace GameLogic
         private void ApplyExplosionDamage(ProjectileData data, Vector2 center, WeaponConfig weaponConfig)
         {
             float radius = weaponConfig.explosionRadius;
-            var hits = Physics2D.OverlapCircleAll(center, radius, LayerMask.GetMask("Enemy"));
+            int hitCount = Physics2D.OverlapCircle(center, radius, _enemyFilter, _explosionResults);
 
-            foreach (var col in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                var col = _explosionResults[i];
+                if (col == null) continue;
+
                 float distance = Vector2.Distance(center, col.transform.position);
                 float falloff = Mathf.Clamp01(1 - distance / radius);
                 float damage = data.Damage * (1 - weaponConfig.explosionDamageFalloff * (1 - falloff));

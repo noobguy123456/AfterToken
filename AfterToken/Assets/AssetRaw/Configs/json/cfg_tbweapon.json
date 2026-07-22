@@ -33,29 +33,34 @@
     "showDebugRay": true,
     "debugRayDuration": 1,
     "debugHitColor": {
-      "r": 0,
-      "g": 1,
-      "b": 0,
-      "a": 1
+      "r": 0.0,
+      "g": 1.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "debugMissColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "trackingTime": 0,
     "trackingLaserColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "lockOnSound": "",
     "muzzleEffect": "",
     "hitEffect": "",
     "fireSound": "",
-    "reloadSound": ""
+    "reloadSound": "",
+    "aimAssistRadius": 2,
+    "aimAssistMaxAngle": 15,
+    "lockOnRange": 20,
+    "lockOnAngle": 10,
+    "lockOnHoldTime": 1.5
   },
   {
     "id": 1002,
@@ -91,29 +96,34 @@
     "showDebugRay": true,
     "debugRayDuration": 1,
     "debugHitColor": {
-      "r": 0,
-      "g": 1,
-      "b": 0,
-      "a": 1
+      "r": 0.0,
+      "g": 1.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "debugMissColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "trackingTime": 0,
     "trackingLaserColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "lockOnSound": "",
     "muzzleEffect": "",
     "hitEffect": "",
     "fireSound": "",
-    "reloadSound": ""
+    "reloadSound": "",
+    "aimAssistRadius": 2,
+    "aimAssistMaxAngle": 15,
+    "lockOnRange": 20,
+    "lockOnAngle": 10,
+    "lockOnHoldTime": 1.5
   },
   {
     "id": 1003,
@@ -149,29 +159,34 @@
     "showDebugRay": true,
     "debugRayDuration": 1,
     "debugHitColor": {
-      "r": 0,
-      "g": 1,
-      "b": 0,
-      "a": 1
+      "r": 0.0,
+      "g": 1.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "debugMissColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "trackingTime": 0,
     "trackingLaserColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "lockOnSound": "",
     "muzzleEffect": "",
     "hitEffect": "",
     "fireSound": "",
-    "reloadSound": ""
+    "reloadSound": "",
+    "aimAssistRadius": 2,
+    "aimAssistMaxAngle": 15,
+    "lockOnRange": 20,
+    "lockOnAngle": 10,
+    "lockOnHoldTime": 1.5
   },
   {
     "id": 1004,
@@ -207,29 +222,34 @@
     "showDebugRay": true,
     "debugRayDuration": 1,
     "debugHitColor": {
-      "r": 0,
-      "g": 1,
-      "b": 0,
-      "a": 1
+      "r": 0.0,
+      "g": 1.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "debugMissColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "trackingTime": 0,
     "trackingLaserColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "lockOnSound": "",
     "muzzleEffect": "",
     "hitEffect": "",
     "fireSound": "",
-    "reloadSound": ""
+    "reloadSound": "",
+    "aimAssistRadius": 2,
+    "aimAssistMaxAngle": 15,
+    "lockOnRange": 20,
+    "lockOnAngle": 10,
+    "lockOnHoldTime": 1.5
   },
   {
     "id": 1005,
@@ -265,28 +285,33 @@
     "showDebugRay": true,
     "debugRayDuration": 1,
     "debugHitColor": {
-      "r": 0,
-      "g": 1,
-      "b": 0,
-      "a": 1
+      "r": 0.0,
+      "g": 1.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "debugMissColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "trackingTime": 1.5,
     "trackingLaserColor": {
-      "r": 1,
-      "g": 0,
-      "b": 0,
-      "a": 1
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
     },
     "lockOnSound": "SFX_LockOn",
     "muzzleEffect": "",
     "hitEffect": "",
     "fireSound": "",
-    "reloadSound": ""
+    "reloadSound": "",
+    "aimAssistRadius": 2,
+    "aimAssistMaxAngle": 15,
+    "lockOnRange": 20,
+    "lockOnAngle": 10,
+    "lockOnHoldTime": 1.5
   }
 ]

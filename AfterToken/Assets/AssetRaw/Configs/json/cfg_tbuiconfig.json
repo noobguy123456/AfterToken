@@ -1,0 +1,45 @@
+[
+  {
+    "id": 1,
+    "damageNumberPoolSize": 16,
+    "damageNumberFadeDuration": 0.8,
+    "damageNumberMoveOffset": 40,
+    "damageNumberNormalColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "damageNumberCriticalColor": {
+      "r": 1.0,
+      "g": 0.5,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "damageNumberNormalFontSize": 24,
+    "damageNumberCriticalFontSize": 32,
+    "hitMarkerPoolSize": 8,
+    "hitMarkerDuration": 0.15,
+    "hitMarkerSize": 32,
+    "hitMarkerNormalColor": {
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "hitMarkerCriticalColor": {
+      "r": 1.0,
+      "g": 0.5,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "indicatorFadeSpeed": 2,
+    "indicatorColor": {
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "loadingTextFormat": "Loading... {0:F0}%"
+  }
+]
