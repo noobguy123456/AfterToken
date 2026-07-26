@@ -44,7 +44,7 @@ namespace GameLogic
 
         private void Start()
         {
-            _mainCamera = CameraSystem.Instance?.MainCamera;
+            _mainCamera = CameraSystem3D.Instance?.GetMainCamera();
         }
 
         private void Update()

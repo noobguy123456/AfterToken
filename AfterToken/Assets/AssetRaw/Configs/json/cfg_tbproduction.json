@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "name": "Craft Iron Sword",
+    "desc": "Craft a sturdy iron blade.",
+    "buildingId": 1,
+    "levelRequired": 1,
+    "inputItems": [
+      {
+        "id": 10000,
+        "num": 1
+      },
+      {
+        "id": 10004,
+        "num": 2
+      }
+    ],
+    "outputItemId": 10001,
+    "outputCount": 1,
+    "productionTime": 3,
+    "icon": "icon_item_ironsword"
+  },
+  {
+    "id": 2,
+    "name": "Craft Steel Sword",
+    "desc": "Craft a refined steel weapon.",
+    "buildingId": 1,
+    "levelRequired": 2,
+    "inputItems": [
+      {
+        "id": 10001,
+        "num": 1
+      },
+      {
+        "id": 10005,
+        "num": 3
+      }
+    ],
+    "outputItemId": 10002,
+    "outputCount": 1,
+    "productionTime": 6,
+    "icon": "icon_item_steelsword"
+  },
+  {
+    "id": 3,
+    "name": "Craft King Sword",
+    "desc": "Craft a legendary sword.",
+    "buildingId": 1,
+    "levelRequired": 3,
+    "inputItems": [
+      {
+        "id": 10002,
+        "num": 1
+      },
+      {
+        "id": 10004,
+        "num": 5
+      },
+      {
+        "id": 10005,
+        "num": 5
+      }
+    ],
+    "outputItemId": 10003,
+    "outputCount": 1,
+    "productionTime": 12,
+    "icon": "icon_item_kingsword"
+  },
+  {
+    "id": 4,
+    "name": "Grow Wheat",
+    "desc": "Grow wheat for food.",
+    "buildingId": 2,
+    "levelRequired": 1,
+    "inputItems": [],
+    "outputItemId": 10006,
+    "outputCount": 5,
+    "productionTime": 10,
+    "icon": "icon_item_wheat"
+  },
+  {
+    "id": 5,
+    "name": "Brew Potion",
+    "desc": "Brew a healing potion.",
+    "buildingId": 3,
+    "levelRequired": 1,
+    "inputItems": [
+      {
+        "id": 10006,
+        "num": 2
+      },
+      {
+        "id": 10007,
+        "num": 1
+      }
+    ],
+    "outputItemId": 10008,
+    "outputCount": 1,
+    "productionTime": 8,
+    "icon": "icon_item_potion"
+  }
+]

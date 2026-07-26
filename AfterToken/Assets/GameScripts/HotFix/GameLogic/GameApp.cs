@@ -137,6 +137,7 @@ namespace GameLogic
                 new ProcedureMainMenu(),
                 new ProcedureLobby(),
                 new ProcedureBattle(),
+                new ProcedureSimulation(),
             };
             procedureModule.Initialize(fsmModule, procedures);
             _procedureFsm = GetProcedureFsm(procedureModule);

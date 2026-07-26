@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "requiredItems": [
+      {
+        "id": 10000,
+        "num": 2
+      }
+    ],
+    "rewardGold": 50,
+    "rewardItems": [
+      {
+        "id": 10004,
+        "num": 3
+      }
+    ],
+    "rewardExp": 10,
+    "timeLimit": 60,
+    "weight": 100,
+    "minPlayerLevel": 1
+  },
+  {
+    "id": 2,
+    "requiredItems": [
+      {
+        "id": 10001,
+        "num": 1
+      }
+    ],
+    "rewardGold": 100,
+    "rewardItems": [
+      {
+        "id": 10005,
+        "num": 2
+      }
+    ],
+    "rewardExp": 20,
+    "timeLimit": 120,
+    "weight": 80,
+    "minPlayerLevel": 1
+  },
+  {
+    "id": 3,
+    "requiredItems": [
+      {
+        "id": 10002,
+        "num": 1
+      }
+    ],
+    "rewardGold": 300,
+    "rewardItems": [
+      {
+        "id": 10004,
+        "num": 5
+      },
+      {
+        "id": 10005,
+        "num": 5
+      }
+    ],
+    "rewardExp": 50,
+    "timeLimit": 300,
+    "weight": 30,
+    "minPlayerLevel": 1
+  },
+  {
+    "id": 4,
+    "requiredItems": [
+      {
+        "id": 10006,
+        "num": 3
+      }
+    ],
+    "rewardGold": 80,
+    "rewardItems": [
+      {
+        "id": 10007,
+        "num": 2
+      }
+    ],
+    "rewardExp": 15,
+    "timeLimit": 180,
+    "weight": 90,
+    "minPlayerLevel": 1
+  }
+]

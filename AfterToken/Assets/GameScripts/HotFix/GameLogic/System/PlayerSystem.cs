@@ -135,7 +135,7 @@ namespace GameLogic
             _playerFsm.Start<PlayerIdleState>();
 
             WeaponSystem.Instance?.SetOwner(_playerEntity);
-            CameraSystem.Instance?.SetTarget(go.transform);
+            CameraSystem3D.Instance?.SetFollowTarget(go.transform);
 
             GameEvent.Get<IPlayerEvent>().OnPlayerCreated(go.transform.position);
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);

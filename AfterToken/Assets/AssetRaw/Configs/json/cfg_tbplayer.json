@@ -2,20 +2,20 @@
   {
     "id": 1,
     "maxHp": 100,
-    "maxStamina": 100,
-    "staminaRecoveryRate": 30,
-    "dodgeStaminaCost": 25,
     "moveSpeed": 5,
+    "rotationSpeed": 10,
+    "colliderRadius": 0.5,
+    "maxStamina": 100,
+    "staminaRecoveryRate": 10,
+    "dodgeStaminaCost": 20,
     "dodgeSpeed": 15,
     "dodgeDuration": 0.4,
-    "rotationSpeed": 720,
-    "colliderRadius": 0.5,
-    "prefab": "Player_Hero",
+    "prefab": "Player",
+    "idleAnim": "Idle",
+    "moveAnim": "Move",
+    "dodgeAnim": "Dodge",
+    "reloadAnim": "Reload",
     "weaponSwitchCooldown": 0.3,
-    "idleAnim": "Player_Idle",
-    "moveAnim": "Player_Run",
-    "dodgeAnim": "Player_Roll",
-    "reloadAnim": "Player_Reload",
-    "deadAnim": "Player_Dead"
+    "deadAnim": "Dead"
   }
 ]

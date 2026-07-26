@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "name": "Workshop",
+    "desc": "Basic workshop for crafting.",
+    "buildingType": 0,
+    "icon": "icon_building_workshop",
+    "maxLevel": 3,
+    "buildCostGold": 100,
+    "buildCostItems": [
+      {
+        "id": 10004,
+        "num": 5
+      }
+    ],
+    "buildTime": 5,
+    "upgradeCostGold": 200,
+    "upgradeCostItems": [
+      {
+        "id": 10004,
+        "num": 10
+      },
+      {
+        "id": 10005,
+        "num": 6
+      }
+    ],
+    "upgradeTime": 10,
+    "productionSlotCount": 1,
+    "unlockLevel": 1
+  },
+  {
+    "id": 2,
+    "name": "Farm",
+    "desc": "Grows crops.",
+    "buildingType": 1,
+    "icon": "icon_building_farm",
+    "maxLevel": 3,
+    "buildCostGold": 80,
+    "buildCostItems": [
+      {
+        "id": 10004,
+        "num": 3
+      }
+    ],
+    "buildTime": 3,
+    "upgradeCostGold": 150,
+    "upgradeCostItems": [
+      {
+        "id": 10004,
+        "num": 6
+      }
+    ],
+    "upgradeTime": 6,
+    "productionSlotCount": 1,
+    "unlockLevel": 1
+  },
+  {
+    "id": 3,
+    "name": "Trade Post",
+    "desc": "Trade goods with merchants.",
+    "buildingType": 2,
+    "icon": "icon_building_trade",
+    "maxLevel": 2,
+    "buildCostGold": 150,
+    "buildCostItems": [
+      {
+        "id": 10005,
+        "num": 8
+      }
+    ],
+    "buildTime": 8,
+    "upgradeCostGold": 300,
+    "upgradeCostItems": [
+      {
+        "id": 10005,
+        "num": 15
+      }
+    ],
+    "upgradeTime": 15,
+    "productionSlotCount": 0,
+    "unlockLevel": 1
+  },
+  {
+    "id": 4,
+    "name": "Decoration",
+    "desc": "A decorative statue.",
+    "buildingType": 3,
+    "icon": "icon_building_decor",
+    "maxLevel": 1,
+    "buildCostGold": 50,
+    "buildCostItems": [],
+    "buildTime": 1,
+    "upgradeCostGold": 0,
+    "upgradeCostItems": [],
+    "upgradeTime": 0,
+    "productionSlotCount": 0,
+    "unlockLevel": 1
+  }
+]

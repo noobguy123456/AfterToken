@@ -33,10 +33,10 @@ namespace GameLogic
         public static CameraSystem Instance { get; private set; }
 
         [Header("跟随")]
-        [SerializeField] private CameraFollowMode _followMode = CameraFollowMode.Hard;
+        [SerializeField] private CameraFollowMode _followMode = CameraFollowMode.Exponential;
         private float _smoothTime;
         [SerializeField] private float _lookAheadFactor = 0f;
-        [SerializeField] private Vector3 _offset = new Vector3(0, 0, -10f);
+        [SerializeField] private Vector3 _offset = new Vector3(0, 15, -10f); // 3D 俯视角偏移（Y轴15，Z轴-10）
 
         [Header("瞄准 FOV")]
         private float _defaultFov;

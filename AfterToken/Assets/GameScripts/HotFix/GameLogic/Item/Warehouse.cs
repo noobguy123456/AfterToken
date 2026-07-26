@@ -105,5 +105,62 @@ namespace GameLogic
             _items.Clear();
             GameEvent.Get<IItemEvent>().OnWarehouseChanged();
         }
+
+        /// <summary>
+        /// 查询某物品当前总数量（跨所有堆叠）。
+        /// </summary>
+        public static int GetItemCount(int itemId)
+        {
+            int total = 0;
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i].ItemId == itemId)
+                {
+                    total += _items[i].Count;
+                }
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// 是否拥有足够物品。
+        /// </summary>
+        public static bool HasItem(int itemId, int count)
+        {
+            if (count <= 0) return true;
+            return GetItemCount(itemId) >= count;
+        }
+
+        /// <summary>
+        /// 尝试消耗物品。不足时不产生部分扣除。
+        /// </summary>
+        public static bool TryConsume(int itemId, int count)
+        {
+            if (count <= 0) return true;
+            if (!HasItem(itemId, count)) return false;
+
+            int remaining = count;
+            for (int i = _items.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                var stack = _items[i];
+                if (stack.ItemId != itemId) continue;
+
+                int take = Mathf.Min(remaining, stack.Count);
+                stack.Count -= take;
+                remaining -= take;
+
+                if (stack.Count <= 0)
+                {
+                    _items.RemoveAt(i);
+                }
+                else
+                {
+                    _items[i] = stack;
+                }
+            }
+
+            GameEvent.Get<IItemEvent>().OnWarehouseChanged();
+            return true;
+        }
     }
 }

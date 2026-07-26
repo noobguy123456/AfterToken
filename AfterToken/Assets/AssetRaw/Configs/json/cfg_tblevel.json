@@ -46,5 +46,53 @@
     "enemySpawnRadius": 8,
     "enemyConfigId": 9001,
     "enemyMaxHp": 100
+  },
+  {
+    "id": 101,
+    "displayName": "3D Training Ground L1",
+    "sceneName": "BattleScene_3D_L01",
+    "description": "First 3D battle scene.",
+    "defaultWeaponIds": [
+      1001,
+      1002,
+      1003
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 10,
+    "enemySpawnRadius": 6,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 50
+  },
+  {
+    "id": 102,
+    "displayName": "3D Abandoned Factory L2",
+    "sceneName": "BattleScene_3D_L02",
+    "description": "Second 3D battle scene.",
+    "defaultWeaponIds": [
+      1002,
+      1003,
+      1004
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 15,
+    "enemySpawnRadius": 8,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 80
+  },
+  {
+    "id": 103,
+    "displayName": "3D Boss Arena L3",
+    "sceneName": "BattleScene_3D_L03",
+    "description": "Final 3D battle scene.",
+    "defaultWeaponIds": [
+      1002,
+      1003,
+      1004
+    ],
+    "playerMaxHp": 100,
+    "enemyCount": 20,
+    "enemySpawnRadius": 8,
+    "enemyConfigId": 9001,
+    "enemyMaxHp": 100
   }
 ]

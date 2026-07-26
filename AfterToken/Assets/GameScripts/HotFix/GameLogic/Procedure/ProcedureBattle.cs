@@ -12,7 +12,7 @@ namespace GameLogic
     public class ProcedureBattle : GameplayProcedureBase
     {
         private GameObject _battleRoot;
-        private CameraSystem _cameraSystem;
+        private CameraSystem3D _cameraSystem3D;
         private LevelConfig _levelConfig;
 
         protected override UniTaskVoid EnterAsync()
@@ -78,13 +78,33 @@ namespace GameLogic
             _battleRoot.AddComponent<GameLogic.GM.GMController>();
 #endif
 
+            // 设置 PlayerSystem 的生成点
+            var playerSystem = _battleRoot.GetComponent<PlayerSystem>();
+            if (playerSystem != null)
+            {
+                var spawnPoint = GameObject.Find("PlayerSpawnPoint");
+                if (spawnPoint != null)
+                {
+                    var spawnPointField = typeof(PlayerSystem).GetField("_spawnPoint", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (spawnPointField != null)
+                    {
+                        spawnPointField.SetValue(playerSystem, spawnPoint.transform);
+                        Log.Info($"[ProcedureBattle] 设置 PlayerSystem 生成点: {spawnPoint.transform.position}");
+                    }
+                }
+                else
+                {
+                    Log.Warning("[ProcedureBattle] 找不到 PlayerSpawnPoint");
+                }
+            }
+
             var mainCamera = Camera.main;
             if (mainCamera != null)
             {
-                _cameraSystem = mainCamera.GetComponent<CameraSystem>();
-                if (_cameraSystem == null)
+                _cameraSystem3D = mainCamera.GetComponent<CameraSystem3D>();
+                if (_cameraSystem3D == null)
                 {
-                    _cameraSystem = mainCamera.gameObject.AddComponent<CameraSystem>();
+                    _cameraSystem3D = mainCamera.gameObject.AddComponent<CameraSystem3D>();
                 }
             }
             else
@@ -130,10 +150,10 @@ namespace GameLogic
         {
             PoolSystem.Instance?.ClearAll();
 
-            if (_cameraSystem != null)
+            if (_cameraSystem3D != null)
             {
-                Object.Destroy(_cameraSystem);
-                _cameraSystem = null;
+                Object.Destroy(_cameraSystem3D);
+                _cameraSystem3D = null;
             }
 
             if (_battleRoot != null)

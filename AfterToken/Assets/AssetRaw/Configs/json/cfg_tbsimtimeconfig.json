@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "baseSpeed": 1,
+    "fastSpeed": 2,
+    "maxSpeed": 4,
+    "orderRefreshInterval": 30,
+    "maxOrderCount": 5
+  }
+]

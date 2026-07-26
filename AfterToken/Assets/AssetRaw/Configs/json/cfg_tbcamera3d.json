@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "pitchAngle": 60,
+    "initialHeight": 15,
+    "initialDistance": -10,
+    "fov": 45,
+    "minZoom": 5,
+    "maxZoom": 30,
+    "moveSpeed": 20,
+    "zoomSpeed": 5,
+    "maxRotationAngle": 30,
+    "rotationSpeed": 90,
+    "followSmoothTime": 0.08
+  }
+]

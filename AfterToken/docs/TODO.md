@@ -92,13 +92,13 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 经营总控 | ⏳ | P2 | 共享系统 | `docs/modules/simulation/simulation-system/` | `ProcedureSimulation`、场景加载、协调子系统 |
-| 经营时间 | ⏳ | P2 | - | `docs/modules/simulation/sim-time-system/` | 时间推进、加速/暂停 |
-| 建筑系统 | ⏳ | P2 | 配置表系统、货币/背包 | `docs/modules/simulation/building-system/` | 建造、升级、拆除 |
-| 生产系统 | ⏳ | P2 | 建筑系统、经营时间 | `docs/modules/simulation/production-system/` | 生产队列、产出结算 |
-| 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长 |
-| 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获 |
-| 订单系统 | ⏳ | P2 | 背包、货币 | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励 |
+| 经营总控 | ✅ | - | - | `docs/modules/simulation/simulation-system/` | `ProcedureSimulation`、场景加载、协调子系统已实现 |
+| 经营时间 | ✅ | - | - | `docs/modules/simulation/sim-time-system/` | 时间推进、加速/暂停已实现 |
+| 建筑系统 | ✅ | - | - | `docs/modules/simulation/building-system/` | 建造、升级、拆除已实现 |
+| 生产系统 | ✅ | - | - | `docs/modules/simulation/production-system/` | 生产队列、产出结算已实现 |
+| 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长；MVP 后实现 |
+| 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获；MVP 后实现 |
+| 订单系统 | ✅ | - | - | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励已实现 |
 
 ### 管线与工具
 
@@ -191,4 +191,5 @@ Luban 配置表数据补充
 | 2026-07-21 | 修复代码中硬编码的玩家/敌人/武器数值：`PlayerEntity` 移速/闪避属性移除默认值；`PlayerSystem` fallback 集中为常量；`EnemyEntity` / `EnemySpawnSystem` 移除血量/数量/半径默认值；`AimAssistSystem` 辅助瞄准与锁定参数从 `TbWeapon` 读取；`WeaponSystem` 切换冷却从 `TbPlayer` 读取；同步在 `weapon.xlsx` / `player.xlsx` 添加新字段并更新 JSON 数据与 Luban 生成代码 |
 | 2026-07-22 | 将剩余硬编码数值全部配置化：扩展 `TbPlayer` 动画名；新增 `TbCamera`（相机参数）、`TbBallistic`（弹道全局参数）、`TbUiConfig`（伤害数字/命中标记/受击指示器/Loading 文本）、`TbPickup`（拾取物半径/缩放/排序）；业务代码 `PlayerEntity` / `CameraSystem` / `BallisticSystem` / `DamageNumberUI` / `HitFeedbackUI` / `LoadingUI` / `PickupEntity` / `WeaponSystem` 改为读取配置；同步更新 Excel/JSON/生成代码/文档；`GameLogic.csproj` 编译通过 |
 | 2026-07-22 | 性能优化与敌人系统收尾：A* 寻路 `PathResult` 池化、路径平滑原地优化、`EnemyChaseState` 路径刷新间隔通过 `TbEnemy.pathRefreshInterval` 配置并动态缩放；敌人接入 `PoolSystem` 预加载/回池；爆炸范围伤害改为非分配物理查询；敌人血条节点纳入 `Enemy.prefab` 由前端直接调整；同步更新敌人系统/飞行物系统/对象池/Luban/TODO 文档 |
-| 2026-07-22 | 清理 Luban 配置工程中的临时 Python 脚本（`generate_cs.py` / `update_config.py` / `update_item_text.py`），统一使用 `gen_code_bin_to_project.bat` 作为标准配置生成流程；同步更新 `luban-config-system` 与 `06-ConfigSystem` 文档 |
+| 2026-07-22 | 梳理模拟经营系统需求并输出 MVP 开发方案：明确本期实现 `SimTimeSystem` / `BuildingSystem` / `ProductionSystem` / `OrderSystem` / `SimulationSystem` / `ProcedureSimulation` / `SimulationMainUI` 的最小闭环；农场与工人系统本期不做；设计新增 Luban 配置表 `TbBuilding` / `TbProduction` / `TbOrder` / `TbSimTimeConfig` 与共享层 `CurrencySystem` / `InventorySystem` / `PlayerProfileSystem`；新增事件接口 `ISimulationEvent` / `ICurrencyEvent` / `IInventoryEvent` / `IPlayerProfileEvent`；创建 `docs/Proposal/simulation/simulation-mvp.md`；同步更新 7 个模拟经营模块 README / progress.md 与 `docs/TODO.md` / `docs/Proposal/README.md` |
+| 2026-07-25 | 实现模拟经营 MVP：新增 Luban 配置表 `TbBuilding` / `TbProduction` / `TbOrder` / `TbSimTimeConfig` 及通用 Bean `ItemExchange` 扩展；实现共享层 `CurrencySystem` / `InventorySystem` / `PlayerProfileSystem`；新增事件接口 `ISimulationEvent` / `ICurrencyEvent` / `IInventoryEvent` / `IPlayerProfileEvent`；实现 `SimTimeSystem` / `BuildingSystem` / `ProductionSystem` / `OrderSystem` / `SimulationSystem`；实现 `ProcedureSimulation` 与 `SimulationMainUI`（代码动态创建 UI，后续替换为正式 Prefab）；`GameApp` 注册 `ProcedureSimulation`；`MainMenuUI` 动态创建“Simulation”入口按钮；修复 `WeaponConfig` / `WeaponSystem` / `EnemySpawnSystem` 因配置表字段缺失导致的编译错误；`GameLogic.csproj` 编译通过 |

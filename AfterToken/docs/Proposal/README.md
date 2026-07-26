@@ -22,6 +22,12 @@ docs/Proposal/
 
 ## 当前提案列表
 
+### 模拟经营系统
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 模拟经营 MVP 开发方案 | [`simulation/simulation-mvp.md`](./simulation/simulation-mvp.md) | 已接受 | `simulation/simulation-system`、`simulation/sim-time-system`、`simulation/building-system`、`simulation/production-system`、`simulation/order-system` |
+
 ### 战斗系统
 
 | 提案 | 路径 | 状态 | 关联模块 |
