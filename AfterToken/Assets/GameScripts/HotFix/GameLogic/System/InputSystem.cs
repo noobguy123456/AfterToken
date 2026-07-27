@@ -91,8 +91,18 @@ namespace GameLogic
                 ? CrosshairUpdater.Instance.CurrentScreenPos
                 : (Vector2)Input.mousePosition;
 
-            Vector2 aimWorldPos = _mainCamera.ScreenToWorldPoint(aimScreenPos);
-            BattleInputEvent?.OnAimInput(aimWorldPos);
+            // 透视相机下 ScreenToWorldPoint 必须指定深度，直接传 Vector2（z=0）会得到相机自身位置。
+            // 统一用“相机射线 × 玩法平面（y=0 的 XZ 地面）”求交，正交/透视相机都适用。
+            Ray ray = _mainCamera.ScreenPointToRay(aimScreenPos);
+            var gameplayPlane = new Plane(Vector3.up, Vector3.zero);
+            if (!gameplayPlane.Raycast(ray, out float enter))
+            {
+                // 射线与玩法平面平行（理论上不会发生），保持上一次瞄准位置。
+                return;
+            }
+
+            Vector3 hitPoint = ray.GetPoint(enter);
+            BattleInputEvent?.OnAimInput(new Vector2(hitPoint.x, hitPoint.z));
         }
 
         private void HandleFireInput()
@@ -193,7 +203,11 @@ namespace GameLogic
 
         private int CalculateWheelSlot()
         {
-            Vector2 mousePos = Input.mousePosition;
+            // 战斗中系统光标被锁定在屏幕中心，Input.mousePosition 恒为中心点，
+            // 必须使用 CrosshairUpdater 的虚拟准星屏幕位置，否则永远选中 slot 0。
+            Vector2 mousePos = CrosshairUpdater.Instance != null
+                ? CrosshairUpdater.Instance.CurrentScreenPos
+                : (Vector2)Input.mousePosition;
             Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             Vector2 dir = (mousePos - center).normalized;
 

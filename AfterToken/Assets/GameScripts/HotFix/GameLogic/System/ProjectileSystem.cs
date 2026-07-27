@@ -18,7 +18,7 @@ namespace GameLogic
 
         private readonly Dictionary<int, ProjectileData> _activeProjectiles = new Dictionary<int, ProjectileData>();
         private readonly Dictionary<int, ProjectileEntity> _entityMap = new Dictionary<int, ProjectileEntity>();
-        private readonly Queue<(ProjectileData data, RaycastHit2D hit)> _pendingHits = new Queue<(ProjectileData data, RaycastHit2D hit)>();
+        private readonly Queue<(ProjectileData data, RaycastHit hit)> _pendingHits = new Queue<(ProjectileData data, RaycastHit hit)>();
         private int _nextProjectileId = 1;
         private GameEventMgr _eventMgr = new GameEventMgr();
 
@@ -28,22 +28,20 @@ namespace GameLogic
         private bool _preloaded;
         private CancellationTokenSource _initCts;
 
-        // 静态缓冲 + ContactFilter，避免爆炸 OverlapCircleAll 每命中都分配结果数组。
-        // 注意：ContactFilter2D 的 layerMask 依赖 LayerMask.GetMask，不能在 MonoBehaviour 的静态字段初始化时调用，
+        // 静态缓冲，避免爆炸 OverlapSphere 每命中都分配结果数组。
+        // 注意：layerMask 依赖 LayerMask.GetMask，不能在静态字段初始化时调用，
         // 因此推迟到 Awake 中初始化。
-        private static readonly Collider2D[] _explosionResults = new Collider2D[32];
-        private static ContactFilter2D _enemyFilter;
+        private static readonly Collider[] _explosionResults = new Collider[32];
+        private static int _enemyLayerMask;
+
+        // 弹丸检测与表现的高度（地面 y=0 之上的视觉/检测层）。
+        private const float PROJECTILE_HEIGHT = 0.5f;
 
         private void Awake()
         {
             Instance = this;
 
-            _enemyFilter = new ContactFilter2D
-            {
-                useLayerMask = true,
-                layerMask = LayerMask.GetMask("Enemy"),
-                useTriggers = true,
-            };
+            _enemyLayerMask = LayerMask.GetMask("Enemy");
 
             if (_projectileRoot == null)
             {
@@ -128,12 +126,13 @@ namespace GameLogic
             sr.color = Color.yellow;
             sr.sortingOrder = 10;
 
-            var col = go.AddComponent<CircleCollider2D>();
+            var col = go.AddComponent<SphereCollider>();
             col.radius = 0.1f;
             col.isTrigger = true;
 
-            var rb = go.AddComponent<Rigidbody2D>();
-            rb.bodyType = RigidbodyType2D.Kinematic;
+            var rb = go.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.useGravity = false;
 
             go.AddComponent<ProjectileEntity>();
             return go;
@@ -248,7 +247,7 @@ namespace GameLogic
                 var target = FindTarget(data.TargetId);
                 if (target != null)
                 {
-                    Vector2 toTarget = ((Vector2)target.transform.position - data.Position).normalized;
+                    Vector2 toTarget = (target.transform.position.ToXZ() - data.Position).normalized;
                     data.Direction = Vector2.Lerp(data.Direction, toTarget, 5f * deltaTime).normalized;
                 }
             }
@@ -256,17 +255,19 @@ namespace GameLogic
             float moveDistance = data.Speed * deltaTime;
             Vector2 newPosition = data.Position + data.Direction * moveDistance;
 
-            RaycastHit2D hit = Physics2D.CircleCast(
-                data.Position,
+            // 3D 物理：玩法平面 (x, z) 转到世界坐标后在弹丸高度上做 SphereCast
+            bool hasHit = Physics.SphereCast(
+                data.Position.ToWorld(PROJECTILE_HEIGHT),
                 data.Radius,
-                data.Direction,
+                data.Direction.ToWorld(),
+                out RaycastHit hit,
                 moveDistance,
                 data.LayerMask
             );
 
-            if (hit.collider != null)
+            if (hasHit)
             {
-                data.Position = hit.point;
+                data.Position = hit.point.ToXZ();
                 if (_entityMap.TryGetValue(data.Id, out var entity))
                 {
                     entity.UpdateVisual();
@@ -299,12 +300,12 @@ namespace GameLogic
             }
         }
 
-        private void HandleHit(ProjectileData data, RaycastHit2D hit)
+        private void HandleHit(ProjectileData data, RaycastHit hit)
         {
             var weaponConfig = WeaponConfigMgr.Instance?.Get(data.ConfigId);
             if (weaponConfig != null && weaponConfig.explosionRadius > 0)
             {
-                ApplyExplosionDamage(data, hit.point, weaponConfig);
+                ApplyExplosionDamage(data, hit.point.ToXZ(), weaponConfig);
             }
             else
             {
@@ -333,14 +334,14 @@ namespace GameLogic
         private void ApplyExplosionDamage(ProjectileData data, Vector2 center, WeaponConfig weaponConfig)
         {
             float radius = weaponConfig.explosionRadius;
-            int hitCount = Physics2D.OverlapCircle(center, radius, _enemyFilter, _explosionResults);
+            int hitCount = Physics.OverlapSphereNonAlloc(center.ToWorld(PROJECTILE_HEIGHT), radius, _explosionResults, _enemyLayerMask);
 
             for (int i = 0; i < hitCount; i++)
             {
                 var col = _explosionResults[i];
                 if (col == null) continue;
 
-                float distance = Vector2.Distance(center, col.transform.position);
+                float distance = Vector2.Distance(center, col.transform.position.ToXZ());
                 float falloff = Mathf.Clamp01(1 - distance / radius);
                 float damage = data.Damage * (1 - weaponConfig.explosionDamageFalloff * (1 - falloff));
 

@@ -72,7 +72,7 @@ namespace GameLogic
                 {
                     go = Object.Instantiate(prefab, transform);
                 }
-                go.transform.position = spawnPos;
+                go.transform.position = spawnPos.ToWorld();
 
                 var enemy = go.GetComponent<EnemyEntity>();
                 if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
@@ -129,13 +129,13 @@ namespace GameLogic
             sr.sortingOrder = 5;
             go.transform.localScale = Vector3.one * 0.3f;
 
-            var col = go.AddComponent<CircleCollider2D>();
+            var col = go.AddComponent<SphereCollider>();
             col.radius = 0.15f;
 
-            var rb = go.AddComponent<Rigidbody2D>();
-            rb.gravityScale = 0;
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            var rb = go.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            rb.isKinematic = false;
+            rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
             return go;
         }

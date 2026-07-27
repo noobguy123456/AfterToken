@@ -14,17 +14,17 @@ namespace GameLogic
         int OwnerId { get; }
 
         /// <summary>
-        /// 当前世界位置。
+        /// 当前世界位置（玩法平面坐标 (x, z)）。
         /// </summary>
         Vector2 Position { get; }
 
         /// <summary>
-        /// 当前瞄准位置（世界坐标）。
+        /// 当前瞄准位置（玩法平面坐标 (x, z)）。
         /// </summary>
         Vector2 AimPosition { get; }
 
         /// <summary>
-        /// 当前移动方向。
+        /// 当前移动方向（玩法平面 (x, z) 上的向量）。
         /// </summary>
         Vector2 MoveDirection { get; }
 

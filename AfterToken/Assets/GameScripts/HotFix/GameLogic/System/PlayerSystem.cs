@@ -37,9 +37,9 @@ namespace GameLogic
         public int MaxStamina => _maxStamina;
 
         /// <summary>
-        /// 玩家出生位置（世界坐标）。
+        /// 玩家出生位置（玩法平面坐标，语义为世界 (x, z)）。
         /// </summary>
-        public Vector2 SpawnPosition => _spawnPoint != null ? (Vector2)_spawnPoint.position : Vector2.zero;
+        public Vector2 SpawnPosition => _spawnPoint != null ? _spawnPoint.position.ToXZ() : Vector2.zero;
 
         private GameConfig.cfg.Player _playerConfig;
 
@@ -225,7 +225,9 @@ namespace GameLogic
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
 
             // 计算伤害来源相对玩家朝向的角度（0-360，0 为前方）
-            float playerAngle = Mathf.Atan2(_playerEntity.transform.up.y, _playerEntity.transform.up.x) * Mathf.Rad2Deg;
+            // XZ 玩法平面下朝向取 transform.forward 的 (x, z) 分量
+            Vector2 facing = _playerEntity.transform.forward.ToXZ();
+            float playerAngle = Mathf.Atan2(facing.y, facing.x) * Mathf.Rad2Deg;
             float hitAngle = Mathf.Atan2(hitDirection.y, hitDirection.x) * Mathf.Rad2Deg;
             float relativeAngle = (hitAngle - playerAngle + 360f) % 360f;
 
@@ -389,13 +391,16 @@ namespace GameLogic
             sr.color = Color.cyan;
             sr.sortingOrder = 5;
 
-            var col = go.AddComponent<CircleCollider2D>();
+            var col = go.AddComponent<CapsuleCollider>();
             col.radius = 0.3f;
+            col.height = 1f;
 
-            var rb = go.AddComponent<Rigidbody2D>();
-            rb.gravityScale = 0;
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.freezeRotation = true;
+            // 3D 刚体：XZ 玩法平面，锁死 Y 位置与 X/Z 旋转
+            var rb = go.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            rb.constraints = RigidbodyConstraints.FreezePositionY |
+                             RigidbodyConstraints.FreezeRotationX |
+                             RigidbodyConstraints.FreezeRotationZ;
 
             return go;
         }

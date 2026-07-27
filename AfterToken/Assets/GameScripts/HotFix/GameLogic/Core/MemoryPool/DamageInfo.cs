@@ -15,7 +15,9 @@ namespace GameLogic
         public bool IsCritical;
         public int WeaponConfigId;
         public int BulletConfigId;
+        // 受击方向，玩法平面 (x, z) 上的归一化向量
         public Vector2 HitDirection;
+        // 命中点，玩法平面坐标 (x, z)
         public Vector2 HitPoint;
 
         public void Clear()

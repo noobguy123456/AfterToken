@@ -34,7 +34,7 @@ namespace GameLogic
             }
 
             int configId = enemy.ConfigId;
-            Vector2 position = enemy.transform.position;
+            Vector2 position = enemy.transform.position.ToXZ();
             var drops = DropConfigMgr.Instance.GetDropsForEnemy(configId);
             if (drops.Count == 0)
             {

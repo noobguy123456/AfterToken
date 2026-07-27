@@ -8,7 +8,7 @@ namespace GameLogic
     /// 玩家触碰后尝试拾取进临时背包；背包满时保留在地上，可稍后拾取。
     /// 代码自建占位视觉（占位 sprite + 稀有度染色），无需 Prefab。
     /// </summary>
-    [RequireComponent(typeof(CircleCollider2D))]
+    [RequireComponent(typeof(SphereCollider))]
     public class PickupEntity : MonoBehaviour
     {
         private int _itemId;
@@ -25,9 +25,9 @@ namespace GameLogic
             int sortingOrder = pickupConfig?.SortingOrder ?? 2;
 
             var go = new GameObject($"Pickup_{itemId}");
-            go.transform.position = position;
+            go.transform.position = position.ToWorld();
 
-            var collider = go.AddComponent<CircleCollider2D>();
+            var collider = go.AddComponent<SphereCollider>();
             collider.isTrigger = true;
             collider.radius = colliderRadius;
 
@@ -51,7 +51,7 @@ namespace GameLogic
             renderer.sortingOrder = sortingOrder;
         }
 
-        private void OnTriggerEnter2D(Collider2D other)
+        private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player"))
             {

@@ -219,8 +219,7 @@ namespace GameLogic.Navigation
             if (distance < 0.001f) return true;
 
             // 使用较小的 box 检测，避免贴边被误判为阻挡
-            var hit = Physics2D.Linecast(from, to, ObstacleLayerMask);
-            return hit.collider == null;
+            return !Physics.Linecast(from.ToWorld(0.5f), to.ToWorld(0.5f), ObstacleLayerMask);
         }
 
         private float CalculatePathLength(List<Vector2> waypoints)

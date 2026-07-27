@@ -2,8 +2,8 @@
   {
     "id": 1,
     "pitchAngle": 60,
-    "initialHeight": 15,
-    "initialDistance": -10,
+    "initialHeight": 5,
+    "initialDistance": -3.5,
     "fov": 45,
     "minZoom": 5,
     "maxZoom": 30,

@@ -12,7 +12,9 @@ namespace GameLogic
         public int ConfigId;
         public int OwnerId;
         public int LayerMask;
+        // 玩法平面坐标 (x, z)
         public Vector2 Position;
+        // 飞行方向，玩法平面 (x, z) 上的归一化向量
         public Vector2 Direction;
         public float Speed;
         public float LifeTime;

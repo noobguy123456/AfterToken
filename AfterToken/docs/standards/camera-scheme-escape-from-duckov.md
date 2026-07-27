@@ -16,6 +16,13 @@
 3. **平滑跟随**：相机平滑跟随目标（玩家或虚拟玩家）
 4. **手动控制**：玩家可以通过 WASD/鼠标拖动临时取消跟随，手动控制相机
 
+### 玩法平面约定（XZ）
+
+- **玩法层（移动/瞄准/弹道/导航/边界）统一在世界 XZ 平面运算**，实体贴地位于 y=0，弹道与视线检测高度为 0.5f。
+- 玩法层中所有 `Vector2` 的语义是 **世界 (x, z)**；与 `Vector3` 互转必须走 `GameLogic.XZConvert`（`Vector3.ToXZ()` / `Vector2.ToWorld(y)`），禁止手写 `(Vector2)transform.position` 之类取 x/y 的转换。
+- 物理组件一律 3D：Rigidbody（useGravity=false，constraints=FreezePositionY|FreezeRotationX|FreezeRotationZ）+ CapsuleCollider/SphereCollider，不再使用任何 2D 物理组件。
+- 屏幕坐标转瞄准点：`Camera.ScreenPointToRay` 与 `Plane(Vector3.up, Vector3.zero)` 求交，取交点的 (x, z)。
+
 ---
 
 ## 二、摄像机参数
@@ -23,8 +30,8 @@
 | 参数 | 值 | 说明 |
 |------|-----|------|
 | **俯视角度** | 60° | 相机固定在俯视 60° |
-| **初始高度** | 15m | 相机初始高度 15m |
-| **初始距离** | -10m | 相机初始距离 -10m |
+| **初始高度** | 5m | 相机初始高度 5m（角色约占屏幕高度 1/5） |
+| **初始距离** | -3.5m | 相机初始距离 -3.5m |
 | **FOV** | 45° | 相机视场角 45° |
 | **最小缩放** | 5m | 相机最小高度 5m |
 | **最大缩放** | 30m | 相机最大高度 30m |

@@ -24,8 +24,8 @@ namespace GameLogic
         }
 
         public float PitchAngle => Get()?.PitchAngle ?? 60f;
-        public float InitialHeight => Get()?.InitialHeight ?? 15f;
-        public float InitialDistance => Get()?.InitialDistance ?? -10f;
+        public float InitialHeight => Get()?.InitialHeight ?? 5f;
+        public float InitialDistance => Get()?.InitialDistance ?? -3.5f;
         public float Fov => Get()?.Fov ?? 45f;
         public float MinZoom => Get()?.MinZoom ?? 5f;
         public float MaxZoom => Get()?.MaxZoom ?? 30f;

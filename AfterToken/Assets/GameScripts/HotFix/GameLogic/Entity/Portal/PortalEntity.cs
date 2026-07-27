@@ -9,7 +9,7 @@ namespace GameLogic.Portal
     /// 传送门实体。
     /// 挂载在场景中的 Portal Prefab 上，负责触发区检测与交互反馈。
     /// </summary>
-    [RequireComponent(typeof(CircleCollider2D))]
+    [RequireComponent(typeof(SphereCollider))]
     public class PortalEntity : MonoBehaviour
     {
         [SerializeField] private int _configId;
@@ -26,7 +26,7 @@ namespace GameLogic.Portal
 
         private void Awake()
         {
-            var collider = GetComponent<CircleCollider2D>();
+            var collider = GetComponent<SphereCollider>();
             if (collider != null)
             {
                 collider.isTrigger = true;
@@ -149,7 +149,7 @@ private void EnsureVisualRenderer()
             PortalSystem.Instance?.ExecuteTransition(this);
         }
 
-        private void OnTriggerEnter2D(Collider2D other)
+        private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;
             _playerInside = true;
@@ -160,7 +160,7 @@ private void EnsureVisualRenderer()
             }
         }
 
-        private void OnTriggerExit2D(Collider2D other)
+        private void OnTriggerExit(Collider other)
         {
             if (!other.CompareTag("Player")) return;
             _playerInside = false;

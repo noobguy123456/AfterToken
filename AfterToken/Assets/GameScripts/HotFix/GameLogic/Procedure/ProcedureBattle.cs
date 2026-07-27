@@ -111,6 +111,27 @@ namespace GameLogic
             {
                 Log.Warning("[ProcedureBattle] 找不到 Main Camera");
             }
+
+            InitBattleBoundary();
+        }
+
+        /// <summary>
+        /// 用场景 Ground 的渲染边界初始化战斗边界（玩家移动钳制范围）。
+        /// </summary>
+        private void InitBattleBoundary()
+        {
+            var ground = GameObject.Find("Ground");
+            var groundRenderer = ground != null ? ground.GetComponentInChildren<Renderer>() : null;
+            if (groundRenderer != null)
+            {
+                BattleBoundary.Init(groundRenderer.bounds);
+                Log.Info($"[ProcedureBattle] 战斗边界: {groundRenderer.bounds}");
+            }
+            else
+            {
+                BattleBoundary.Clear();
+                Log.Warning("[ProcedureBattle] 找不到 Ground 的 Renderer，玩家移动将不受边界钳制");
+            }
         }
 
         private void ApplyLevelConfig()
@@ -149,6 +170,7 @@ namespace GameLogic
         private void CleanupBattleSystems()
         {
             PoolSystem.Instance?.ClearAll();
+            BattleBoundary.Clear();
 
             if (_cameraSystem3D != null)
             {

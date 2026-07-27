@@ -83,7 +83,7 @@ namespace GameLogic
             var target = FindBestAssistTarget(origin, direction, config);
             if (target == null) return direction;
 
-            Vector2 toTarget = ((Vector2)target.position - origin).normalized;
+            Vector2 toTarget = (target.position.ToXZ() - origin).normalized;
             float angle = Vector2.Angle(direction, toTarget);
             if (angle > config.aimAssistMaxAngle) return direction;
 
@@ -102,7 +102,7 @@ namespace GameLogic
             {
                 if (enemy == null) continue;
 
-                Vector2 toEnemy = (Vector2)enemy.transform.position - origin;
+                Vector2 toEnemy = enemy.transform.position.ToXZ() - origin;
                 float distance = toEnemy.magnitude;
                 if (distance > radius) continue;
 
@@ -130,8 +130,9 @@ namespace GameLogic
                 return;
             }
 
-            Vector2 origin = player.transform.position;
-            Vector2 aimDir = ((Vector2)player.AimPosition - origin).normalized;
+            Vector2 origin = player.transform.position.ToXZ();
+            // AimPosition 本身已是玩法平面坐标 (x, z)，直接相减
+            Vector2 aimDir = (player.AimPosition - origin).normalized;
 
             var target = FindLockOnTarget(origin, aimDir, weaponConfig);
             if (target == null)
@@ -171,7 +172,7 @@ namespace GameLogic
             {
                 if (enemy == null) continue;
 
-                Vector2 toEnemy = (Vector2)enemy.transform.position - origin;
+                Vector2 toEnemy = enemy.transform.position.ToXZ() - origin;
                 float distance = toEnemy.magnitude;
                 if (distance > range) continue;
 

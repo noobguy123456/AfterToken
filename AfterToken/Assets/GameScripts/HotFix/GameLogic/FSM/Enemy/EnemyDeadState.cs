@@ -16,12 +16,12 @@ namespace GameLogic
             Context.IsDead = true;
             if (Owner.Rigidbody != null)
             {
-                Owner.Rigidbody.linearVelocity = Vector2.zero;
-                Owner.Rigidbody.bodyType = RigidbodyType2D.Kinematic;
+                Owner.Rigidbody.linearVelocity = Vector3.zero;
+                Owner.Rigidbody.isKinematic = true;
             }
 
             // 禁用碰撞体，避免死亡后继续被命中/造成伤害
-            var colliders = Owner.GetComponentsInChildren<Collider2D>();
+            var colliders = Owner.GetComponentsInChildren<Collider>();
             foreach (var col in colliders)
             {
                 col.enabled = false;

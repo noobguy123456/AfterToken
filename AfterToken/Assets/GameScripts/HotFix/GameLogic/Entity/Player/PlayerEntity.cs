@@ -6,12 +6,13 @@ namespace GameLogic
     /// <summary>
     /// 玩家实体。
     /// 负责玩家表现、动画、物理移动。
+    /// 玩法平面为世界 XZ 地面（y=0），逻辑坐标 Vector2 语义为 (x, z)。
     /// </summary>
-    [RequireComponent(typeof(Rigidbody2D))]
+    [RequireComponent(typeof(Rigidbody))]
     public class PlayerEntity : MonoBehaviour, IDamageable, IWeaponOwner
     {
         [SerializeField] private Animator _animator;
-        [SerializeField] private Rigidbody2D _rb;
+        [SerializeField] private Rigidbody _rb;
         [SerializeField] private SpriteRenderer _spriteRenderer;
 
         public Vector2 MoveDirection { get; private set; }
@@ -27,7 +28,7 @@ namespace GameLogic
         #region IWeaponOwner
 
         int IWeaponOwner.OwnerId => GetInstanceID();
-        Vector2 IWeaponOwner.Position => transform.position;
+        Vector2 IWeaponOwner.Position => transform.position.ToXZ();
         Vector2 IWeaponOwner.AimPosition => AimPosition;
         Vector2 IWeaponOwner.MoveDirection => MoveDirection;
         bool IWeaponOwner.IsMoving => IsMoving;
@@ -41,7 +42,7 @@ namespace GameLogic
 
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody2D>();
+            _rb = GetComponent<Rigidbody>();
             if (_animator == null) _animator = GetComponent<Animator>();
             if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
         }
@@ -80,7 +81,7 @@ namespace GameLogic
         public void StartDodge()
         {
             IsDodging = true;
-            _rb.linearVelocity = MoveDirection.normalized * DodgeSpeed;
+            _rb.linearVelocity = new Vector3(MoveDirection.x, 0f, MoveDirection.y).normalized * DodgeSpeed;
         }
 
         public void EndDodge()
@@ -91,17 +92,17 @@ namespace GameLogic
         public void SetDead()
         {
             IsDead = true;
-            _rb.linearVelocity = Vector2.zero;
-            _rb.bodyType = RigidbodyType2D.Kinematic;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.isKinematic = true;
         }
 
         public void ResetEntity()
         {
             IsDead = false;
             IsDodging = false;
-            _rb.bodyType = RigidbodyType2D.Dynamic;
-            _rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-            _rb.linearVelocity = Vector2.zero;
+            _rb.isKinematic = false;
+            _rb.interpolation = RigidbodyInterpolation.Interpolate;
+            _rb.linearVelocity = Vector3.zero;
             MoveDirection = Vector2.zero;
             MoveSpeed = BaseMoveSpeed;
         }
@@ -117,11 +118,11 @@ namespace GameLogic
         {
             if (IsDead) return;
 
-            // 朝向瞄准位置（渲染帧更新，保证视觉流畅）
-            Vector2 aimDir = (AimPosition - (Vector2)transform.position).normalized;
+            // 朝向瞄准位置（渲染帧更新，保证视觉流畅）；XZ 平面上绕 Y 轴旋转
+            Vector2 aimDir = (AimPosition - transform.position.ToXZ()).normalized;
             if (aimDir.sqrMagnitude > 0.001f)
             {
-                transform.up = aimDir;
+                transform.rotation = Quaternion.LookRotation(new Vector3(aimDir.x, 0f, aimDir.y));
             }
         }
 
@@ -132,7 +133,13 @@ namespace GameLogic
             // 闪避期间不覆盖速度；闪避由 StartDodge 设置，EndDodge 结束
             if (!IsDodging)
             {
-                _rb.linearVelocity = MoveDirection * MoveSpeed;
+                _rb.linearVelocity = new Vector3(MoveDirection.x, 0f, MoveDirection.y) * MoveSpeed;
+            }
+
+            // 边界钳制：防止走出战斗地面（XZ 平面）
+            if (BattleBoundary.HasBounds)
+            {
+                _rb.position = BattleBoundary.Clamp(_rb.position);
             }
 
             // 广播位置变化（供非视觉系统使用，相机已直接读取 Transform）

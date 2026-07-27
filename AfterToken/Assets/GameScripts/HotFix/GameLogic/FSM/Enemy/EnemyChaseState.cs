@@ -24,17 +24,10 @@ namespace GameLogic
         private const float CHASE_RANGE = 8f;
         private const float MAX_INTERVAL_SCALE = 3f; // 远距离最大倍率
 
-        // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的 params 数组与结果数组分配。
+        // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的结果数组分配。
         private static readonly int EnemyMask = LayerMask.GetMask("Enemy");
         private static readonly int ObstacleMask = LayerMask.GetMask("Obstacle");
-        private static readonly Collider2D[] _separationResults = new Collider2D[16];
-        // Unity 6 新物理查询 API：ContactFilter2D 替代废弃的 OverlapCircleNonAlloc；useTriggers 与原默认行为一致。
-        private static readonly ContactFilter2D SeparationFilter = new ContactFilter2D
-        {
-            useTriggers = true,
-            useLayerMask = true,
-            layerMask = EnemyMask,
-        };
+        private static readonly Collider[] _separationResults = new Collider[16];
 
         protected override void OnEnterState(IFsm<EnemyEntity> fsm)
         {
@@ -58,7 +51,7 @@ namespace GameLogic
                 return;
             }
 
-            Vector2 ownerPos = Owner.transform.position;
+            Vector2 ownerPos = Owner.transform.position.ToXZ();
             Vector2 targetPos = Context.PlayerPosition;
             Vector2 toTarget = targetPos - ownerPos;
             float distanceToTarget = toTarget.magnitude;
@@ -107,7 +100,7 @@ namespace GameLogic
         {
             if (Owner.Rigidbody != null)
             {
-                Owner.Rigidbody.linearVelocity = Vector2.zero;
+                Owner.Rigidbody.linearVelocity = Vector3.zero;
             }
             _currentPath = null;
         }
@@ -117,7 +110,7 @@ namespace GameLogic
             var nav = Context.NavigationSystem;
             if (nav == null) return;
 
-            _currentPath = nav.FindPath(Owner.transform.position, Context.PlayerPosition);
+            _currentPath = nav.FindPath(Owner.transform.position.ToXZ(), Context.PlayerPosition);
             _currentWaypointIndex = 0;
         }
 
@@ -127,7 +120,7 @@ namespace GameLogic
         private float GetDynamicRefreshInterval()
         {
             float baseInterval = Owner?.PathRefreshInterval ?? 0.3f;
-            float distance = Vector2.Distance(Owner.transform.position, Context.PlayerPosition);
+            float distance = Vector2.Distance(Owner.transform.position.ToXZ(), Context.PlayerPosition);
             float t = Mathf.Clamp01(distance / CHASE_RANGE);
             return Mathf.Lerp(baseInterval, baseInterval * MAX_INTERVAL_SCALE, t);
         }
@@ -138,11 +131,11 @@ namespace GameLogic
             Owner.SetFacing(finalDirection);
             if (Owner.Rigidbody != null)
             {
-                Owner.Rigidbody.linearVelocity = finalDirection * MoveSpeed;
+                Owner.Rigidbody.linearVelocity = new Vector3(finalDirection.x, 0f, finalDirection.y) * MoveSpeed;
             }
             else
             {
-                Owner.transform.position += (Vector3)(finalDirection * MoveSpeed * elapse);
+                Owner.transform.position += (finalDirection * MoveSpeed * elapse).ToWorld();
             }
         }
 
@@ -151,19 +144,19 @@ namespace GameLogic
         /// </summary>
         private Vector2 ApplySeparation(Vector2 desiredDirection)
         {
-            // OverlapCircle（Unity 6 非分配版 API）+ 静态缓冲：结果即刻消费，不产生每帧数组分配；
+            // OverlapSphereNonAlloc + 静态缓冲：结果即刻消费，不产生每帧数组分配；
             // 缓冲 16 个对于 0.6m 分离半径足够（超出部分仅影响分离向量的精度，不影响功能）。
-            int hitCount = Physics2D.OverlapCircle(Owner.transform.position, SEPARATION_RADIUS, SeparationFilter, _separationResults);
+            int hitCount = Physics.OverlapSphereNonAlloc(Owner.transform.position, SEPARATION_RADIUS, _separationResults, EnemyMask, QueryTriggerInteraction.Collide);
             if (hitCount <= 1) return desiredDirection;
 
             Vector2 separation = Vector2.zero;
             int count = 0;
-            Vector2 ownerPos = Owner.transform.position;
+            Vector2 ownerPos = Owner.transform.position.ToXZ();
             for (int i = 0; i < hitCount; i++)
             {
                 var col = _separationResults[i];
                 if (col == null || col.gameObject == Owner.gameObject) continue;
-                Vector2 away = ownerPos - (Vector2)col.transform.position;
+                Vector2 away = ownerPos - col.transform.position.ToXZ();
                 float dist = away.magnitude;
                 if (dist > 0.01f)
                 {
@@ -179,7 +172,8 @@ namespace GameLogic
 
         private bool HasLineOfSight(Vector2 from, Vector2 to)
         {
-            return Physics2D.Linecast(from, to, ObstacleMask).collider == null;
+            // 检测高度取 0.5f，与敌人胶囊中心对齐
+            return !Physics.Linecast(from.ToWorld(0.5f), to.ToWorld(0.5f), ObstacleMask);
         }
     }
 }

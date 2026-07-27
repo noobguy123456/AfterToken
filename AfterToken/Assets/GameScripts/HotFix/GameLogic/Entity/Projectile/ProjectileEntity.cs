@@ -35,17 +35,18 @@ namespace GameLogic
         {
             if (Data == null) return;
 
-            transform.position = Data.Position;
+            // 玩法平面坐标 (x, z) 写回世界坐标，弹丸视觉高度 0.5
+            transform.position = Data.Position.ToWorld(0.5f);
 
             if (Data.Direction.sqrMagnitude > 0.001f)
             {
-                transform.up = (Vector3)Data.Direction;
+                transform.forward = Data.Direction.ToWorld();
             }
 
             if (_spriteRenderer != null) _spriteRenderer.enabled = true;
         }
 
-        private void OnTriggerEnter2D(Collider2D other)
+        private void OnTriggerEnter(Collider other)
         {
             if (!IsActive) return;
 

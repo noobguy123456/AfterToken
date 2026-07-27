@@ -5,8 +5,9 @@ namespace GameLogic
 {
     /// <summary>
     /// 3D摄像机系统（Hades 风格）。
-    /// 负责固定俯视角、有限旋转、平滑跟随、缩放控制。
-    /// 移动键只控制玩家移动，摄像头始终跟随玩家。
+    /// 固定俯视角纯跟随：移动键只控制玩家移动，摄像头始终跟随玩家。
+    /// 战斗内不提供滚轮缩放与 Q/E 旋转（与切武器、交互键冲突），仅保留鼠标中键拖拽微调旋转。
+    /// 参数来源于 <see cref="Camera3DConfigMgr"/>（Luban TbCamera3D，缺失时用代码默认值）。
     /// </summary>
     public class CameraSystem3D : MonoBehaviour
     {
@@ -14,13 +15,7 @@ namespace GameLogic
 
         [Header("跟随")]
         [SerializeField] private Transform _followTarget;
-        [SerializeField] private Vector3 _followOffset = new Vector3(0f, 15f, -10f);
-
-        [Header("缩放")]
-        [SerializeField] private float _currentZoom = 15f;
-        [SerializeField] private float _minZoom = 5f;
-        [SerializeField] private float _maxZoom = 30f;
-        [SerializeField] private float _zoomSpeed = 5f;
+        [SerializeField] private Vector3 _followOffset = new Vector3(0f, 5f, -3.5f);
 
         [Header("旋转")]
         [SerializeField] private float _yawAngle = 0f;
@@ -30,6 +25,7 @@ namespace GameLogic
         [Header("俯视角度")]
         [SerializeField] private float _pitchAngle = 60f;
 
+        private float _followSmoothTime = 0.08f;
         private Camera _mainCamera;
 
         private void Awake()
@@ -40,6 +36,26 @@ namespace GameLogic
             {
                 _mainCamera = gameObject.AddComponent<Camera>();
             }
+
+            ApplyConfig();
+        }
+
+        /// <summary>
+        /// 从 Luban 配置读取相机参数（配置缺失时保留代码默认值）。
+        /// </summary>
+        private void ApplyConfig()
+        {
+            var config = Camera3DConfigMgr.Instance;
+            _pitchAngle = config.PitchAngle;
+            _followOffset = new Vector3(0f, config.InitialHeight, config.InitialDistance);
+            _maxRotationAngle = config.MaxRotationAngle;
+            _rotationSpeed = config.RotationSpeed;
+            _followSmoothTime = Mathf.Max(0.01f, config.FollowSmoothTime);
+
+            if (_mainCamera != null && config.Fov > 0f)
+            {
+                _mainCamera.fieldOfView = config.Fov;
+            }
         }
 
         private void OnDestroy()
@@ -49,69 +65,37 @@ namespace GameLogic
 
         private void Update()
         {
-            HandleMouseInput();
             HandleRotationInput();
             UpdateCameraPosition();
         }
 
-        private void HandleMouseInput()
-        {
-            // 鼠标滚轮缩放
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.01f)
-            {
-                _currentZoom -= scroll * _zoomSpeed;
-                _currentZoom = Mathf.Clamp(_currentZoom, _minZoom, _maxZoom);
-                _followOffset.y = _currentZoom;
-            }
-        }
-
         private void HandleRotationInput()
         {
-            // 鼠标中键旋转
+            // 仅鼠标中键拖拽旋转；Q/E 与战斗交互键冲突，已移除。
             if (Input.GetMouseButton(2))
             {
                 float mouseX = Input.GetAxis("Mouse X");
                 _yawAngle += mouseX * _rotationSpeed * Time.deltaTime;
                 _yawAngle = Mathf.Clamp(_yawAngle, -_maxRotationAngle, _maxRotationAngle);
             }
-
-            // Q/E 键旋转
-            if (Input.GetKey(KeyCode.Q))
-            {
-                _yawAngle -= _rotationSpeed * Time.deltaTime;
-                _yawAngle = Mathf.Clamp(_yawAngle, -_maxRotationAngle, _maxRotationAngle);
-            }
-            if (Input.GetKey(KeyCode.E))
-            {
-                _yawAngle += _rotationSpeed * Time.deltaTime;
-                _yawAngle = Mathf.Clamp(_yawAngle, -_maxRotationAngle, _maxRotationAngle);
-            }
         }
 
         private void UpdateCameraPosition()
         {
-            if (_followTarget != null)
+            if (_followTarget == null)
             {
-                // 计算目标位置（跟随目标位置 + 偏移）
-                Vector3 targetPos = _followTarget.position + _followOffset;
-
-                // 应用旋转
-                targetPos = ApplyRotation(targetPos);
-
-                // 平滑跟随
-                transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 5f);
-
-                // 应用俯视角度
-                transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
+                return;
             }
-        }
 
-        private Vector3 ApplyRotation(Vector3 position)
-        {
-            // 绕 Y 轴旋转
-            Quaternion rotation = Quaternion.Euler(0f, _yawAngle, 0f);
-            return rotation * position;
+            // 旋转只作用于跟随偏移量（绕玩家转），不能绕世界原点旋转整个目标位置
+            Vector3 rotatedOffset = Quaternion.Euler(0f, _yawAngle, 0f) * _followOffset;
+            Vector3 targetPos = _followTarget.position + rotatedOffset;
+
+            // 平滑跟随
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime / _followSmoothTime);
+
+            // 应用俯视角度
+            transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
         }
 
         /// <summary>
@@ -128,7 +112,7 @@ namespace GameLogic
         /// </summary>
         public void FocusOn(Vector3 position)
         {
-            transform.position = new Vector3(position.x, _currentZoom, position.z - 5f);
+            transform.position = position + _followOffset;
         }
 
         /// <summary>

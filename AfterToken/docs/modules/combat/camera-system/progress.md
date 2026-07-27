@@ -8,6 +8,8 @@
 - [x] 受击方向指示数据计算
 - [x] 受击/开火相机抖动基础接入
 - [x] 开火后坐力相机抖动：根据武器 `recoilIntensity` 计算幅度，以上跳为主，指数衰减
+- [x] `CameraSystem3D`（3D 俯视角）：修复 `ApplyRotation` 偏航偏移未旋转导致的跟随失真；删除滚轮缩放与 Q/E 旋转（与切武器/交互键冲突，仅留鼠标中键拖拽偏航）；接线 `Camera3DConfigMgr`（俯角/高度/距离/FOV/平滑时间等）
+- [x] 玩法层迁移 XZ 平面后，旧 2D `CameraSystem` 标记为遗留不再维护（其中残留一处 `Rigidbody2D` 引用属计划内）
 
 ## 进行中
 - [ ] 狙击镜 RenderTexture 集成优化

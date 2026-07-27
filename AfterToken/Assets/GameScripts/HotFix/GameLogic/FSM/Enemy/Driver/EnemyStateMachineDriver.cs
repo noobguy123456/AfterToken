@@ -69,8 +69,8 @@ namespace GameLogic
                 return;
             }
 
-            Vector2 ownerPos = owner.transform.position;
-            Vector2 playerPos = player.transform.position;
+            Vector2 ownerPos = owner.transform.position.ToXZ();
+            Vector2 playerPos = player.transform.position.ToXZ();
             context.PlayerPosition = playerPos;
             float distance = Vector2.Distance(ownerPos, playerPos);
 

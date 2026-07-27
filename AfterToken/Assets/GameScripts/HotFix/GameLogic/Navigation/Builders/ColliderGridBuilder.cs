@@ -4,7 +4,7 @@ using UnityEngine;
 namespace GameLogic.Navigation
 {
     /// <summary>
-    /// 基于 Collider2D 自动生成导航网格。
+    /// 基于 Collider 自动生成导航网格。
     /// </summary>
     public class ColliderGridBuilder : INavigationGridBuilder
     {
@@ -37,8 +37,9 @@ namespace GameLogic.Navigation
         public NavigationGrid Build()
         {
             Bounds bounds = CalculateBounds();
-            Vector2 min = bounds.min;
-            Vector2 max = bounds.max;
+            // 玩法平面为世界 (x, z)，网格边界取 bounds 的 x/z 分量
+            Vector2 min = new Vector2(bounds.min.x, bounds.min.z);
+            Vector2 max = new Vector2(bounds.max.x, bounds.max.z);
 
             int width = Mathf.CeilToInt((max.x - min.x) / _cellSize);
             int height = Mathf.CeilToInt((max.y - min.y) / _cellSize);
@@ -66,7 +67,8 @@ namespace GameLogic.Navigation
                 for (int x = 0; x < width; x++)
                 {
                     Vector2 center = grid.GetWorldPosition(x, y);
-                    bool blocked = Physics2D.OverlapCircle(center, checkRadius, _obstacleMask) != null;
+                    // 检测高度取 0.5f，与地面上的障碍物碰撞体对齐
+                    bool blocked = Physics.CheckSphere(center.ToWorld(0.5f), checkRadius, _obstacleMask);
                     grid.Walkable[grid.GetIndex(x, y)] = !blocked;
                 }
             }
@@ -78,30 +80,35 @@ namespace GameLogic.Navigation
         {
             if (_forcedBoundsCenter.HasValue && _forcedBoundsSize.HasValue)
             {
-                return new Bounds((Vector3)_forcedBoundsCenter.Value, (Vector3)_forcedBoundsSize.Value);
+                return new Bounds(_forcedBoundsCenter.Value.ToWorld(), _forcedBoundsSize.Value.ToWorld());
             }
 
             Vector2 center = _scanCenter ?? Vector2.zero;
             float radius = _scanRadius ?? 10f;
             Vector2 halfSize = Vector2.one * (radius + _margin);
-            Vector2 min = center - halfSize;
-            Vector2 max = center + halfSize;
 
-            Collider2D[] obstacles = Physics2D.OverlapAreaAll(min, max, _obstacleMask);
+            // y 方向给 2f 覆盖高度，保证扫到地面上的障碍物碰撞体
+            Vector3 boxCenter = center.ToWorld(1f);
+            Vector3 boxHalfExtents = new Vector3(halfSize.x, 1f, halfSize.y);
+            Collider[] obstacles = Physics.OverlapBox(boxCenter, boxHalfExtents, Quaternion.identity, _obstacleMask);
 
             if (obstacles == null || obstacles.Length == 0)
             {
                 Log.Warning("[ColliderGridBuilder] 未在扫描范围内找到任何障碍物，使用扫描范围作为边界");
-                return new Bounds((Vector3)center, (Vector3)(halfSize * 2f));
+                return new Bounds(center.ToWorld(), (halfSize * 2f).ToWorld());
             }
 
-            Bounds bounds = obstacles[0].bounds;
+            // 障碍 bounds 只关心玩法平面 (x, z)，压缩 y 后合并，避免障碍物高度撑大网格边界
+            Bounds bounds = new Bounds(obstacles[0].bounds.min.ToXZ().ToWorld(), Vector3.zero);
+            bounds.Encapsulate(obstacles[0].bounds.max.ToXZ().ToWorld());
             for (int i = 1; i < obstacles.Length; i++)
             {
-                bounds.Encapsulate(obstacles[i].bounds);
+                Bounds obstacleBounds = obstacles[i].bounds;
+                bounds.Encapsulate(obstacleBounds.min.ToXZ().ToWorld());
+                bounds.Encapsulate(obstacleBounds.max.ToXZ().ToWorld());
             }
 
-            bounds.Expand(new Vector3(_margin * 2f, _margin * 2f, 0f));
+            bounds.Expand(new Vector3(_margin * 2f, 0f, _margin * 2f));
             return bounds;
         }
     }

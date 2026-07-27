@@ -25,11 +25,13 @@ namespace GameLogic
         {
             if (damageInfo == null) return;
 
-            var mainCamera = CameraSystem.Instance?.MainCamera;
+            var mainCamera = CameraSystem3D.Instance?.GetMainCamera();
             if (mainCamera == null) return;
 
-            Vector3 worldPos = damageInfo.HitPoint;
-            if (worldPos == Vector3.zero && damageInfo.TargetGameObject != null)
+            // 命中点为玩法平面坐标 (x, z)，转世界坐标时使用目标的实际高度
+            float targetY = damageInfo.TargetGameObject != null ? damageInfo.TargetGameObject.transform.position.y : 0f;
+            Vector3 worldPos = damageInfo.HitPoint.ToWorld(targetY);
+            if (damageInfo.HitPoint == Vector2.zero && damageInfo.TargetGameObject != null)
             {
                 worldPos = damageInfo.TargetGameObject.transform.position;
             }
@@ -53,7 +55,7 @@ namespace GameLogic
                         if (tookDamage)
                         {
                             // 命中反馈：在目标位置显示受击标记 + 伤害飘字
-                            var mainCamera = CameraSystem.Instance?.MainCamera;
+                            var mainCamera = CameraSystem3D.Instance?.GetMainCamera();
                             if (mainCamera != null)
                             {
                                 var screenPos = mainCamera.WorldToScreenPoint(damageInfo.TargetGameObject.transform.position);

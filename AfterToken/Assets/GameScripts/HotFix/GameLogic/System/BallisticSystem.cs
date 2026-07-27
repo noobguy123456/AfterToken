@@ -34,6 +34,9 @@ namespace GameLogic
         private LineRenderer _rocketLaser;
         private Material _tracerMaterial;
 
+        // 弹道检测与弹迹表现的高度（地面 y=0 之上的视觉/检测层）。
+        private const float BALLISTIC_HEIGHT = 0.5f;
+
         private void Awake()
         {
             Instance = this;
@@ -164,14 +167,14 @@ namespace GameLogic
                 }
 
                 tracer.Position += tracer.Direction * tracer.Speed * deltaTime;
-                tracer.Transform.position = tracer.Position;
+                tracer.Transform.position = tracer.Position.ToWorld(BALLISTIC_HEIGHT);
 
                 // 更新 tracer 拖尾线段
                 if (tracer.LineRenderer != null)
                 {
                     float tailLength = Mathf.Min(_tracerTailLength, Vector2.Distance(tracer.Position, tracer.HitPoint));
-                    tracer.LineRenderer.SetPosition(0, tracer.Position);
-                    tracer.LineRenderer.SetPosition(1, tracer.Position - tracer.Direction * tailLength);
+                    tracer.LineRenderer.SetPosition(0, tracer.Position.ToWorld(BALLISTIC_HEIGHT));
+                    tracer.LineRenderer.SetPosition(1, (tracer.Position - tracer.Direction * tailLength).ToWorld(BALLISTIC_HEIGHT));
                 }
 
                 // 接近命中点时结束
@@ -206,14 +209,16 @@ namespace GameLogic
             float radius = config.raycastRadius >= 0 ? config.raycastRadius : _tracerRadius;
             LayerMask layers = config.hitLayers != 0 ? config.hitLayers : _hitLayers;
 
-            RaycastHit2D hit = Physics2D.CircleCast(origin, radius, direction, maxDistance, layers);
+            // 3D 物理：玩法平面 (x, z) 转到世界坐标后在弹道高度上做 SphereCast
+            Vector3 rayOrigin = origin.ToWorld(BALLISTIC_HEIGHT);
+            Vector3 rayDirection = direction.ToWorld();
+            bool hasHit = Physics.SphereCast(rayOrigin, radius, rayDirection, out RaycastHit hit, maxDistance, layers);
 
             Vector2 hitPoint = origin + direction * maxDistance;
             GameObject hitTarget = null;
-            bool hasHit = hit.collider != null;
             if (hasHit)
             {
-                hitPoint = hit.point;
+                hitPoint = hit.point.ToXZ();
                 hitTarget = hit.collider.gameObject;
 
                 // 立即伤害（命中反馈统一由 BattleSystem 触发，避免重复）
@@ -245,16 +250,17 @@ namespace GameLogic
             Color color = hasHit ? config.debugHitColor : config.debugMissColor;
             Vector2 endPoint = hasHit ? hitPoint : origin + direction * maxDistance;
 
-            // 主射线
-            Debug.DrawLine(origin, endPoint, color, config.debugRayDuration);
+            // 主射线（XZ 玩法平面，绘制在弹道高度上）
+            Debug.DrawLine(origin.ToWorld(BALLISTIC_HEIGHT), endPoint.ToWorld(BALLISTIC_HEIGHT), color, config.debugRayDuration);
 
             if (hasHit)
             {
-                // 命中点十字标记
-                Debug.DrawRay(hitPoint, Vector2.up * 0.2f, color, config.debugRayDuration);
-                Debug.DrawRay(hitPoint, Vector2.down * 0.2f, color, config.debugRayDuration);
-                Debug.DrawRay(hitPoint, Vector2.left * 0.2f, color, config.debugRayDuration);
-                Debug.DrawRay(hitPoint, Vector2.right * 0.2f, color, config.debugRayDuration);
+                // 命中点十字标记（XZ 平面内）
+                Vector3 hitWorld = hitPoint.ToWorld(BALLISTIC_HEIGHT);
+                Debug.DrawRay(hitWorld, Vector3.forward * 0.2f, color, config.debugRayDuration);
+                Debug.DrawRay(hitWorld, Vector3.back * 0.2f, color, config.debugRayDuration);
+                Debug.DrawRay(hitWorld, Vector3.left * 0.2f, color, config.debugRayDuration);
+                Debug.DrawRay(hitWorld, Vector3.right * 0.2f, color, config.debugRayDuration);
             }
         }
 
@@ -299,12 +305,12 @@ namespace GameLogic
             tracer.LifeTime = lifeTime;
 
             tracer.GameObject.SetActive(true);
-            tracer.Transform.position = origin;
+            tracer.Transform.position = origin.ToWorld(BALLISTIC_HEIGHT);
 
             if (tracer.LineRenderer != null)
             {
-                tracer.LineRenderer.SetPosition(0, origin);
-                tracer.LineRenderer.SetPosition(1, origin + direction * Mathf.Min(_tracerTailLength, distance));
+                tracer.LineRenderer.SetPosition(0, origin.ToWorld(BALLISTIC_HEIGHT));
+                tracer.LineRenderer.SetPosition(1, (origin + direction * Mathf.Min(_tracerTailLength, distance)).ToWorld(BALLISTIC_HEIGHT));
             }
 
             _activeTracers.Add(tracer);

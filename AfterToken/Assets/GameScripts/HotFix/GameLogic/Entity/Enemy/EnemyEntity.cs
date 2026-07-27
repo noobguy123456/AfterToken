@@ -13,7 +13,7 @@ namespace GameLogic
         [SerializeField] private int _hp;
         [SerializeField] private Animator _animator;
         [SerializeField] private SpriteRenderer _spriteRenderer;
-        [SerializeField] private Rigidbody2D _rb;
+        [SerializeField] private Rigidbody _rb;
 
         [Header("血条")]
         [SerializeField] private Transform _healthBarRoot;
@@ -52,13 +52,18 @@ namespace GameLogic
         /// <summary>
         /// 敌人刚体。
         /// </summary>
-        public Rigidbody2D Rigidbody => _rb;
+        public Rigidbody Rigidbody => _rb;
 
         private void Awake()
         {
             if (_animator == null) _animator = GetComponent<Animator>();
-            if (_spriteRenderer == null) _spriteRenderer = GetComponent<SpriteRenderer>();
-            if (_rb == null) _rb = GetComponent<Rigidbody2D>();
+            if (_spriteRenderer == null)
+            {
+                // 角色贴图已移到 Visual 子节点（X+90° 平躺渲染），优先从该节点取，避免误取到血条 SpriteRenderer
+                var visual = transform.Find("Visual");
+                _spriteRenderer = visual != null ? visual.GetComponent<SpriteRenderer>() : GetComponent<SpriteRenderer>();
+            }
+            if (_rb == null) _rb = GetComponent<Rigidbody>();
             EnsureRigidbody();
         }
 
@@ -73,17 +78,17 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 确保刚体配置与玩家一致：Dynamic、无重力、冻结旋转。
+        /// 确保刚体配置与玩家一致：无重力、锁死 Y 位置、仅保留绕 Y 旋转。
         /// </summary>
         private void EnsureRigidbody()
         {
             if (_rb == null)
             {
-                _rb = gameObject.AddComponent<Rigidbody2D>();
+                _rb = gameObject.AddComponent<Rigidbody>();
             }
-            _rb.gravityScale = 0;
-            _rb.bodyType = RigidbodyType2D.Dynamic;
-            _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            _rb.useGravity = false;
+            _rb.isKinematic = false;
+            _rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
         /// <summary>
@@ -92,10 +97,10 @@ namespace GameLogic
         private void ResetPhysics()
         {
             EnsureRigidbody();
-            _rb.linearVelocity = Vector2.zero;
-            _rb.bodyType = RigidbodyType2D.Dynamic;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.isKinematic = false;
 
-            var colliders = GetComponentsInChildren<Collider2D>();
+            var colliders = GetComponentsInChildren<Collider>();
             foreach (var col in colliders)
             {
                 col.enabled = true;

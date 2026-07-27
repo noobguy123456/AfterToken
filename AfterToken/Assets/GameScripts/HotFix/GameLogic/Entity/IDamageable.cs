@@ -17,7 +17,7 @@ namespace GameLogic
         /// 受到伤害。
         /// </summary>
         /// <param name="damage">伤害值。</param>
-        /// <param name="hitDirection">受击方向。</param>
+        /// <param name="hitDirection">受击方向（玩法平面 (x, z) 上的向量）。</param>
         /// <returns>是否实际受到伤害。</returns>
         bool TakeDamage(int damage, Vector2 hitDirection);
     }

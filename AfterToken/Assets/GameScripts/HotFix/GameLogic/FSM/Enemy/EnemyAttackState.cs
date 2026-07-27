@@ -23,7 +23,7 @@ namespace GameLogic
             _hasAttacked = false;
             if (Owner.Rigidbody != null)
             {
-                Owner.Rigidbody.linearVelocity = Vector2.zero;
+                Owner.Rigidbody.linearVelocity = Vector3.zero;
             }
         }
 
@@ -54,7 +54,7 @@ namespace GameLogic
             damageInfo.AttackerId = Owner.GetInstanceID();
             damageInfo.TargetGameObject = player.gameObject;
             damageInfo.Damage = AttackDamage;
-            damageInfo.HitDirection = ((Vector2)player.transform.position - (Vector2)Owner.transform.position).normalized;
+            damageInfo.HitDirection = (player.transform.position.ToXZ() - Owner.transform.position.ToXZ()).normalized;
             damageInfo.HitPoint = player.transform.position;
 
             GameEvent.Get<IBattleEvent>().OnEntityDamaged(damageInfo);

@@ -14,7 +14,7 @@ namespace GameLogic
         {
             if (Owner.Rigidbody != null)
             {
-                Owner.Rigidbody.linearVelocity = Vector2.zero;
+                Owner.Rigidbody.linearVelocity = Vector3.zero;
             }
         }
 
