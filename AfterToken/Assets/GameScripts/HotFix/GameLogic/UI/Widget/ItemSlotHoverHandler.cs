@@ -18,7 +18,8 @@ namespace GameLogic
         {
             if (ItemId > 0)
             {
-                ItemTooltipUI.ShowTooltip(ItemId, eventData.position);
+                // 传格子自身的 RectTransform，提示窗锚定在格子左侧/右侧而非跟随鼠标
+                ItemTooltipUI.ShowTooltip(ItemId, transform as RectTransform);
             }
         }
 

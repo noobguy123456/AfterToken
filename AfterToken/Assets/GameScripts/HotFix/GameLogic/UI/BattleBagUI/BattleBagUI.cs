@@ -23,8 +23,14 @@ namespace GameLogic
         private RectTransform _slotRoot;
         private GameObject _slotTemplate;
         private Button _closeButton;
+        private Button _sortButton;
 
         private readonly List<ItemSlotWidget> _slots = new List<ItemSlotWidget>();
+
+        /// <summary>
+        /// 当前选中的格子（绿色高亮 + 放大），null 表示无选中。
+        /// </summary>
+        private ItemSlotWidget _selectedSlot;
 
         #region 脚本工具生成的代码
 
@@ -35,6 +41,7 @@ namespace GameLogic
             _slotRoot = FindChildComponent<RectTransform>("m_img_Background/m_rect_SlotRoot");
             _slotTemplate = FindChild("m_img_Background/m_rect_SlotRoot/m_item_Slot")?.gameObject;
             _closeButton = FindChildComponent<Button>("m_img_Background/m_btn_Close");
+            _sortButton = FindChildComponent<Button>("m_img_Background/m_btn_Sort");
         }
 
         #endregion
@@ -58,6 +65,12 @@ namespace GameLogic
                 _closeButton.onClick.RemoveAllListeners();
                 _closeButton.onClick.AddListener(() => GameModule.UI.CloseUI<BattleBagUI>());
             }
+
+            if (_sortButton != null)
+            {
+                _sortButton.onClick.RemoveAllListeners();
+                _sortButton.onClick.AddListener(RunInventory.Organize);
+            }
         }
 
         protected override void OnDestroy()
@@ -75,6 +88,9 @@ namespace GameLogic
 
         private void Refresh()
         {
+            // 背包内容刷新后格子与道具的对应关系可能变化，直接清除选中态避免误标
+            ClearSelection();
+
             var items = RunInventory.Items;
             var maxSlots = RunInventory.MaxSlots;
 
@@ -97,6 +113,7 @@ namespace GameLogic
                     break;
                 }
                 widget.gameObject.SetActive(true);
+                widget.Clicked = OnSlotClicked;
                 _slots.Add(widget);
             }
 
@@ -112,6 +129,35 @@ namespace GameLogic
                 {
                     _slots[i].SetEmpty();
                 }
+            }
+        }
+
+        /// <summary>
+        /// 格子点击：再次点击已选中的格子取消选中；空槽位点击只清除当前选中。
+        /// </summary>
+        private void OnSlotClicked(ItemSlotWidget slot)
+        {
+            if (_selectedSlot == slot)
+            {
+                ClearSelection();
+                return;
+            }
+
+            ClearSelection();
+
+            if (slot.HasItem)
+            {
+                _selectedSlot = slot;
+                _selectedSlot.SetSelected(true);
+            }
+        }
+
+        private void ClearSelection()
+        {
+            if (_selectedSlot != null)
+            {
+                _selectedSlot.SetSelected(false);
+                _selectedSlot = null;
             }
         }
     }

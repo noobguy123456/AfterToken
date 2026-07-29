@@ -88,6 +88,7 @@ namespace GameLogic
             }
             _rb.useGravity = false;
             _rb.isKinematic = false;
+            _rb.interpolation = RigidbodyInterpolation.Interpolate;
             _rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 

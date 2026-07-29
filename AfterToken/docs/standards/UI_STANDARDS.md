@@ -16,6 +16,25 @@
 - **文字渲染**：TextMeshPro（TMP）已全量替换 uGUI Text，新增 UI 必须使用 TMP。
 - **异步**：所有 UI 加载接口均为 `UniTask`。
 
+### 1.1 渲染模式与特效接入约定
+
+> **强制规则**：AI 在创建任何新 UI 之前，必须先询问人类选择以下哪种类型，并主动说明三类的特效接入差异，由人类确认后再动工。
+
+| 类型 | Canvas Render Mode | 特效接入方式 | 特效差异说明 |
+|------|-------------------|-------------|-------------|
+| **A. 标准界面**（默认） | Screen Space - Overlay | **帧动画**（美术序列帧，`Image` 换图播放） | Overlay 下场景粒子永远被 UI 盖住不可见；帧动画是普通 UI 控件，层级/遮罩/适配直接可用，覆盖约 80% 装饰性特效需求（流光、飞溅、结算烟花等） |
+| **B. 重特效界面**（个案审批） | Screen Space - Camera | **真粒子**（ParticleSystem 摆在 canvas plane 前方，用 layer + plane distance 控制遮挡） | 效果上限最高（拖尾、随机性、物理感），但绑定相机、FOV 变化会影响 UI 占比，遮挡排序需人工管理；仅限抽卡、开箱、结算等特效重的界面，需说明理由 |
+| **C. 3D 内容展示** | 任意（通常叠加在 A 类界面上） | **RenderTexture + RawImage**（独立相机渲染隔离舞台，RT 作为 UI 控件显示） | 用于装备/角色 3D 模型展示、复杂演出；成本最高（RT 显存 + 额外一次渲染），复用狙击镜的 RenderTexture 经验 |
+
+**约定**：
+
+1. **默认 A**：无法判断时一律 Screen Space - Overlay，特效用帧动画。
+2. **B 需审批**：选择 B 必须说明"为什么帧动画满足不了"，禁止泛滥。
+3. **不引入第三方 UI 粒子插件**（如 ParticleEffectForUGUI），特效只走帧动画 / 真粒子 / RenderTexture 三条路。
+4. 现有 5 个 Screen Space - Camera 的 UI（BattleBagUI、ItemTooltipUI、LoginUI、TestUI、WarehouseUI）保留不动；修改这些 UI 时按需评估是否迁回 Overlay。
+   - **已定**：背包（BattleBagUI）的物品特效框采用**帧动画**方案（A 类做法，slot 上叠 `Image` 播序列帧），不使用真粒子——粒子不被 RectMask2D 裁剪且需逐 slot 坐标转换。下次改动 BattleBagUI 时可将 Canvas 迁回 Overlay。
+5. 世界空间信息（敌人血条、伤害飘字）不走 uGUI Canvas，用 World Space Canvas 或 SpriteRenderer 占位方案，单独评审。
+
 ---
 
 ## 2. 目录与命名约定

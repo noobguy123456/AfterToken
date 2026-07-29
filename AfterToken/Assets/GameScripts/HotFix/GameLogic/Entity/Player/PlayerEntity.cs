@@ -137,9 +137,15 @@ namespace GameLogic
             }
 
             // 边界钳制：防止走出战斗地面（XZ 平面）
+            // 注意：Rigidbody.position 赋值等于传送，会打断插值导致移动卡顿，
+            // 因此只有确实越界（钳制值与当前值不同）时才回写。
             if (BattleBoundary.HasBounds)
             {
-                _rb.position = BattleBoundary.Clamp(_rb.position);
+                Vector3 clamped = BattleBoundary.Clamp(_rb.position);
+                if (clamped != _rb.position)
+                {
+                    _rb.position = clamped;
+                }
             }
 
             // 广播位置变化（供非视觉系统使用，相机已直接读取 Transform）

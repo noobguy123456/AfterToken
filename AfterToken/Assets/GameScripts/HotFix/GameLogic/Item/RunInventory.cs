@@ -93,6 +93,21 @@ namespace GameLogic
             NotifyChanged();
         }
 
+        /// <summary>
+        /// 整理背包：稀有度从高到低 → 价值从大到小 → 获取时间从早到晚。
+        /// 整理后新获取的道具仍按顺序追加到后面的槽位，直到下次整理。
+        /// </summary>
+        public static void Organize()
+        {
+            if (_items.Count <= 1)
+            {
+                return;
+            }
+
+            InventorySorter.Organize(_items);
+            NotifyChanged();
+        }
+
         private static void NotifyChanged()
         {
             GameEvent.Get<IItemEvent>().OnTempInventoryChanged(UsedSlots, MaxSlots);

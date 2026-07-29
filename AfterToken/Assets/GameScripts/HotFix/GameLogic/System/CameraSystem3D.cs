@@ -63,8 +63,9 @@ namespace GameLogic
             Instance = null;
         }
 
-        private void Update()
+        private void LateUpdate()
         {
+            // 相机跟随放在 LateUpdate：等本帧所有移动/旋转（FixedUpdate 物理同步、Update 朝向）结束后再取目标位置，避免跟拍抖动
             HandleRotationInput();
             UpdateCameraPosition();
         }

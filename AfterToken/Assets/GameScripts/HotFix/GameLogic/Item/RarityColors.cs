@@ -19,7 +19,8 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 获取稀有度对应颜色：蓝 / 紫 / 黄 / 红。
+        /// 获取稀有度对应颜色：蓝 / 紫 / 橙 / 红。
+        /// Yellow 档显示为橙色，与背包格子选中框的黄色区分。
         /// </summary>
         public static Color Get(EQuality quality)
         {
@@ -27,7 +28,7 @@ namespace GameLogic
             {
                 case EQuality.Blue: return new Color(0.3f, 0.55f, 1f);
                 case EQuality.Purple: return new Color(0.7f, 0.35f, 0.95f);
-                case EQuality.Yellow: return new Color(1f, 0.85f, 0.2f);
+                case EQuality.Yellow: return new Color(1f, 0.55f, 0.1f);
                 case EQuality.Red: return new Color(1f, 0.3f, 0.25f);
                 default: return Color.white;
             }

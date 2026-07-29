@@ -42,12 +42,13 @@ namespace GameLogic
 
         /// <summary>
         /// 显示指定道具的提示信息。
+        /// 提示窗锚定在格子边缘：格子位于屏幕左半区时固定到格子右侧，右半区时固定到左侧，避免飞出屏幕。
         /// </summary>
         /// <param name="itemId">道具 ID（读取配置表）。</param>
-        /// <param name="screenPos">提示窗锚定的屏幕位置（通常为鼠标位置）。</param>
-        public static void ShowTooltip(int itemId, Vector2 screenPos)
+        /// <param name="slotRect">悬停格子的 RectTransform。</param>
+        public static void ShowTooltip(int itemId, RectTransform slotRect)
         {
-            ShowAsync(itemId, screenPos).Forget();
+            ShowAsync(itemId, slotRect).Forget();
         }
 
         /// <summary>
@@ -58,13 +59,13 @@ namespace GameLogic
             GameModule.UI.CloseUI<ItemTooltipUI>();
         }
 
-        private static async UniTaskVoid ShowAsync(int itemId, Vector2 screenPos)
+        private static async UniTaskVoid ShowAsync(int itemId, RectTransform slotRect)
         {
             var ui = await GameModule.UI.ShowUIAsyncAwait<ItemTooltipUI>();
-            ui?.SetItem(itemId, screenPos);
+            ui?.SetItem(itemId, slotRect);
         }
 
-        private void SetItem(int itemId, Vector2 screenPos)
+        private void SetItem(int itemId, RectTransform slotRect)
         {
             var item = ItemConfigMgr.Instance.Get(itemId);
             if (item == null)
@@ -97,12 +98,12 @@ namespace GameLogic
                 _descText.text = item.Desc;
             }
 
-            UpdatePosition(screenPos);
+            UpdatePosition(slotRect);
         }
 
-        private void UpdatePosition(Vector2 screenPos)
+        private void UpdatePosition(RectTransform slotRect)
         {
-            if (_panel == null)
+            if (_panel == null || slotRect == null)
             {
                 return;
             }
@@ -113,17 +114,37 @@ namespace GameLogic
                 return;
             }
 
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPos, null, out var localPos))
-            {
-                // 向右上方偏移，避免遮挡鼠标
-                _panel.anchoredPosition = localPos + new Vector2(20f, 20f);
-            }
-        }
+            // 格子世界角点（Overlay 画布下世界坐标即屏幕坐标）：0=左下，2=右上
+            var corners = new Vector3[4];
+            slotRect.GetWorldCorners(corners);
+            float slotLeft = corners[0].x;
+            float slotRight = corners[2].x;
+            float slotCenterY = (corners[0].y + corners[2].y) * 0.5f;
 
-        protected override void OnUpdate()
-        {
-            base.OnUpdate();
-            UpdatePosition(Input.mousePosition);
+            const float margin = 8f;
+            var size = _panel.rect.size;
+            var pivot = _panel.pivot;
+
+            // 格子在屏幕左半区 → 面板固定到格子右侧；右半区 → 固定到左侧，避免面板飞出屏幕
+            bool placeRight = (slotLeft + slotRight) * 0.5f < Screen.width * 0.5f;
+            float panelScreenX = placeRight
+                ? slotRight + margin + pivot.x * size.x
+                : slotLeft - margin - (1f - pivot.x) * size.x;
+            float panelScreenY = slotCenterY - (0.5f - pivot.y) * size.y;
+
+            // 钳制面板完整落在屏幕内（考虑 pivot 与外间距），防止格子靠近屏幕边缘时面板越界
+            float minX = margin + pivot.x * size.x;
+            float maxX = Screen.width - margin - (1f - pivot.x) * size.x;
+            float minY = margin + pivot.y * size.y;
+            float maxY = Screen.height - margin - (1f - pivot.y) * size.y;
+            panelScreenX = Mathf.Clamp(panelScreenX, minX, maxX);
+            panelScreenY = Mathf.Clamp(panelScreenY, minY, maxY);
+
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    parentRect, new Vector2(panelScreenX, panelScreenY), null, out var localPos))
+            {
+                _panel.anchoredPosition = localPos;
+            }
         }
     }
 }

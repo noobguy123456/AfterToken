@@ -17,6 +17,7 @@ namespace GameLogic
         private RectTransform _slotRoot;
         private GameObject _slotTemplate;
         private Button _closeButton;
+        private Button _sortButton;
 
         private readonly List<ItemSlotWidget> _slots = new List<ItemSlotWidget>();
 
@@ -29,6 +30,7 @@ namespace GameLogic
             _slotRoot = FindChildComponent<RectTransform>("m_img_Background/m_rect_SlotRoot");
             _slotTemplate = FindChild("m_img_Background/m_rect_SlotRoot/m_item_Slot")?.gameObject;
             _closeButton = FindChildComponent<Button>("m_img_Background/m_btn_Close");
+            _sortButton = FindChildComponent<Button>("m_img_Background/m_btn_Sort");
         }
 
         #endregion
@@ -42,6 +44,12 @@ namespace GameLogic
             {
                 _closeButton.onClick.RemoveAllListeners();
                 _closeButton.onClick.AddListener(() => GameModule.UI.CloseUI<WarehouseUI>());
+            }
+
+            if (_sortButton != null)
+            {
+                _sortButton.onClick.RemoveAllListeners();
+                _sortButton.onClick.AddListener(Warehouse.Organize);
             }
 
             Refresh();

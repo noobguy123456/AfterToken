@@ -77,6 +77,7 @@ TEngine 基于 HybridCLR + YooAsset + UniTask + Luban 构建。
 3. **资源必须释放**：`LoadAssetAsync` 对应 `UnloadAsset`，GameObject 用 `LoadGameObjectAsync`
 4. **热更边界**：`GameScripts/Main` 不热更，`GameScripts/HotFix/` 全部热更
 5. **事件解耦**：模块间用 `GameEvent`，UI 内部用 `AddUIEvent`
+6. **新增 UI 先问类型**：创建任何新 UI 前，必须先询问人类选择渲染模式类型（A 标准 Overlay / B 重特效 Camera / C 3D 内容 RenderTexture），并主动说明三类的特效接入差异，确认后再动工。详见 `docs/standards/UI_STANDARDS.md` 第 1.1 节
 
 ---
 

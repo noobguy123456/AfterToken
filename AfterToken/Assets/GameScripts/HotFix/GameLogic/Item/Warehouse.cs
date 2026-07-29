@@ -107,6 +107,20 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 整理仓库：排序规则与背包一致（稀有度 → 价值 → 获取时间）。
+        /// </summary>
+        public static void Organize()
+        {
+            if (_items.Count <= 1)
+            {
+                return;
+            }
+
+            InventorySorter.Organize(_items);
+            GameEvent.Get<IItemEvent>().OnWarehouseChanged();
+        }
+
+        /// <summary>
         /// 查询某物品当前总数量（跨所有堆叠）。
         /// </summary>
         public static int GetItemCount(int itemId)

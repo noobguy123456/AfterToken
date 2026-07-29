@@ -43,5 +43,13 @@ namespace GameLogic
             var item = Get(itemId);
             return item != null && item.StackLimit > 0 ? item.StackLimit : 1;
         }
+
+        /// <summary>
+        /// 获取道具价值（价格，找不到配置时按 0 处理）。
+        /// </summary>
+        public int GetPrice(int itemId)
+        {
+            return Get(itemId)?.Price ?? 0;
+        }
     }
 }
