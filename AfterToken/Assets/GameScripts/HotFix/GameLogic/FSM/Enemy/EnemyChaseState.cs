@@ -21,7 +21,7 @@ namespace GameLogic
         private const float DIRECT_CHASE_DISTANCE = 1.5f;
         private const float SEPARATION_RADIUS = 0.6f;
         private const float SEPARATION_WEIGHT = 0.6f;
-        private const float CHASE_RANGE = 8f;
+        private const float CHASE_RANGE_FALLBACK = 5f; // 未配置仇恨范围时的回退值
         private const float MAX_INTERVAL_SCALE = 3f; // 远距离最大倍率
 
         // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的结果数组分配。
@@ -120,8 +120,9 @@ namespace GameLogic
         private float GetDynamicRefreshInterval()
         {
             float baseInterval = Owner?.PathRefreshInterval ?? 0.3f;
+            float chaseRange = Owner?.ChaseRange > 0.01f ? Owner.ChaseRange : CHASE_RANGE_FALLBACK;
             float distance = Vector2.Distance(Owner.transform.position.ToXZ(), Context.PlayerPosition);
-            float t = Mathf.Clamp01(distance / CHASE_RANGE);
+            float t = Mathf.Clamp01(distance / chaseRange);
             return Mathf.Lerp(baseInterval, baseInterval * MAX_INTERVAL_SCALE, t);
         }
 

@@ -9,7 +9,8 @@
     "attackRange": 1.5,
     "attackInterval": 1,
     "pathRefreshInterval": 0.3,
-    "prefab": "Enemy"
+    "prefab": "Enemy",
+    "chaseRange": 5
   },
   {
     "id": 9002,
@@ -21,6 +22,7 @@
     "attackRange": 2,
     "attackInterval": 1.2,
     "pathRefreshInterval": 0.3,
-    "prefab": "Enemy_Assault"
+    "prefab": "Enemy_Assault",
+    "chaseRange": 5
   }
 ]

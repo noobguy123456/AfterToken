@@ -87,6 +87,7 @@ namespace GameLogic
 
         private void OnTimeAdvanced(float deltaTime, float totalTime)
         {
+            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Order f={Time.frameCount}");
             _refreshTimer += deltaTime;
             if (_refreshTimer >= SimTimeConfigMgr.Instance.OrderRefreshInterval)
             {
@@ -111,9 +112,16 @@ namespace GameLogic
         private void TryRefreshOrders()
         {
             int maxCount = SimTimeConfigMgr.Instance.MaxOrderCount;
-            while (_orders.Count < maxCount)
+            // 防御：配置为空或权重全 0 导致无法生成新订单时，避免 while 死循环卡死主线程
+            int guard = maxCount * 4;
+            while (_orders.Count < maxCount && guard-- > 0)
             {
+                int before = _orders.Count;
                 GenerateRandomOrder();
+                if (_orders.Count == before)
+                {
+                    break;
+                }
             }
         }
 

@@ -24,6 +24,7 @@
 - [x] Luban 生成逻辑已跑通：本地运行 `gen_code_bin_to_project.bat` 可正常生成 `GameProto/GameConfig/` 代码与 `AssetRaw/Configs/json/` 数据
 - [x] 新增配置表流程文档：[ADDING-NEW-CONFIG.md](./ADDING-NEW-CONFIG.md)
 - [x] 业务接入：`PlayerConfigMgr`/`WeaponConfigMgr`/`LevelConfigMgr`/`ItemConfigMgr`/`DropConfigMgr`/`InventoryConfigMgr`/`PortalConfigMgr`
+- [x] 修复新增表运行时为空（2026-08-01）：`ConfigSystem._tableFiles` 预加载清单补上 10 张缺失表（`inventoryconfig`/`camera`/`ballistic`/`uiconfig`/`pickup`/`building`/`production`/`order`/`simtimeconfig`/`camera3d`）——`LoadAsync` 路径对未列出的表返回空 `JArray`，建筑/订单列表因此全空；新增配置表时必须同步把表名加进该清单（已写入 ADDING-NEW-CONFIG.md 则更佳）
 
 ## 进行中
 

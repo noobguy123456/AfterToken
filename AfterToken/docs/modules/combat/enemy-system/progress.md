@@ -30,6 +30,10 @@
 - [x] **血条进入 Prefab**：`Assets/AssetRaw/Prefabs/Enemy.prefab` 已包含 `HealthBarRoot/Background/Fill` 节点，运行时优先使用 Prefab 节点，无 sprite 时自动补白色占位 Sprite
 - [x] **`TbEnemy` 新增 `pathRefreshInterval` 字段**：`EnemyChaseState` 路径刷新间隔可配置，并按玩家距离动态缩放（近快远慢）
 - [x] **A* 寻路减少分配**：`PathResult` 池化、`ReconstructPath` 复用 List、`SmoothPath` 改为原地平滑
+- [x] **`TbEnemy` 新增 `chaseRange` 字段**：仇恨（追击触发）范围可配置（当前 5m），替换 `EnemyStateMachineDriver` / `EnemyChaseState` 中硬编码的 8f——此前仇恨范围大于相机视野（约 5m），敌人总是从屏幕外冲进来，体感像"从玩家身上挤出来"
+- [x] **敌人生成改为圆环带随机散射**：`EnemySpawnSystem` 由正圆环均匀分布改为 `[spawnRadius, spawnRadius*1.5]` 环带内随机角度/半径散射（生成位置本身经日志验证一直在 12m 环上，并无"同点出生"bug）
+- [x] **修复池化敌人被物理回写到原点的真 bug**：项目关闭了 `Physics.autoSyncTransforms`（`DynamicsManager.asset`），池化实例 `SetActive` 后刚体停留在池化位置（原点）；`transform.position` 瞬移不会同步刚体，下一次 FixedUpdate 物理回写把约一半敌人覆盖回原点（与玩家重叠互挤，即"一移动挤出一堆"的根因）。修复：`EnemySpawnSystem` / `GMController` 刷怪瞬移后同步 `Rigidbody.position`。已经 Unity MCP Play Mode 实测：10 敌全部落位环带，atOrigin=0
+- [x] **接入 Unity MCP 验证链路**：`http://localhost:8080/mcp`（mcp-for-unity-server），辅助脚本 `.tmp_unity_mcp.py` 支持编译检查 / Console 读取 / Play Mode / `execute_code` 运行时检查
 
 ## 进行中
 - [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家

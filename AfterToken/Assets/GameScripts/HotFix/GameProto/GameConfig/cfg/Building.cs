@@ -37,6 +37,13 @@ public sealed partial class Building : Luban.BeanBase
         UpgradeTime = (float)_obj.GetValue("upgradeTime");
         ProductionSlotCount = (int)_obj.GetValue("productionSlotCount");
         UnlockLevel = (int)_obj.GetValue("unlockLevel");
+        FootprintX = (int)_obj.GetValue("footprintX");
+        MaxCount = (int)_obj.GetValue("maxCount");
+        MaxCountPerPlayerLevel = (int)_obj.GetValue("maxCountPerPlayerLevel");
+        MaxCountUpgradeLevel = (int)_obj.GetValue("maxCountUpgradeLevel");
+        MaxCountSlotBaseCost = (int)_obj.GetValue("maxCountSlotBaseCost");
+        MaxCountSlotCostGrow = (int)_obj.GetValue("maxCountSlotCostGrow");
+        FootprintZ = (int)_obj.GetValue("footprintZ");
     }
 
     public static Building DeserializeBuilding(JToken _buf)
@@ -100,6 +107,34 @@ public sealed partial class Building : Luban.BeanBase
     /// 解锁等级
     /// </summary>
     public readonly int UnlockLevel;
+    /// <summary>
+    /// 占地格数X(1m格)
+    /// </summary>
+    public readonly int FootprintX;
+    /// <summary>
+    /// 数量上限-基础值(默认1)
+    /// </summary>
+    public readonly int MaxCount;
+    /// <summary>
+    /// 数量上限-玩家等级解锁:玩家每升1级上限+N(默认0)
+    /// </summary>
+    public readonly int MaxCountPerPlayerLevel;
+    /// <summary>
+    /// 数量上限-升级解锁(默认方式):同类建筑每有1座达到该等级上限+1,0=不启用
+    /// </summary>
+    public readonly int MaxCountUpgradeLevel;
+    /// <summary>
+    /// 数量上限-购买解锁:购买1个栏位的金币基础价,0=不可购买
+    /// </summary>
+    public readonly int MaxCountSlotBaseCost;
+    /// <summary>
+    /// 数量上限-购买解锁:每已购1个栏位价格+N(线性涨价)
+    /// </summary>
+    public readonly int MaxCountSlotCostGrow;
+    /// <summary>
+    /// 占地格数Z(1m格)
+    /// </summary>
+    public readonly int FootprintZ;
 
 
     public const int __ID__ = -381740770;
@@ -128,6 +163,13 @@ public sealed partial class Building : Luban.BeanBase
         + "upgradeTime:" + UpgradeTime + ","
         + "productionSlotCount:" + ProductionSlotCount + ","
         + "unlockLevel:" + UnlockLevel + ","
+        + "footprintX:" + FootprintX + ","
+        + "maxCount:" + MaxCount + ","
+        + "maxCountPerPlayerLevel:" + MaxCountPerPlayerLevel + ","
+        + "maxCountUpgradeLevel:" + MaxCountUpgradeLevel + ","
+        + "maxCountSlotBaseCost:" + MaxCountSlotBaseCost + ","
+        + "maxCountSlotCostGrow:" + MaxCountSlotCostGrow + ","
+        + "footprintZ:" + FootprintZ + ","
         + "}";
     }
 }

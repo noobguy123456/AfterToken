@@ -48,6 +48,8 @@ namespace GameLogic
             float attackRange = enemyCfg?.AttackRange ?? 1.2f;
             float attackInterval = enemyCfg?.AttackInterval ?? 0.5f;
             float pathRefreshInterval = enemyCfg?.PathRefreshInterval ?? 0.3f;
+            float chaseRange = enemyCfg?.ChaseRange ?? 5f;
+            Log.Info($"[EnemySpawn] level={BattleContext.CurrentLevelId} count={_enemyCount} radius={_spawnRadius} chaseRange={chaseRange} center={spawnCenter}");
 
             GameObject prefab = await LoadEnemyPrefabAsync(prefabAddress, cancellationToken);
             string poolKey = !string.IsNullOrEmpty(prefabAddress) ? prefabAddress : "Enemy_Placeholder";
@@ -60,8 +62,10 @@ namespace GameLogic
 
             for (int i = 0; i < _enemyCount; i++)
             {
-                float angle = i * (360f / _enemyCount) * Mathf.Deg2Rad;
-                Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _spawnRadius;
+                // 在 [_spawnRadius, _spawnRadius*1.5] 圆环带内随机散射，避免正圆环的人工感
+                float angle = Random.Range(0f, Mathf.PI * 2f);
+                float radius = Random.Range(_spawnRadius, _spawnRadius * 1.5f);
+                Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
                 GameObject go;
                 if (PoolSystem.Instance != null)
@@ -73,10 +77,17 @@ namespace GameLogic
                     go = Object.Instantiate(prefab, transform);
                 }
                 go.transform.position = spawnPos.ToWorld();
+                // 项目关闭了 Physics.autoSyncTransforms：必须同步刚体位置，
+                // 否则池化实例的刚体仍停留在池化位置，下一次 FixedUpdate 物理回写会把瞬移覆盖掉
+                var rb = go.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.position = go.transform.position;
+                }
 
                 var enemy = go.GetComponent<EnemyEntity>();
                 if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
-                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval, pathRefreshInterval);
+                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval, pathRefreshInterval, chaseRange);
                 enemy.PoolKey = poolKey;
 
                 GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), _enemyConfigId);

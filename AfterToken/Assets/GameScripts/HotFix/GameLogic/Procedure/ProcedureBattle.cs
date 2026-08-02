@@ -101,6 +101,9 @@ namespace GameLogic
             var mainCamera = Camera.main;
             if (mainCamera != null)
             {
+                // 场景相机剔除 UI 层：界面 UI 一律走 Overlay，防止未来 UI 层特效物体被场景相机透视重渲
+                mainCamera.cullingMask &= ~(1 << LayerMask.NameToLayer("UI"));
+
                 _cameraSystem3D = mainCamera.GetComponent<CameraSystem3D>();
                 if (_cameraSystem3D == null)
                 {

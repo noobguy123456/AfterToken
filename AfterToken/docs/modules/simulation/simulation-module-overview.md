@@ -24,17 +24,21 @@
 
 ### 1.1 实现方法
 
-经营场景采用 **3D 俯视角**，场景内容（地面、相机、灯光）在 Unity 编辑器中设计，通过场景文件加载。
+经营场景采用 **3D 俯视角**，场景内容（地面、相机、灯光、EventSystem）在 Unity 编辑器中设计，通过场景文件加载。
 
-虚拟玩家角色（透明胶囊体）通过代码动态创建，作为摄像机的跟随目标。
+进入流程后加载玩家角色：复用战斗 `Player` prefab（`GameModule.Resource.LoadGameObjectAsync("Player", ...)`），移除战斗逻辑的 `PlayerEntity`，挂载轻量 `SimulationPlayerController`（WASD 移动 / 面向移动方向 / 地面边界钳制，移速读 `TbPlayer`）。经营相机较远，实例的 `Visual` 占位视觉放大 5 倍（0.2m→1m），不影响战斗 prefab。
+
+相机控制使用 `SimulationCameraController`（跟随玩家 / 滚轮缩放），由 `ProcedureSimulation` 挂载到主相机并 `SetFollowTarget(player)`；跟随模式下禁用 WASD 平移与右键拖动（避免抢控制权，WASD 归玩家移动）；战斗用 `CameraSystem3D` 若存在会被移除。地面渲染器染灰绿色，与天空盒区分。
 
 ### 1.2 涉及文件
 
 | 文件 | 说明 |
 |------|------|
-| `Assets/AssetRaw/Scenes/SimulationScene.unity` | 经营场景文件（在 Unity 编辑器中设计） |
-| `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureSimulation.cs` | 经营流程，负责加载场景并初始化虚拟玩家和相机跟随 |
-| `Assets/GameScripts/HotFix/GameLogic/Simulation/SimulationCameraController.cs` | 相机控制器，支持跟随目标、WASD 移动、鼠标拖动、滚轮缩放 |
+| `Assets/AssetRaw/Scenes/SimulationScene.unity` | 经营场景文件（Global Light / Ground / PlayerSpawnPoint / Main Camera / EventSystem，无场景脚本） |
+| `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureSimulation.cs` | 经营流程，负责加载场景、生成玩家并初始化相机控制 |
+| `Assets/GameScripts/HotFix/GameLogic/Simulation/SimulationPlayerController.cs` | 经营玩家控制器（WASD 移动 / 边界钳制，移速读 `TbPlayer`） |
+| `Assets/GameScripts/HotFix/GameLogic/Simulation/SimulationCameraController.cs` | 经营相机控制器（跟随玩家 / 滚轮缩放；无跟随目标时支持 WASD 平移与右键拖动） |
+| `Assets/GameScripts/HotFix/GameLogic/Simulation/SimulationInputSystem.cs` | 经营场景输入（Esc 关弹窗/开设置） |
 
 ### 1.3 关键技术点
 
@@ -42,85 +46,32 @@
 
 ```csharp
 // ProcedureSimulation.InitializeSceneContent()
-private void InitializeSceneContent()
-{
-    // 1. 创建虚拟玩家角色（透明胶囊体，作为摄像机跟随目标）
-    _virtualPlayer = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-    _virtualPlayer.name = "VirtualPlayer";
-    _virtualPlayer.transform.position = Vector3.zero;
-    _virtualPlayer.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-    
-    // 设置半透明材质
-    var renderer = _virtualPlayer.GetComponent<Renderer>();
-    renderer.material.color = new Color(1f, 1f, 1f, 0.3f);
-    
-    // 移除碰撞体，避免干扰点击检测
-    Object.Destroy(_virtualPlayer.GetComponent<Collider>());
+// 1. 销毁战斗场景 CameraSystem（避免干扰经营相机）
+// 2. 主相机设为 3D 透视（fov 45、俯角 60°），移除 CameraSystem3D（若存在）
+// 3. 挂载 SimulationCameraController；地面染色
 
-    // 2. 设置相机跟随虚拟玩家
-    var mainCamera = Camera.main;
-    var cameraController = mainCamera.GetComponent<SimulationCameraController>();
-    cameraController.SetFollowTarget(_virtualPlayer.transform);
-}
+// ProcedureSimulation.SpawnPlayerAsync()
+// 1. 读取场景 PlayerSpawnPoint，加载 "Player" prefab
+// 2. 移除 PlayerEntity，挂载 SimulationPlayerController
+// 3. Visual 占位视觉放大 5 倍；相机 SetFollowTarget(player)
 ```
 
-#### 相机控制器
+#### 相机跟随
 
-```csharp
-// SimulationCameraController
-public class SimulationCameraController : MonoBehaviour
-{
-    private Transform _followTarget;
-    private Vector3 _followOffset = new Vector3(0f, 15f, -10f);
-    private bool _isFollowing = true;
-    
-    private void Update()
-    {
-        HandleKeyboardInput();  // WASD 移动（取消跟随）
-        HandleMouseInput();     // 鼠标拖动（取消跟随）+ 滚轮缩放
-        UpdateCameraPosition(); // 跟随目标或手动控制
-    }
-    
-    private void UpdateCameraPosition()
-    {
-        if (_isFollowing && _followTarget != null)
-        {
-            // 跟随目标
-            Vector3 targetPos = _followTarget.position + _followOffset;
-            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 5f);
-        }
-        else
-        {
-            // 手动控制时，确保 Y 坐标为缩放值
-            Vector3 position = transform.position;
-            position.y = _currentZoom;
-            transform.position = position;
-        }
-    }
-    
-    public void SetFollowTarget(Transform target)
-    {
-        _followTarget = target;
-        _isFollowing = true;
-    }
-}
-```
+`SimulationCameraController.Update` 每帧处理滚轮缩放（改变跟随高度），有跟随目标时平滑跟随；无跟随目标时支持 WASD 平移与右键拖动。
 
 ### 1.4 数据流
 
 ```
-用户输入（WASD/鼠标）
+ProcedureSimulation.InitializeSceneContent()
     ↓
-SimulationCameraController.HandleKeyboardInput / HandleMouseInput
+主相机移除 CameraSystem3D，挂载 SimulationCameraController
     ↓
-取消跟随（_isFollowing = false）或更新缩放（_currentZoom）
+SpawnPlayerAsync：加载 Player prefab → 移除 PlayerEntity → 挂 SimulationPlayerController
     ↓
-UpdateCameraPosition()
+SimulationCameraController.SetFollowTarget(player)
     ↓
-如果 _isFollowing = true，跟随虚拟玩家（VirtualPlayer）
-如果 _isFollowing = false，手动控制相机位置
-    ↓
-相机移动/缩放
+WASD 驱动玩家移动，相机每帧平滑跟随
 ```
 
 ---
@@ -575,34 +526,40 @@ public static class InventorySystem
 
 使用代码动态创建 UI 元素（文本、按钮、滚动列表），避免依赖复杂的 Prefab。
 
+渲染方式：**独立的 Screen Space - Camera 根 Canvas**（`SimulationUIRoot`，planeDistance 5，挂主相机），方便后续 UI 特效穿插 3D 粒子。注意：TEngine UIRoot 是全局 Overlay 根 Canvas，嵌套 Canvas 无法单独切换渲染模式，因此这里不走窗口自身 Canvas，而是单独建根 Canvas，窗口只负责生命周期（`OnDestroy` 时销毁）。
+
+布局分两部分：
+
+- **顶部常驻 HUD 条**：金币 / 等级 / 时间 / 暂停·1x·2x 时间控制 / `[Tab] Panel` 提示。
+- **管理面板（默认隐藏，Tab 切换）**：标题 + 建筑列表（可建造/已建造）+ 订单列表 + Build / Upgrade / Back to Menu 按钮。
+
+建筑头顶牌子为 World Space（见 `BuildingEntity.CreateLabel`）。
+
 #### 涉及文件
 
 | 文件 | 说明 |
 |------|------|
 | `Assets/GameScripts/HotFix/GameLogic/UI/SimulationMainUI/SimulationMainUI.cs` | 经营主界面 |
+| `Assets/GameScripts/HotFix/GameLogic/Simulation/Entity/BuildingEntity.cs` | 建筑场景实体（含 World Space 头顶牌子） |
 
 #### 关键技术点
 
 ```csharp
-// SimulationMainUI.BuildUI()
-private void BuildUI()
+// SimulationMainUI.OnCreate()：独立 Screen Space - Camera 根 Canvas
+_uiRootGo = new GameObject("SimulationUIRoot");
+var uiCanvas = _uiRootGo.AddComponent<Canvas>();
+uiCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+uiCanvas.worldCamera = Camera.main;
+uiCanvas.planeDistance = 5f;
+
+// OnUpdate()：Tab 切换管理面板（默认隐藏）
+if (Input.GetKeyDown(KeyCode.Tab))
 {
-    // 1. 创建标题
-    CreateText("Simulation", new Vector2(0, 400), 48, TextAlignmentOptions.Center);
-    
-    // 2. 创建资源栏
-    _goldText = CreateText("Gold: 0", new Vector2(-400, 350), 24, TextAlignmentOptions.Left);
-    
-    // 3. 创建时间控制按钮
-    _pauseButton = CreateButton("Pause", new Vector2(-300, 280), () => SetSpeed(ESimSpeed.Pause));
-    
-    // 4. 创建建筑列表
-    _buildingListRoot = CreateScrollList(new Vector2(-600, -50), new Vector2(400, 500));
-    
-    // 5. 创建订单列表
-    _orderListRoot = CreateScrollList(new Vector2(200, -50), new Vector2(400, 500));
+    SetPanelVisible(!_panelVisible);
 }
 ```
+
+注意事项：滚动列表裁剪必须使用 `RectMask2D`；`Mask`（模板缓冲）在该渲染路径下会导致列表内容全部不可见。
 
 ### 7.2 建筑选择界面 `BuildingSelectionUI`
 

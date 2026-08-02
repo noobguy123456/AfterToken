@@ -40,6 +40,11 @@ namespace GameLogic
         public float PathRefreshInterval { get; private set; }
 
         /// <summary>
+        /// 仇恨范围（追击触发距离），由 TbEnemy 配置注入。
+        /// </summary>
+        public float ChaseRange { get; private set; }
+
+        /// <summary>
         /// 对象池标识。死亡回收时用于归还到对应池中。
         /// </summary>
         public string PoolKey { get; set; }
@@ -123,7 +128,7 @@ namespace GameLogic
             }
         }
 
-        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval, float pathRefreshInterval = 0.3f)
+        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval, float pathRefreshInterval = 0.3f, float chaseRange = 5f)
         {
             _configId = configId;
             _maxHp = maxHp;
@@ -133,6 +138,7 @@ namespace GameLogic
             AttackRange = attackRange;
             AttackInterval = attackInterval;
             PathRefreshInterval = pathRefreshInterval;
+            ChaseRange = chaseRange;
 
             Context = new EnemyStateContext();
             Context.IsDead = false;

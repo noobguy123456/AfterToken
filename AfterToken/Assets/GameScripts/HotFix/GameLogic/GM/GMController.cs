@@ -331,6 +331,12 @@ namespace GameLogic.GM
             }
 
             go.transform.position = position;
+            // autoSyncTransforms 关闭，需同步刚体位置防止物理回写覆盖瞬移
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.position = position;
+            }
             var enemy = go.GetComponent<EnemyEntity>();
             if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
 
@@ -341,7 +347,9 @@ namespace GameLogic.GM
                 enemyCfg?.MoveSpeed ?? 2f,
                 enemyCfg?.AttackDamage ?? 5,
                 enemyCfg?.AttackRange ?? 1.2f,
-                enemyCfg?.AttackInterval ?? 0.5f);
+                enemyCfg?.AttackInterval ?? 0.5f,
+                enemyCfg?.PathRefreshInterval ?? 0.3f,
+                enemyCfg?.ChaseRange ?? 5f);
 
             GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), enemyId);
             LogToConsole($"生成敌人 {enemyId} 在 {position}");

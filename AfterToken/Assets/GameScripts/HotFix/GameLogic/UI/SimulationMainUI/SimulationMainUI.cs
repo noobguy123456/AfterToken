@@ -8,6 +8,10 @@ namespace GameLogic
 {
     /// <summary>
     /// 模拟经营主界面。
+    /// 渲染方式：挂在框架 UIRoot（Screen Space - Overlay）下，不占场景、Scene 视图不可见、
+    /// 不随场景相机倾斜；UI 特效后续用序列帧或 UICamera 特效层（见 docs/Proposal/ui/ui-render-architecture.md）；
+    /// 建筑头顶牌子为 World Space（见 BuildingEntity.CreateLabel）。
+    /// 布局：顶部常驻 HUD 条（金币/等级/时间/时间控制）+ 管理面板（默认隐藏，Tab 切换）。
     /// 本期使用代码动态创建 UI，后续替换为正式 Prefab。
     /// </summary>
     [Window(UILayer.UI, "TestUI", true)]
@@ -16,12 +20,17 @@ namespace GameLogic
         private TextMeshProUGUI _goldText;
         private TextMeshProUGUI _timeText;
         private TextMeshProUGUI _levelText;
+        private GameObject _uiRootGo;
+        private RectTransform _buildRoot;
+        private RectTransform _hudRoot;
+        private RectTransform _panelRoot;
         private RectTransform _buildingListRoot;
         private RectTransform _orderListRoot;
         private Button _pauseButton;
         private Button _normalButton;
         private Button _fastButton;
         private Button _backButton;
+        private bool _panelVisible;
 
         private readonly List<GameObject> _buildingItems = new List<GameObject>();
         private readonly List<GameObject> _orderItems = new List<GameObject>();
@@ -40,71 +49,135 @@ namespace GameLogic
             base.OnCreate();
             FixFullScreenCanvas();
             CursorManager.Instance?.ShowCursor();
-            
+
             // 禁用 GraphicRaycaster 的 Block Raycasts，避免拦截场景中的鼠标输入
             if (GraphicRaycaster != null)
             {
                 GraphicRaycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
             }
-            
+
+            // UI 容器挂在框架 UIRoot（Overlay）下：纯 RectTransform 不带 Canvas，渲染随窗口自身画布，
+            // 不占场景、不随场景相机倾斜（修复旧版自建 SSC Canvas 挂 Main Camera 导致的面板倾斜/陷地）
+            _uiRootGo = new GameObject("SimulationUIRoot", typeof(RectTransform));
+            _uiRootGo.transform.SetParent(rectTransform, false);
+            _buildRoot = (RectTransform)_uiRootGo.transform;
+            // 容器按设计分辨率 1920x1080 固定尺寸居中（反向缩放后 1 单位 = 1 屏幕像素，
+            // 顶锚 HUD 与中心面板布局坐标都按像素直写，无需换算）
+            _buildRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            _buildRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            _buildRoot.pivot = new Vector2(0.5f, 0.5f);
+            _buildRoot.anchoredPosition = Vector2.zero;
+            _buildRoot.sizeDelta = new Vector2(1920f, 1080f);
+
+            // 框架根 Canvas 带 CanvasScaler（参考 750x1334 按宽适配，1920x1080 下放大 2.56 倍），
+            // 本界面布局按 1920x1080 像素设计，反向缩放保持设计尺寸（正式 Prefab 化后移除）
+            var rootCanvas = rectTransform.GetComponentInParent<Canvas>()?.rootCanvas;
+            if (rootCanvas != null && rootCanvas.scaleFactor > 0f)
+            {
+                _buildRoot.localScale = Vector3.one / rootCanvas.scaleFactor;
+            }
+
+            TEngine.Log.Info("[SimulationMainUI] OnCreate BuildUI begin");
             BuildUI();
+            TEngine.Log.Info("[SimulationMainUI] OnCreate RegisterSimulationEvents begin");
             RegisterSimulationEvents();
+            TEngine.Log.Info("[SimulationMainUI] OnCreate done");
         }
 
         protected override void OnDestroy()
         {
             ClearListItems();
-            RemoveAllUIEvent();
+            // 注意：不要在子类调用 RemoveAllUIEvent()，UIWindow.InternalDestroy 已统一释放，重复调用会触发内存池二次释放异常
+            if (_uiRootGo != null)
+            {
+                Object.Destroy(_uiRootGo);
+                _uiRootGo = null;
+            }
             CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }
 
         private void BuildUI()
         {
-            var canvas = Canvas;
-            if (canvas == null) return;
+            if (_buildRoot == null) return;
 
-            // 清空 TestUI 原有内容
-            for (int i = canvas.transform.childCount - 1; i >= 0; i--)
-            {
-                var child = canvas.transform.GetChild(i);
-                if (child != null) Object.Destroy(child.gameObject);
-            }
-
-            // 创建标题
-            CreateText("Simulation", new Vector2(0, 400), 48, TextAlignmentOptions.Center);
-
-            // 顶部资源栏
-            _goldText = CreateText("Gold: 0", new Vector2(-400, 350), 24, TextAlignmentOptions.Left);
-            _levelText = CreateText("Lv: 1", new Vector2(0, 350), 24, TextAlignmentOptions.Center);
-            _timeText = CreateText("Time: 0s", new Vector2(400, 350), 24, TextAlignmentOptions.Right);
-
-            // 时间控制按钮
-            _pauseButton = CreateButton("Pause", new Vector2(-300, 280), () => SetSpeed(ESimSpeed.Pause));
-            _normalButton = CreateButton("1x", new Vector2(-150, 280), () => SetSpeed(ESimSpeed.Normal));
-            _fastButton = CreateButton("2x", new Vector2(0, 280), () => SetSpeed(ESimSpeed.Fast));
-            _backButton = CreateButton("Back to Menu", new Vector2(400, -400), () => GameApp.ChangeProcedure<ProcedureMainMenu>());
-
-            // 建筑操作按钮
-            CreateButton("Build", new Vector2(-600, 280), () => OpenBuildingSelection());
-            CreateButton("Upgrade", new Vector2(-450, 280), () => TryUpgradeSelected());
-
-            // 建筑列表标题
-            CreateText("Buildings", new Vector2(-600, 200), 32, TextAlignmentOptions.Left);
-            _buildingListRoot = CreateScrollList(new Vector2(-600, -50), new Vector2(400, 500));
-
-            // 订单列表标题
-            CreateText("Orders", new Vector2(200, 200), 32, TextAlignmentOptions.Left);
-            _orderListRoot = CreateScrollList(new Vector2(200, -50), new Vector2(400, 500));
+            BuildHud();
+            BuildPanel();
+            SetPanelVisible(false);
 
             RefreshBuildingList();
             RefreshOrderList();
         }
 
-        private TextMeshProUGUI CreateText(string content, Vector2 position, int fontSize, TextAlignmentOptions alignment)
+        /// <summary>
+        /// 顶部常驻 HUD 条：金币 / 等级 / 时间 / 时间控制 / 面板提示。
+        /// </summary>
+        private void BuildHud()
+        {
+            var go = new GameObject("HudBar");
+            go.transform.SetParent(_buildRoot, false);
+            _hudRoot = go.AddComponent<RectTransform>();
+            _hudRoot.anchorMin = new Vector2(0f, 1f);
+            _hudRoot.anchorMax = new Vector2(1f, 1f);
+            _hudRoot.pivot = new Vector2(0.5f, 0.5f);
+            _hudRoot.sizeDelta = new Vector2(0f, 56f);
+            _hudRoot.anchoredPosition = new Vector2(0f, -28f);
+            var bg = go.AddComponent<Image>();
+            bg.color = new Color(0f, 0f, 0f, 0.5f);
+            // 背景不拦截点击（按钮自身会拦截）
+            bg.raycastTarget = false;
+
+            _goldText = CreateText("Gold: 0", _hudRoot, new Vector2(-550f, 0f), 22, TextAlignmentOptions.Left);
+            _levelText = CreateText("Lv: 1", _hudRoot, new Vector2(-300f, 0f), 22, TextAlignmentOptions.Left);
+            _timeText = CreateText("Time: 0s", _hudRoot, new Vector2(-50f, 0f), 22, TextAlignmentOptions.Left);
+
+            _pauseButton = CreateButton("Pause", _hudRoot, new Vector2(220f, 0f), () => SetSpeed(ESimSpeed.Pause));
+            _normalButton = CreateButton("1x", _hudRoot, new Vector2(370f, 0f), () => SetSpeed(ESimSpeed.Normal));
+            _fastButton = CreateButton("2x", _hudRoot, new Vector2(520f, 0f), () => SetSpeed(ESimSpeed.Fast));
+
+            CreateButton("Panel (Tab)", _hudRoot, new Vector2(740f, 0f), () => SetPanelVisible(!_panelVisible));
+        }
+
+        /// <summary>
+        /// 管理面板：建筑列表 / 订单列表 / 建造与升级 / 返回主菜单。默认隐藏，Tab 切换。
+        /// </summary>
+        private void BuildPanel()
+        {
+            var go = new GameObject("ManagementPanel");
+            go.transform.SetParent(_buildRoot, false);
+            _panelRoot = go.AddComponent<RectTransform>();
+            _panelRoot.anchoredPosition = Vector2.zero;
+            _panelRoot.sizeDelta = new Vector2(1100f, 750f);
+            var bg = go.AddComponent<Image>();
+            bg.color = new Color(0.08f, 0.08f, 0.12f, 0.95f);
+
+            CreateText("Management", _panelRoot, new Vector2(0f, 335f), 32, TextAlignmentOptions.Center);
+
+            // 文本框宽 400，左对齐时位置需偏移半宽才能对齐列表左边缘
+            CreateText("Buildings", _panelRoot, new Vector2(-320f, 290f), 24, TextAlignmentOptions.Left);
+            _buildingListRoot = CreateScrollList(_panelRoot, new Vector2(-280f, -15f), new Vector2(480f, 550f));
+
+            CreateText("Orders", _panelRoot, new Vector2(240f, 290f), 24, TextAlignmentOptions.Left);
+            _orderListRoot = CreateScrollList(_panelRoot, new Vector2(280f, -15f), new Vector2(480f, 550f));
+
+            CreateButton("Build", _panelRoot, new Vector2(-380f, -330f), () => OpenBuildingSelection());
+            CreateButton("Upgrade", _panelRoot, new Vector2(-220f, -330f), () => TryUpgradeSelected());
+            _backButton = CreateButton("Back to Menu", _panelRoot, new Vector2(380f, -330f), () => GameApp.ChangeProcedure<ProcedureMainMenu>());
+        }
+
+        private void SetPanelVisible(bool visible)
+        {
+            _panelVisible = visible;
+            if (_panelRoot != null)
+            {
+                _panelRoot.gameObject.SetActive(visible);
+            }
+        }
+
+        private TextMeshProUGUI CreateText(string content, RectTransform parent, Vector2 position, int fontSize, TextAlignmentOptions alignment)
         {
             var go = new GameObject("Text_" + content);
-            go.transform.SetParent(Canvas.transform, false);
+            go.transform.SetParent(parent, false);
             var rect = go.AddComponent<RectTransform>();
             rect.anchoredPosition = position;
             rect.sizeDelta = new Vector2(400, 50);
@@ -114,13 +187,14 @@ namespace GameLogic
             text.fontSize = fontSize;
             text.alignment = alignment;
             text.color = Color.white;
+            text.raycastTarget = false;
             return text;
         }
 
-        private Button CreateButton(string label, Vector2 position, UnityEngine.Events.UnityAction onClick)
+        private Button CreateButton(string label, RectTransform parent, Vector2 position, UnityEngine.Events.UnityAction onClick)
         {
             var go = new GameObject("Btn_" + label);
-            go.transform.SetParent(Canvas.transform, false);
+            go.transform.SetParent(parent, false);
             var rect = go.AddComponent<RectTransform>();
             rect.anchoredPosition = position;
             rect.sizeDelta = new Vector2(140, 40);
@@ -145,26 +219,27 @@ namespace GameLogic
             text.fontSize = 18;
             text.alignment = TextAlignmentOptions.Center;
             text.color = Color.white;
+            text.raycastTarget = false;
 
             return btn;
         }
 
-        private RectTransform CreateScrollList(Vector2 position, Vector2 size)
+        private RectTransform CreateScrollList(RectTransform parent, Vector2 position, Vector2 size)
         {
             var go = new GameObject("ScrollList");
-            go.transform.SetParent(Canvas.transform, false);
+            go.transform.SetParent(parent, false);
             var rect = go.AddComponent<RectTransform>();
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
 
             var image = go.AddComponent<Image>();
-            image.color = new Color(0.1f, 0.1f, 0.15f, 0.8f);
+            image.color = new Color(0.16f, 0.16f, 0.24f, 0.95f);
 
             var scrollRect = go.AddComponent<ScrollRect>();
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
 
-            // 创建 viewport（带 Mask，用于裁剪内容）
+            // 创建 viewport（RectMask2D 裁剪，无需模板缓冲；Mask 在此渲染模式下会导致内容全部不可见）
             var viewportGo = new GameObject("Viewport");
             viewportGo.transform.SetParent(go.transform, false);
             var viewportRect = viewportGo.AddComponent<RectTransform>();
@@ -172,10 +247,7 @@ namespace GameLogic
             viewportRect.anchorMax = Vector2.one;
             viewportRect.offsetMin = Vector2.zero;
             viewportRect.offsetMax = Vector2.zero;
-            var mask = viewportGo.AddComponent<Mask>();
-            mask.showMaskGraphic = false;
-            var viewportImage = viewportGo.AddComponent<Image>();
-            viewportImage.color = Color.clear;
+            viewportGo.AddComponent<RectMask2D>();
 
             // 创建 content（实际放置列表项的容器）
             var contentGo = new GameObject("Content");
@@ -277,6 +349,14 @@ namespace GameLogic
 
         protected override void OnUpdate()
         {
+            if (Time.frameCount % 15 == 0) TEngine.Log.Info($"[hb] SimMainUI f={Time.frameCount}");
+
+            // Tab 切换管理面板
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                SetPanelVisible(!_panelVisible);
+            }
+
             _refreshTimer += Time.deltaTime;
             if (_refreshTimer >= REFRESH_INTERVAL)
             {
@@ -319,17 +399,23 @@ namespace GameLogic
 
         private void CreateBuildingItem(GameConfig.cfg.Building cfg)
         {
+            var simSystem = GetSimulationSystem();
+
             var go = new GameObject($"Building_{cfg.Id}");
             go.transform.SetParent(_buildingListRoot, false);
             var rect = go.AddComponent<RectTransform>();
             rect.sizeDelta = new Vector2(380, 80);
 
             var image = go.AddComponent<Image>();
-            image.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
+            image.color = new Color(0.22f, 0.22f, 0.3f, 0.95f);
 
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = image;
-            btn.onClick.AddListener(() => TryBuild(cfg.Id));
+            btn.onClick.AddListener(() => EnterPlacement(cfg.Id));
+
+            // 可购买栏位时右侧放解锁按钮，文本让出宽度
+            long slotPrice = simSystem?.Building != null ? simSystem.Building.GetSlotPrice(cfg.Id) : 0;
+            bool canUnlock = slotPrice > 0;
 
             var textGo = new GameObject("Text");
             textGo.transform.SetParent(go.transform, false);
@@ -337,15 +423,71 @@ namespace GameLogic
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
             textRect.offsetMin = new Vector2(10, 0);
-            textRect.offsetMax = new Vector2(-10, 0);
+            textRect.offsetMax = new Vector2(canUnlock ? -110 : -10, 0);
+
+            int count = simSystem?.Building != null ? simSystem.Building.CountByConfig(cfg.Id) : 0;
+            int maxCount = simSystem?.Building != null ? simSystem.Building.GetMaxCount(cfg.Id) : cfg.MaxCount;
 
             var text = textGo.AddComponent<TextMeshProUGUI>();
-            text.text = $"{cfg.Name} (Lv{cfg.MaxLevel})\nCost: {cfg.BuildCostGold}G";
+            text.text = $"{cfg.Name} (Lv{cfg.MaxLevel})  [{count}/{maxCount}]\nCost: {cfg.BuildCostGold}G";
             text.fontSize = 14;
             text.alignment = TextAlignmentOptions.Left;
             text.color = Color.white;
 
+            if (canUnlock)
+            {
+                CreateUnlockSlotButton(go.transform, cfg.Id, slotPrice);
+            }
+
             _buildingItems.Add(go);
+        }
+
+        /// <summary>
+        /// 建筑列表项右侧的解锁栏位按钮：花费金币永久提升该类型数量上限 +1（价格线性递增）。
+        /// </summary>
+        private void CreateUnlockSlotButton(Transform parent, int configId, long price)
+        {
+            var go = new GameObject("UnlockSlot");
+            go.transform.SetParent(parent, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(-10f, 0f);
+            rect.sizeDelta = new Vector2(90f, 40f);
+
+            var image = go.AddComponent<Image>();
+            image.color = new Color(0.35f, 0.3f, 0.15f, 0.95f);
+
+            var btn = go.AddComponent<Button>();
+            btn.targetGraphic = image;
+            btn.onClick.AddListener(() =>
+            {
+                var simSystem = GetSimulationSystem();
+                string reason = "系统未就绪";
+                if (simSystem?.Building != null && simSystem.Building.TryPurchaseSlot(configId, out reason))
+                {
+                    RefreshBuildingList();
+                }
+                else
+                {
+                    Log.Warning($"[SimulationMainUI] 解锁栏位失败：{reason}");
+                }
+            });
+
+            var textGo = new GameObject("Text");
+            textGo.transform.SetParent(go.transform, false);
+            var textRect = textGo.AddComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            var text = textGo.AddComponent<TextMeshProUGUI>();
+            text.text = $"Unlock\n{price}G";
+            text.fontSize = 12;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
         }
 
         private void CreateBuildingInstanceItem(BuildingInstance building)
@@ -359,7 +501,7 @@ namespace GameLogic
             rect.sizeDelta = new Vector2(380, 80);
 
             var image = go.AddComponent<Image>();
-            image.color = new Color(0.2f, 0.25f, 0.2f, 0.9f);
+            image.color = new Color(0.25f, 0.32f, 0.25f, 0.95f);
 
             var textGo = new GameObject("Text");
             textGo.transform.SetParent(go.transform, false);
@@ -384,11 +526,21 @@ namespace GameLogic
             _buildingItems.Add(go);
         }
 
-        private void TryBuild(int configId)
+        /// <summary>
+        /// 点击可建造建筑：关闭管理面板并进入摆放模式，由玩家自己选位置放置。
+        /// </summary>
+        private void EnterPlacement(int configId)
         {
-            var simSystem = GetSimulationSystem();
-            simSystem?.Building?.TryBuild(configId, out _);
-            RefreshBuildingList();
+            var simRoot = SingletonSystem.GetGameObject("SimulationRoot");
+            var placement = simRoot != null ? simRoot.GetComponent<BuildingPlacementSystem>() : null;
+            if (placement == null)
+            {
+                Log.Error("[SimulationMainUI] BuildingPlacementSystem 未找到");
+                return;
+            }
+
+            SetPanelVisible(false);
+            placement.StartPlacement(configId);
         }
 
         private void RefreshOrderList()
@@ -417,7 +569,7 @@ namespace GameLogic
             rect.sizeDelta = new Vector2(380, 80);
 
             var image = go.AddComponent<Image>();
-            image.color = new Color(0.25f, 0.2f, 0.15f, 0.9f);
+            image.color = new Color(0.34f, 0.27f, 0.2f, 0.95f);
 
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = image;

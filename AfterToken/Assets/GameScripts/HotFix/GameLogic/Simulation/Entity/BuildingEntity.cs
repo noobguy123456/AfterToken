@@ -3,6 +3,8 @@ using TEngine;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Building = GameConfig.cfg.Building;
+using EBuildingType = GameConfig.cfg.EBuildingType;
 
 namespace GameLogic
 {
@@ -13,9 +15,11 @@ namespace GameLogic
     {
         private int _instanceId;
         private int _configId;
+        private Building _cfg;
         private GameObject _modelInstance;
+        private bool _modelFromResource; // 模型是否来自资源加载（决定销毁时走 UnloadAsset 还是 Destroy）
         private Renderer[] _renderers;
-        private Color _originalColor = Color.white;
+        private Color[] _originalColors; // 逐 renderer 缓存，多方块占位模型各有颜色
         private Color _buildingColor = new Color(1f, 0.5f, 0.5f, 0.7f);
         private Color _upgradingColor = new Color(0.5f, 0.5f, 1f, 0.7f);
         private GameObject _labelInstance;
@@ -42,6 +46,7 @@ namespace GameLogic
                 Log.Error($"[BuildingEntity] 找不到建筑配置 {configId}");
                 return;
             }
+            _cfg = cfg;
 
             await LoadModelAsync(cfg.Icon);
             CreateLabel(cfg.Name, 1);
@@ -57,13 +62,27 @@ namespace GameLogic
                 return;
             }
 
+            // 资源地址无效（占位配置）时直接用占位模型，避免资源模块报 ERROR
+            if (!GameModule.Resource.CheckLocationValid(modelAddress))
+            {
+                CreateDefaultModel();
+                return;
+            }
+
             try
             {
                 _modelInstance = await GameModule.Resource.LoadGameObjectAsync(modelAddress, transform);
                 if (_modelInstance != null)
                 {
+                    _modelFromResource = true;
                     _renderers = _modelInstance.GetComponentsInChildren<Renderer>();
-                    CacheOriginalColor();
+                    CacheOriginalColors();
+                }
+                else
+                {
+                    // 资源加载返回 null（占位地址无对应资源）时回退到占位模型
+                    Log.Warning($"[BuildingEntity] 建筑 {_configId} 模型资源为空 {modelAddress}，使用默认模型");
+                    CreateDefaultModel();
                 }
             }
             catch (System.Exception e)
@@ -75,20 +94,28 @@ namespace GameLogic
 
         private void CreateDefaultModel()
         {
-            // 创建默认 3D 模型（Cube）
-            _modelInstance = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // 正式模型资源到位前，使用按类型拼装的占位方块模型（尺寸由配置表 footprint 决定）
+            int fx = _cfg != null ? _cfg.FootprintX : 2;
+            int fz = _cfg != null ? _cfg.FootprintZ : 2;
+            var type = _cfg != null ? _cfg.BuildingType : EBuildingType.Workshop;
+            _modelInstance = BuildingModelFactory.CreatePlaceholder(type, fx, fz);
             _modelInstance.transform.SetParent(transform, false);
             _modelInstance.transform.localPosition = Vector3.zero;
-            _modelInstance.transform.localScale = new Vector3(2f, 2f, 2f);
             _renderers = _modelInstance.GetComponentsInChildren<Renderer>();
-            CacheOriginalColor();
+            CacheOriginalColors();
         }
 
-        private void CacheOriginalColor()
+        private void CacheOriginalColors()
         {
-            if (_renderers != null && _renderers.Length > 0 && _renderers[0] != null)
+            if (_renderers == null)
             {
-                _originalColor = _renderers[0].material.color;
+                _originalColors = null;
+                return;
+            }
+            _originalColors = new Color[_renderers.Length];
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                _originalColors[i] = _renderers[i] != null ? _renderers[i].material.color : Color.white;
             }
         }
 
@@ -100,7 +127,9 @@ namespace GameLogic
             // 创建 Canvas（World Space）
             _labelInstance = new GameObject("BuildingLabel");
             _labelInstance.transform.SetParent(transform, false);
-            _labelInstance.transform.localPosition = new Vector3(0f, 2.5f, 0f); // 放置在建筑上方
+            // 标签高度按建筑类型抬高，避免嵌入占位模型顶部
+            float labelHeight = _cfg != null ? BuildingModelFactory.GetLabelHeight(_cfg.BuildingType) : 2.5f;
+            _labelInstance.transform.localPosition = new Vector3(0f, labelHeight, 0f);
 
             var canvas = _labelInstance.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
@@ -150,41 +179,29 @@ namespace GameLogic
 
         public void UpdateState(BuildingState state, float progress)
         {
-            if (_renderers == null) return;
+            if (_renderers == null || _originalColors == null) return;
 
-            Color targetColor = state switch
+            for (int i = 0; i < _renderers.Length; i++)
             {
-                BuildingState.Building => Color.Lerp(_buildingColor, _originalColor, progress),
-                BuildingState.Upgrading => Color.Lerp(_upgradingColor, _originalColor, progress),
-                _ => _originalColor,
-            };
-
-            foreach (var renderer in _renderers)
-            {
-                if (renderer != null)
+                if (_renderers[i] == null) continue;
+                Color original = _originalColors[i];
+                _renderers[i].material.color = state switch
                 {
-                    renderer.material.color = targetColor;
-                }
+                    BuildingState.Building => Color.Lerp(_buildingColor, original, progress),
+                    BuildingState.Upgrading => Color.Lerp(_upgradingColor, original, progress),
+                    _ => original,
+                };
             }
         }
 
         public void SetSelected(bool selected)
         {
-            if (_renderers == null) return;
+            if (_renderers == null || _originalColors == null) return;
 
-            foreach (var renderer in _renderers)
+            for (int i = 0; i < _renderers.Length; i++)
             {
-                if (renderer != null)
-                {
-                    if (selected)
-                    {
-                        renderer.material.color = Color.yellow;
-                    }
-                    else
-                    {
-                        renderer.material.color = _originalColor;
-                    }
-                }
+                if (_renderers[i] == null) continue;
+                _renderers[i].material.color = selected ? Color.yellow : _originalColors[i];
             }
         }
 
@@ -202,7 +219,15 @@ namespace GameLogic
         {
             if (_modelInstance != null)
             {
-                GameModule.Resource.UnloadAsset(_modelInstance);
+                // 资源加载的模型走资源卸载；代码拼装的占位模型直接销毁
+                if (_modelFromResource)
+                {
+                    GameModule.Resource.UnloadAsset(_modelInstance);
+                }
+                else
+                {
+                    Destroy(_modelInstance);
+                }
                 _modelInstance = null;
             }
 

@@ -105,6 +105,7 @@ namespace GameLogic
 
         private void OnTimeAdvanced(float deltaTime, float totalTime)
         {
+            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Production f={Time.frameCount}");
             for (int i = _productions.Count - 1; i >= 0; i--)
             {
                 var production = _productions[i];

@@ -324,7 +324,7 @@ D:\U3D_project\AfterToken\AfterToken\Configs\GameConfig\gen_code_bin_to_project.
 - [ ] 创建新的数据 `.xlsx`，包含 `##var` / `##type` / `##` 三行表头及数据。
 - [ ] 运行 `Configs/GameConfig/gen_code_bin_to_project.bat` 重新生成。
 - [ ] 检查是否生成了 `cfg/Xxx.cs`、`cfg/TbXxx.cs`、`cfg_tbxxx.json`。
-- [ ] 检查 `ConfigSystem.cs` 的 `_tableFiles` 是否已自动包含 `cfg_tbxxx`（由生成脚本复制桥接文件时处理）。
+- [ ] **手动**把 `cfg_tbxxx` 加入 `ConfigSystem.cs` 的 `_tableFiles` 预加载清单（生成脚本不会自动同步；漏加则 `LoadAsync` 路径下该表运行时数据为空，2026-08-01 曾有 10 张表因此全空）。
 - [ ] 检查 `GameProto.csproj` 是否包含新生成的 `.cs` 文件（通配符项目通常自动包含，非通配符需手动添加）。
 - [ ] 检查 `Tables.cs` 是否已生成 `TbXxx` 属性与加载/Resolve 调用。
 - [ ] 业务代码通过 `ConfigSystem.Instance.Tables.TbXxx.Get(id)` 访问。

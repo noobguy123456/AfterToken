@@ -12,7 +12,8 @@ namespace GameLogic.Navigation
     {
         public static NavigationSystem Instance { get; private set; }
 
-        [SerializeField] private float _cellSize = 0.5f;
+        // 寻路子格尺寸，全局统一为 MapGrid.NavCellSize（基础格 1m 的 1/2），勿在 Inspector 改成其他值
+        [SerializeField] private float _cellSize = MapGrid.NavCellSize;
         [SerializeField] private float _margin = 3f;
 
         private INavigationSystem _navigator;

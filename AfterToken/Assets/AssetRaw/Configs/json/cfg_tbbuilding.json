@@ -27,7 +27,14 @@
     ],
     "upgradeTime": 10,
     "productionSlotCount": 1,
-    "unlockLevel": 1
+    "unlockLevel": 1,
+    "footprintX": 4,
+    "maxCount": 1,
+    "maxCountPerPlayerLevel": 0,
+    "maxCountUpgradeLevel": 3,
+    "maxCountSlotBaseCost": 500,
+    "maxCountSlotCostGrow": 500,
+    "footprintZ": 4
   },
   {
     "id": 2,
@@ -53,7 +60,14 @@
     ],
     "upgradeTime": 6,
     "productionSlotCount": 1,
-    "unlockLevel": 1
+    "unlockLevel": 1,
+    "footprintX": 4,
+    "maxCount": 1,
+    "maxCountPerPlayerLevel": 1,
+    "maxCountUpgradeLevel": 3,
+    "maxCountSlotBaseCost": 500,
+    "maxCountSlotCostGrow": 500,
+    "footprintZ": 4
   },
   {
     "id": 3,
@@ -79,7 +93,14 @@
     ],
     "upgradeTime": 15,
     "productionSlotCount": 0,
-    "unlockLevel": 1
+    "unlockLevel": 1,
+    "footprintX": 2,
+    "maxCount": 1,
+    "maxCountPerPlayerLevel": 0,
+    "maxCountUpgradeLevel": 2,
+    "maxCountSlotBaseCost": 800,
+    "maxCountSlotCostGrow": 800,
+    "footprintZ": 2
   },
   {
     "id": 4,
@@ -95,6 +116,13 @@
     "upgradeCostItems": [],
     "upgradeTime": 0,
     "productionSlotCount": 0,
-    "unlockLevel": 1
+    "unlockLevel": 1,
+    "footprintX": 2,
+    "maxCount": 3,
+    "maxCountPerPlayerLevel": 0,
+    "maxCountUpgradeLevel": 0,
+    "maxCountSlotBaseCost": 100,
+    "maxCountSlotCostGrow": 100,
+    "footprintZ": 2
   }
 ]

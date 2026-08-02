@@ -76,7 +76,7 @@ namespace GameLogic
 
             // 攻击/追击范围从敌人实体读取（由 TbEnemy 配置注入）
             float attackRange = owner.AttackRange > 0.01f ? owner.AttackRange : 1.2f;
-            float chaseRange = 8f;
+            float chaseRange = owner.ChaseRange > 0.01f ? owner.ChaseRange : 5f;
 
             context.WantsToAttack = distance <= attackRange;
             context.WantsToChase = !context.WantsToAttack && distance <= chaseRange;

@@ -10,12 +10,12 @@ namespace GameLogic
     {
         private Camera _camera;
         private Transform _followTarget;
-        private Vector3 _followOffset = new Vector3(0f, 15f, -10f);
+        private Vector3 _followOffset = new Vector3(0f, 7f, -5f);
         private float _moveSpeed = 50f; // 增加移动速度，从 20 改为 50
         private float _zoomSpeed = 5f;
-        private float _minZoom = 5f;
-        private float _maxZoom = 30f;
-        private float _currentZoom = 15f;
+        private float _minZoom = 4f;
+        private float _maxZoom = 20f;
+        private float _currentZoom = 7f;
         private bool _isDragging;
         private Vector3 _lastMousePosition;
         private bool _isFollowing = true;
@@ -40,6 +40,12 @@ namespace GameLogic
 
         private void HandleKeyboardInput()
         {
+            // 跟随模式下 WASD 驱动玩家移动，相机不平移
+            if (_followTarget != null)
+            {
+                return;
+            }
+
             float horizontal = Input.GetAxis("Horizontal");
             float vertical = Input.GetAxis("Vertical");
 
@@ -68,8 +74,8 @@ namespace GameLogic
                 _followOffset.y = _currentZoom;
             }
 
-            // 鼠标右键拖动
-            if (Input.GetMouseButtonDown(1))
+            // 鼠标右键拖动（跟随模式下禁用，避免相机脱离玩家）
+            if (_followTarget == null && Input.GetMouseButtonDown(1))
             {
                 _isDragging = true;
                 _lastMousePosition = Input.mousePosition;
