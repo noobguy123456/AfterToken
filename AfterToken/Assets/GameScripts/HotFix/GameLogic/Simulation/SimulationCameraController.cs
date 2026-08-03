@@ -1,5 +1,6 @@
 using TEngine;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace GameLogic
 {
@@ -65,17 +66,20 @@ namespace GameLogic
 
         private void HandleMouseInput()
         {
+            // 鼠标悬停在 UI 上时（如 Management 面板滚动列表），滚轮只操作 UI，不缩放视角
+            bool pointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
             // 鼠标滚轮缩放
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.01f)
+            if (!pointerOverUI && Mathf.Abs(scroll) > 0.01f)
             {
                 _currentZoom -= scroll * _zoomSpeed;
                 _currentZoom = Mathf.Clamp(_currentZoom, _minZoom, _maxZoom);
                 _followOffset.y = _currentZoom;
             }
 
-            // 鼠标右键拖动（跟随模式下禁用，避免相机脱离玩家）
-            if (_followTarget == null && Input.GetMouseButtonDown(1))
+            // 鼠标右键拖动（跟随模式下禁用，避免相机脱离玩家；从 UI 上起拖时不移动视角）
+            if (_followTarget == null && !pointerOverUI && Input.GetMouseButtonDown(1))
             {
                 _isDragging = true;
                 _lastMousePosition = Input.mousePosition;

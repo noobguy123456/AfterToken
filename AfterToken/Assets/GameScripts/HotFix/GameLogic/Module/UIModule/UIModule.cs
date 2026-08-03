@@ -255,6 +255,15 @@ namespace GameLogic
             return IsContains(type.FullName);
         }
 
+        /// <summary>
+        /// 同步获取已打开的窗口实例（未打开返回 null）。
+        /// 适用于按键处理等需要同步消费的场景；窗口可能尚未加载完成（IsLoadDone=false）。
+        /// </summary>
+        public T GetUI<T>() where T : UIWindow
+        {
+            return GetWindow(typeof(T).FullName) as T;
+        }
+
        /// <summary>
         /// 异步打开窗口。
         /// </summary>

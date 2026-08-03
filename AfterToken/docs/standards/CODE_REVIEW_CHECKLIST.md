@@ -89,6 +89,7 @@
 
 ### 生命周期
 
+- [ ] 新 UI 必须做成正式 Prefab（`Tools/UI/Create UI Prefab`），禁止挂 `TestUI` 占位 Prefab 运行时代码拼装（2026-08-03 决策）。
 - [ ] `ScriptGenerator()` 中节点路径与 Prefab 实际层级一致。
 - [ ] 全屏面板在 `OnCreate()` 中调用 `FixFullScreenCanvas()`。
 - [ ] 点击事件在 `OnCreate()` 或 `BindEvents()` 中注册。
@@ -98,6 +99,7 @@
 ### 字体与渲染
 
 - [ ] 使用 `TextMeshProUGUI`，不使用 `UnityEngine.UI.Text`。
+- [ ] 面向用户的文本一律英文（2026-08-03 决策，直到用户明确允许中文）。
 - [ ] 动态创建 TMP 文本时使用 `TMPFontProvider.DefaultFont`。
 - [ ] 字体 asset 路径为 `Assets/AssetRaw/Fonts/MainUIFont.asset`。
 

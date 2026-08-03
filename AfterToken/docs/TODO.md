@@ -212,3 +212,19 @@ Luban 配置表数据补充
 | 2026-08-02 | 测试期默认物资：`ProcedureSimulation.GrantTestMaterials` 进入经营流程时遍历 `TbBuilding` 全部建造/升级材料，每种补足到堆叠上限（实测 Wood/Stone 各 x99，槽位 2/200），避免测试被"材料不足"卡住；正式经济循环接入后移除。Play Mode 反射调用实测通过，Console 0 报错。同步更新 building-system progress 与本文件 |
 
 | 2026-08-02 | 同类型建筑数量上限三方式并存解锁落地：①`TbBuilding` 新增 `maxCount`/`maxCountPerPlayerLevel`/`maxCountUpgradeLevel`/`maxCountSlotBaseCost`/`maxCountSlotCostGrow` 五字段（`__beans__.xlsx` comment 列与 `building.xlsx` 注释行均已备注配置方法；默认解锁方式为升级解锁——同类每有 1 座达到 maxCountUpgradeLevel 上限 +1）；②`BuildingSystem` 新增 `GetMaxCount`（基础+玩家等级+升级解锁+已购栏位四种叠加）/`CountByConfig`/`GetSlotPrice`（线性涨价）/`TryPurchaseSlot`，`CanBuild` 重复检查改"数量已达上限"；③管理面板建筑项显示 `[当前/上限]` + 右侧 Unlock 按钮（TMP 无中文字形，面板文本维持英文）。Play Mode 实测 15/15 PASS（基础上限/上限拦截/购买+涨价/升级解锁 Lv3→+1/玩家等级解锁/装饰基础 3）。事故与修复：Luban bat 复制桥接文件步骤用旧模板覆盖 `GameProto/ConfigSystem.cs`，此前未提交 git 的"`_tableFiles` 补 10 张表"修复丢失、运行时建筑表变空；已将 19 张表清单同时写入 GameProto 与 `Configs/GameConfig/CustomTemplate/ConfigSystem.cs` 模板源头，并记录教训"改 GameProto/ConfigSystem.cs 必须同步改 CustomTemplate"。同步更新 building-system progress 与本文件 |
+
+| 2026-08-02 | 建筑数量上限提升条件显示 + 摆放 ESC/右键退回建筑选择 UI：①管理面板建筑项第三行显示提升途径（`SimulationMainUI.BuildUnlockHint`：升级解锁 `+1 slot at building Lv{n}` / 玩家等级解锁 `+N slot per player Lv`，购买途径由 Unlock 按钮价格体现）；②`BuildingPlacementSystem.ExitToBuildingSelection`——ESC/右键取消摆放并打开 `BuildingSelectionUI`（原为直接退出建造流程）；③修复按键冲突：摆放中按 ESC 此前会同时触发取消摆放 + `SimulationInputSystem` 弹出设置面板，现增加 IsPlacing 拦截。实测：4 建筑提升条件文本正确、反射调用退出后 IsPlacing=False 且 BuildingSelectionUI 实际打开。同步更新 building-system progress 与本文件 |
+
+| 2026-08-02 | 建筑信息面板 + 经营交互修正四项：①新建 `BuildingInfoUI`——非摆放模式左键点击场景建筑打开（`BuildingPlacementSystem.TryOpenBuildingInfo`，EventSystem 防 UI 穿透，`PendingInstanceId` 支持已开窗口切换目标）；左侧产出（进行中队列进度 + `TbProduction` 配方列表带 Start 直接投产），右侧建筑名+Lv+状态+模型快照（临时相机拍一帧到 RenderTexture，实体临时切 layer 30 防混入他物）+Upgrade 按钮；ESC 关闭加入 SimulationInputSystem 关闭链首位。②摆放 ESC/右键由"退回 BuildingSelectionUI"改为退回 Management 面板（`ExitToManagement` → `SimulationMainUI.OpenManagementPanel`）。③Management 列表自适应滚动：Content 补 `ContentSizeFitter`（此前高度恒等于 viewport 导致无法滚动）+ 垂直 Scrollbar（AutoHideAndExpandViewport）。④删除 Management 的 Upgrade 占位按钮（原 TODO 无脑升级第一个建筑），升级入口移至建筑信息面板。坑位记录：UIWindow 非 MonoBehaviour（刷新用 `OnUpdate`、销毁用 `Object.Destroy`）；动态 UI 需 1920x1080 固定容器 + 反向缩放抵消根 CanvasScaler 2.56 倍放大（首版 BuildingInfoUI 直接画 Canvas 被放大出屏）。Play Mode 实测：信息面板布局/快照/配方列表截图验证、StartPlacement→ExitToManagement 后 IsPlacing=False 且 ManagementPanel 展开、滚动条 AutoHide 行为正确。同步更新 building-system progress 与本文件 |
+
+- 2026-08-02 建筑系统交互收尾：修复 TestUI 根 Image 挡射线（左键放不下去/点不开信息面板的根因）、`BuildingEntity.EnsureClickCollider` 补点选碰撞体（注意工厂 Destroy 帧末生效的误判坑）、ESC 关闭链加入 Management 面板（右上角 X 按钮同步加入）；规定设置面板仅在无菜单 UI 时按 ESC 弹出；R 旋转功能正常但正方形占地+对称占位模型导致视觉无差异（需要可见朝向时给模型加非对称部件）。详见 docs/modules/simulation/building-system/progress.md
+
+- 2026-08-03 修复 Management 面板滚动时相机同时缩放：`SimulationCameraController` 在指针悬停 UI 时拦截滚轮缩放与右键拖动起拖（规则：悬停任何 UI 时视角操作不生效）。详见 docs/modules/simulation/building-system/progress.md
+
+- 2026-08-03 建筑信息面板升级失败显示原因：`BuildingSystem.CanUpgrade` 输出中文失败原因（忙碌/满级/金币不足/材料不足），`BuildingInfoUI` 升级按钮下方红字显示 3 秒（legacy 动态字体，中文不走 TMP）。已实测。
+
+- 2026-08-03 规范更新：所有新 UI 必须做成正式 Prefab（禁止 TestUI 占位 + 代码拼装），遗留三个代码拼装窗口（SimulationMainUI/BuildingInfoUI/BuildingSelectionUI）下次结构性改动时迁移；同时澄清字体例外——TMP 字库 Latin-only，中文动态文本允许 legacy Text + LegacyRuntime.ttf。详见 docs/standards/UI_STANDARDS.md 与 CODE_REVIEW_CHECKLIST.md
+
+- 2026-08-03 经营三窗口（SimulationMainUI/BuildingSelectionUI/BuildingInfoUI）Prefab 化完成并 Play 实测通过：静态结构入 `Assets/AssetRaw/UI/{Name}/{Name}.prefab`，脚本改 `ScriptGenerator()` 绑定；动态列表项仍运行时生成。同时所有面向用户文本改英文（CanBuild/CanUpgrade/TryPurchaseSlot 失败原因等），BuildingInfoUI 失败红字改回 TMP；"新 UI 必须 Prefab + 文本英文优先（直到用户许可中文）"两条规则已写入 docs/standards/UI_STANDARDS.md 与 CODE_REVIEW_CHECKLIST.md
+
+- 2026-08-03 经营 UI 归拢目录：三个窗口脚本移到 `GameLogic/UI/Simulation/{Name}/`，prefab 移到 `AssetRaw/UI/Simulation/{Name}/`（地址按文件名解析不受影响，已 Play 实测加载正常）；UI_STANDARDS §2.1 三者一致原则补充模块子目录规则

@@ -2,8 +2,8 @@
   <Project Path="TEngine.Runtime.csproj" />
   <Project Path="YooAsset.csproj" />
   <Project Path="HybridCLR.Editor.csproj" />
-  <Project Path="TEngine.Editor.csproj" />
   <Project Path="GameLogic.csproj" />
+  <Project Path="TEngine.Editor.csproj" />
   <Project Path="YooAsset.RuntimeExtension.csproj" />
   <Project Path="UniTask.csproj" />
   <Project Path="YooAsset.MiniGame.csproj" />

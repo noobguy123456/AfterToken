@@ -14,6 +14,7 @@
 
 - **UI 框架**：TEngine `UIWindow` + `[Window(...)]` Attribute。
 - **文字渲染**：TextMeshPro（TMP）已全量替换 uGUI Text，新增 UI 必须使用 TMP。
+- **文本语言（2026-08-03 用户决策）**：**后续所有面向用户的文本一律先用英文**（按钮、标签、提示、失败原因、飘字等），直到用户明确表示可以使用中文为止。在英文-only 期间不再需要 legacy `UnityEngine.UI.Text` 的中文兜底（TMP 对英文完整支持）；中文回退方案（legacy Text + `LegacyRuntime.ttf`）仅作为历史记录保留，恢复中文时仍需走该方案或接入中文 TMP 字库。
 - **异步**：所有 UI 加载接口均为 `UniTask`。
 
 ### 1.1 渲染模式与特效接入约定
@@ -39,16 +40,21 @@
 
 ## 2. 目录与命名约定
 
+> **强制规则（2026-08-03 用户决策）**：**所有新 UI 必须做成正式 Prefab**（走 2.2 流程：`Tools/UI/Create UI Prefab` 生成 Prefab + 脚本，`ScriptGenerator()` 绑定节点）。**禁止**再出现"挂 `TestUI` 占位 Prefab、运行时代码拼装界面"的写法。
+>
+> 历史遗留已全部清零（2026-08-03）：`SimulationMainUI`、`BuildingInfoUI`、`BuildingSelectionUI` 已迁移为正式 Prefab（静态结构在 Prefab、动态列表项仍运行时生成，属正常模式）。
+
 ### 2.1 三者一致原则
 
 | 项 | 规则 | 示例 |
 |----|------|------|
-| Prefab 路径 | `Assets/AssetRaw/UI/{Name}/{Name}.prefab` | `Assets/AssetRaw/UI/BattleMainUI/BattleMainUI.prefab` |
-| 脚本路径 | `Assets/GameScripts/HotFix/GameLogic/UI/{Name}/{Name}.cs` | `Assets/GameScripts/HotFix/GameLogic/UI/BattleMainUI/BattleMainUI.cs` |
+| Prefab 路径 | `Assets/AssetRaw/UI/{Name}/{Name}.prefab`；同模块 UI 可收进模块子目录 `Assets/AssetRaw/UI/{Module}/{Name}/{Name}.prefab` | `Assets/AssetRaw/UI/BattleMainUI/BattleMainUI.prefab`、`Assets/AssetRaw/UI/Simulation/SimulationMainUI/SimulationMainUI.prefab` |
+| 脚本路径 | `Assets/GameScripts/HotFix/GameLogic/UI/{Name}/{Name}.cs`；同模块 UI 可收进模块子目录 `.../UI/{Module}/{Name}/{Name}.cs` | `.../UI/BattleMainUI/BattleMainUI.cs`、`.../UI/Simulation/SimulationMainUI/SimulationMainUI.cs` |
 | 类名 | `public class {Name}UI : UIWindow` | `public class BattleMainUI : UIWindow` |
-| `[Window]` location | 与 Prefab 文件名一致（不含扩展名） | `[Window(UILayer.UI, location: "BattleMainUI")]` |
+| `[Window]` location | 与 Prefab 文件名一致（不含扩展名；地址按文件名解析，模块子目录不影响） | `[Window(UILayer.UI, location: "BattleMainUI")]` |
 
 - **禁止**把 Prefab 直接放在 `Assets/AssetRaw/UI/` 根目录，避免 YooAsset 地址冲突。
+- 现有模块子目录：`Simulation/`（SimulationMainUI、BuildingSelectionUI、BuildingInfoUI，2026-08-03 归拢）。
 - UI 脚本中 `ScriptGenerator()` 里的节点路径必须与 Prefab 实际层级完全一致。
 
 ### 2.2 新增 UI 标准流程

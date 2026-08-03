@@ -100,32 +100,32 @@ namespace GameLogic
             var cfg = BuildingConfigMgr.Instance.Get(configId);
             if (cfg == null)
             {
-                reason = "配置错误";
+                reason = "Config error";
                 return false;
             }
 
             ComputeFootprint(cfg, position, rotationY, out _, out var cells);
             if (!IsAreaFree(cells))
             {
-                reason = "当前位置无法放置";
+                reason = "Cannot place here";
                 return false;
             }
 
             if (CountByConfig(configId) >= GetMaxCount(configId))
             {
-                reason = "数量已达上限";
+                reason = "Count limit reached";
                 return false;
             }
 
             if (!CurrencySystem.HasGold(cfg.BuildCostGold))
             {
-                reason = "金币不足";
+                reason = "Not enough gold";
                 return false;
             }
 
             if (!InventorySystem.HasItems(cfg.BuildCostItems))
             {
-                reason = "材料不足";
+                reason = "Not enough materials";
                 return false;
             }
 
@@ -207,20 +207,20 @@ namespace GameLogic
             var cfg = BuildingConfigMgr.Instance.Get(configId);
             if (cfg == null)
             {
-                reason = "配置错误";
+                reason = "Config error";
                 return false;
             }
 
             long price = GetSlotPrice(configId);
             if (price <= 0)
             {
-                reason = "该建筑不可解锁";
+                reason = "Slot not unlockable";
                 return false;
             }
 
             if (!CurrencySystem.HasGold(price))
             {
-                reason = "金币不足";
+                reason = "Not enough gold";
                 return false;
             }
 
@@ -272,31 +272,51 @@ namespace GameLogic
             _buildingEntities[building.InstanceId] = entity;
         }
 
-        public bool TryUpgrade(int instanceId)
+        /// <summary>
+        /// 升级校验（与 CanBuild 同款模式）：依次输出中文失败原因，TryUpgrade 改走此方法。
+        /// </summary>
+        public bool CanUpgrade(int instanceId, out string reason)
         {
+            reason = null;
             var building = GetBuilding(instanceId);
             if (building == null || building.State != BuildingState.Idle)
             {
+                reason = "Building is busy";
                 return false;
             }
 
             var cfg = BuildingConfigMgr.Instance.Get(building.ConfigId);
             if (cfg == null || building.Level >= cfg.MaxLevel)
             {
+                reason = "Max level reached";
                 return false;
             }
 
             if (!CurrencySystem.HasGold(cfg.UpgradeCostGold))
             {
-                Log.Warning($"[BuildingSystem] 金币不足，无法升级 {cfg.Name}");
+                reason = "Not enough gold";
                 return false;
             }
 
             if (!InventorySystem.HasItems(cfg.UpgradeCostItems))
             {
-                Log.Warning($"[BuildingSystem] 材料不足，无法升级 {cfg.Name}");
+                reason = "Not enough materials";
                 return false;
             }
+
+            return true;
+        }
+
+        public bool TryUpgrade(int instanceId)
+        {
+            if (!CanUpgrade(instanceId, out var reason))
+            {
+                Log.Warning($"[BuildingSystem] 升级失败：{reason}");
+                return false;
+            }
+
+            var building = GetBuilding(instanceId);
+            var cfg = BuildingConfigMgr.Instance.Get(building.ConfigId);
 
             CurrencySystem.TryConsumeGold(cfg.UpgradeCostGold);
             InventorySystem.TryConsumeItems(cfg.UpgradeCostItems);

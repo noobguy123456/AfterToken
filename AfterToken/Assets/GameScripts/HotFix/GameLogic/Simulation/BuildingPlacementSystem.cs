@@ -48,7 +48,15 @@ namespace GameLogic
         private void Update()
         {
             if (Time.frameCount % 15 == 0) Log.Info($"[hb] Placement f={Time.frameCount}");
-            if (!_isPlacing) return;
+            if (!_isPlacing)
+            {
+                // 非摆放模式：左键点击场景建筑打开信息面板
+                if (Input.GetMouseButtonDown(0))
+                {
+                    TryOpenBuildingInfo();
+                }
+                return;
+            }
 
             UpdatePreviewPosition();
 
@@ -59,13 +67,62 @@ namespace GameLogic
                 UpdatePreviewPosition();
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && !IsPointerOverUI())
             {
                 TryPlaceBuilding();
             }
             else if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
             {
-                CancelPlacement();
+                ExitToManagement();
+            }
+        }
+
+        /// <summary>指针是否悬停在 UGUI 上（放置/点击建筑前必查，防 UI 点击穿透到场景）。</summary>
+        private static bool IsPointerOverUI()
+        {
+            return UnityEngine.EventSystems.EventSystem.current != null
+                && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+        }
+
+        /// <summary>
+        /// 退出摆放模式并退回管理面板（ESC / 右键）。
+        /// 注意：摆放模式下 ESC 会同时被 SimulationInputSystem 监听，那边已做 IsPlacing 拦截，不会误开设置面板。
+        /// </summary>
+        private void ExitToManagement()
+        {
+            CancelPlacement();
+            // SimulationMainUI 常驻打开（仅面板隐藏），直接取实例展开管理面板
+            GameModule.UI.GetUIAsync<SimulationMainUI>(ui =>
+            {
+                if (ui != null)
+                {
+                    ui.OpenManagementPanel();
+                }
+            });
+        }
+
+        /// <summary>
+        /// 非摆放模式下左键点击场景建筑：射线命中 BuildingEntity 时打开建筑信息面板。
+        /// </summary>
+        private void TryOpenBuildingInfo()
+        {
+            // 指针在 UI 上时不穿透到场景
+            if (IsPointerOverUI())
+            {
+                return;
+            }
+
+            if (_mainCamera == null) return;
+
+            Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            {
+                var entity = hit.collider.GetComponentInParent<BuildingEntity>();
+                if (entity != null)
+                {
+                    BuildingInfoUI.PendingInstanceId = entity.InstanceId;
+                    GameModule.UI.ShowUIAsync<BuildingInfoUI>(entity.InstanceId);
+                }
             }
         }
 

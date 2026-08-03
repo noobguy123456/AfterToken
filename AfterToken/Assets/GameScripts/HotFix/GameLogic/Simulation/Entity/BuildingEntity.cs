@@ -50,7 +50,30 @@ namespace GameLogic
 
             await LoadModelAsync(cfg.Icon);
             CreateLabel(cfg.Name, 1);
+            EnsureClickCollider();
             UpdateState(BuildingState.Building, 0f);
+        }
+
+        /// <summary>
+        /// 确保实体有可点击的碰撞体（点击建筑打开信息面板依赖射线命中）。
+        /// 占位模型 cube 不带 collider；正式模型若自带 collider 则直接用，否则按渲染包围盒补一个。
+        /// </summary>
+        private void EnsureClickCollider()
+        {
+            // 只查根节点：占位模型子 cube 的 collider 被工厂 Destroy 后帧末才真正移除，
+            // 同帧 GetComponentInChildren 仍能查到会误判为"已有碰撞体"导致跳过
+            if (GetComponent<Collider>() != null) return;
+            if (_renderers == null || _renderers.Length == 0) return;
+
+            Bounds bounds = _renderers[0].bounds;
+            foreach (var r in _renderers)
+            {
+                if (r != null) bounds.Encapsulate(r.bounds);
+            }
+
+            var box = gameObject.AddComponent<BoxCollider>();
+            box.center = transform.InverseTransformPoint(bounds.center);
+            box.size = bounds.size;
         }
 
         private async UniTask LoadModelAsync(string modelAddress)
