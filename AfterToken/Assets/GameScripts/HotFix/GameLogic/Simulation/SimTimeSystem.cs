@@ -23,8 +23,6 @@ namespace GameLogic
                 return;
             }
 
-            if (Time.frameCount % 15 == 0) Log.Info($"[hb] SimTime f={Time.frameCount}");
-
             float speedMultiplier = GetSpeedMultiplier(_speed);
             float deltaTime = Time.deltaTime * speedMultiplier;
             _currentTime += deltaTime;

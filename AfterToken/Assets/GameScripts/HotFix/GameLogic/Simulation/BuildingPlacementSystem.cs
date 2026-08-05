@@ -47,7 +47,6 @@ namespace GameLogic
 
         private void Update()
         {
-            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Placement f={Time.frameCount}");
             if (!_isPlacing)
             {
                 // 非摆放模式：左键点击场景建筑打开信息面板

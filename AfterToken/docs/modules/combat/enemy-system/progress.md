@@ -34,6 +34,7 @@
 - [x] **敌人生成改为圆环带随机散射**：`EnemySpawnSystem` 由正圆环均匀分布改为 `[spawnRadius, spawnRadius*1.5]` 环带内随机角度/半径散射（生成位置本身经日志验证一直在 12m 环上，并无"同点出生"bug）
 - [x] **修复池化敌人被物理回写到原点的真 bug**：项目关闭了 `Physics.autoSyncTransforms`（`DynamicsManager.asset`），池化实例 `SetActive` 后刚体停留在池化位置（原点）；`transform.position` 瞬移不会同步刚体，下一次 FixedUpdate 物理回写把约一半敌人覆盖回原点（与玩家重叠互挤，即"一移动挤出一堆"的根因）。修复：`EnemySpawnSystem` / `GMController` 刷怪瞬移后同步 `Rigidbody.position`。已经 Unity MCP Play Mode 实测：10 敌全部落位环带，atOrigin=0
 - [x] **接入 Unity MCP 验证链路**：`http://localhost:8080/mcp`（mcp-for-unity-server），辅助脚本 `.tmp_unity_mcp.py` 支持编译检查 / Console 读取 / Play Mode / `execute_code` 运行时检查
+- [x] **血条钉住固定朝向与位置（2026-08-05）**：敌人刚体约束不锁 Y 旋转（`FreezeRotationX/Z` only），物理推挤会让根节点打转，挂在根节点下的血条跟着转。修复：`EnsureHealthBar` 末尾捕获生成时刻的世界朝向/偏移（`_healthBarFixedRotation`/`_healthBarFixedOffset`，对象池复用时随 `Initialize` 重新捕获），新增 `LateUpdate` 每帧钉住 `_healthBarRoot.rotation` 与 `position`。实测：敌人根节点转 137°，血条保持 (0,0,0) 朝向 + 头顶 (0,0.6,0) 偏移不变
 
 ## 进行中
 - [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家

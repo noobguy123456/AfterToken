@@ -87,7 +87,6 @@ namespace GameLogic
 
         private void OnTimeAdvanced(float deltaTime, float totalTime)
         {
-            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Order f={Time.frameCount}");
             _refreshTimer += deltaTime;
             if (_refreshTimer >= SimTimeConfigMgr.Instance.OrderRefreshInterval)
             {

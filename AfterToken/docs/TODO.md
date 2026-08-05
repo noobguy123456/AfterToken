@@ -92,7 +92,7 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 经营总控 | 🟡 | P0 | 卡死疑似修复（OrderSystem while 防御），待用户复测确认；确认后移除 8 处心跳日志 | `docs/modules/simulation/simulation-system/` | `ProcedureSimulation` 加载 `SimulationScene`（已重建规范场景含 EventSystem）、相机改挂 `SimulationCameraController`（WASD/缩放/拖动，修复无法移动）、`SimulationInputSystem`；2026-08-01 多次进出未再卡死 |
+| 经营总控 | ✅ | P0 | - | `docs/modules/simulation/simulation-system/` | `ProcedureSimulation` 加载 `SimulationScene`、相机挂 `SimulationCameraController`、`SimulationInputSystem`；2026-08-05 卡死长期未复现、8 处心跳日志已移除；`SimulationPlayerController` 开刚体插值修复移动抖动 |
 | 经营时间 | ✅ | - | - | `docs/modules/simulation/sim-time-system/` | 时间推进、加速/暂停已实现 |
 | 建筑系统 | ✅ | - | - | `docs/modules/simulation/building-system/` | 建造、升级、拆除已实现；`BuildingPlacementSystem` 3D 摆放预览/校验/落位已实现 |
 | 生产系统 | ✅ | - | - | `docs/modules/simulation/production-system/` | 生产队列、产出结算已实现 |
@@ -228,3 +228,5 @@ Luban 配置表数据补充
 - 2026-08-03 经营三窗口（SimulationMainUI/BuildingSelectionUI/BuildingInfoUI）Prefab 化完成并 Play 实测通过：静态结构入 `Assets/AssetRaw/UI/{Name}/{Name}.prefab`，脚本改 `ScriptGenerator()` 绑定；动态列表项仍运行时生成。同时所有面向用户文本改英文（CanBuild/CanUpgrade/TryPurchaseSlot 失败原因等），BuildingInfoUI 失败红字改回 TMP；"新 UI 必须 Prefab + 文本英文优先（直到用户许可中文）"两条规则已写入 docs/standards/UI_STANDARDS.md 与 CODE_REVIEW_CHECKLIST.md
 
 - 2026-08-03 经营 UI 归拢目录：三个窗口脚本移到 `GameLogic/UI/Simulation/{Name}/`，prefab 移到 `AssetRaw/UI/Simulation/{Name}/`（地址按文件名解析不受影响，已 Play 实测加载正常）；UI_STANDARDS §2.1 三者一致原则补充模块子目录规则
+
+- 2026-08-05 修复敌人血条跟随敌人打转：`EnemyEntity` 刚体不锁 Y 旋转，物理推挤导致根节点旋转、血条跟着转；改为 EnsureHealthBar 捕获固定世界朝向/偏移 + LateUpdate 每帧钉住，实测敌人转 137° 血条不动。详见 docs/modules/combat/enemy-system/progress.md

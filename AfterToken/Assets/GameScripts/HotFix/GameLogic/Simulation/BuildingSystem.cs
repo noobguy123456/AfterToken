@@ -434,7 +434,6 @@ namespace GameLogic
 
         private void OnTimeAdvanced(float deltaTime, float totalTime)
         {
-            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Building f={Time.frameCount}");
             for (int i = 0; i < _buildings.Count; i++)
             {
                 var building = _buildings[i];

@@ -196,8 +196,6 @@ namespace GameLogic
 
         protected override void OnUpdate()
         {
-            if (Time.frameCount % 15 == 0) TEngine.Log.Info($"[hb] SimMainUI f={Time.frameCount}");
-
             // Tab 切换管理面板
             if (Input.GetKeyDown(KeyCode.Tab))
             {

@@ -107,9 +107,10 @@ namespace GameLogic
         {
             if (_isFollowing && _followTarget != null)
             {
-                // 跟随目标
+                // 跟随目标：指数阻尼，系数与帧率无关
                 Vector3 targetPos = _followTarget.position + _followOffset;
-                transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 5f);
+                float t = 1f - Mathf.Exp(-Time.deltaTime * 5f);
+                transform.position = Vector3.Lerp(transform.position, targetPos, t);
             }
             else
             {

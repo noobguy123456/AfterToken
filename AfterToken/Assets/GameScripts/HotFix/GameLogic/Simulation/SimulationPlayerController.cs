@@ -14,6 +14,7 @@ namespace GameLogic
 
         private float _moveSpeed = 5f;
         private Rigidbody _rb;
+        private Vector3 _moveDir;
 
         // 地面为 50x50，边缘留 1 米
         private const float GROUND_HALF_SIZE = 24f;
@@ -21,6 +22,12 @@ namespace GameLogic
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
+            if (_rb != null)
+            {
+                // 开启刚体插值：移动在 FixedUpdate(50Hz) 发生，渲染帧率远高于此，
+                // 不插值会出现可见的移动抖动
+                _rb.interpolation = RigidbodyInterpolation.Interpolate;
+            }
             LoadMoveSpeed();
         }
 
@@ -43,6 +50,15 @@ namespace GameLogic
             }
         }
 
+        private void Update()
+        {
+            // 面向移动方向（渲染帧更新，避免朝向按物理步进跳动）
+            if (_moveDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(_moveDir);
+            }
+        }
+
         private void FixedUpdate()
         {
             float h = Input.GetAxis("Horizontal");
@@ -52,6 +68,7 @@ namespace GameLogic
             {
                 dir.Normalize();
             }
+            _moveDir = dir;
 
             if (_rb != null)
             {
@@ -72,12 +89,6 @@ namespace GameLogic
                 pos.x = Mathf.Clamp(pos.x, -GROUND_HALF_SIZE, GROUND_HALF_SIZE);
                 pos.z = Mathf.Clamp(pos.z, -GROUND_HALF_SIZE, GROUND_HALF_SIZE);
                 transform.position = pos;
-            }
-
-            // 面向移动方向
-            if (dir.sqrMagnitude > 0.001f)
-            {
-                transform.rotation = Quaternion.LookRotation(dir);
             }
         }
     }

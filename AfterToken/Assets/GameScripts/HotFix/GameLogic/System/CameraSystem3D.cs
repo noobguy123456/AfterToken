@@ -5,9 +5,9 @@ namespace GameLogic
 {
     /// <summary>
     /// 3D摄像机系统（Hades 风格）。
-    /// 固定俯视角纯跟随：移动键只控制玩家移动，摄像头始终跟随玩家。
+    /// 固定俯视角硬跟随：相机与玩家像素级锁定（无平滑阻尼，避免跟随滞后/顿挫感）。
     /// 战斗内不提供滚轮缩放与 Q/E 旋转（与切武器、交互键冲突），仅保留鼠标中键拖拽微调旋转。
-    /// 参数来源于 <see cref="Camera3DConfigMgr"/>（Luban TbCamera3D，缺失时用代码默认值）。
+    /// 参数来源于 <see cref="Camera3DConfigMgr"/>（Luban TbCamera3D，缺失时用代码默认值；FollowSmoothTime 已废弃不读）。
     /// </summary>
     public class CameraSystem3D : MonoBehaviour
     {
@@ -25,7 +25,6 @@ namespace GameLogic
         [Header("俯视角度")]
         [SerializeField] private float _pitchAngle = 60f;
 
-        private float _followSmoothTime = 0.08f;
         private Camera _mainCamera;
 
         private void Awake()
@@ -50,7 +49,6 @@ namespace GameLogic
             _followOffset = new Vector3(0f, config.InitialHeight, config.InitialDistance);
             _maxRotationAngle = config.MaxRotationAngle;
             _rotationSpeed = config.RotationSpeed;
-            _followSmoothTime = Mathf.Max(0.01f, config.FollowSmoothTime);
 
             if (_mainCamera != null && config.Fov > 0f)
             {
@@ -65,7 +63,6 @@ namespace GameLogic
 
         private void LateUpdate()
         {
-            if (Time.frameCount % 15 == 0) Log.Info($"[hb] Cam3D f={Time.frameCount}");
             // 相机跟随放在 LateUpdate：等本帧所有移动/旋转（FixedUpdate 物理同步、Update 朝向）结束后再取目标位置，避免跟拍抖动
             HandleRotationInput();
             UpdateCameraPosition();
@@ -93,8 +90,9 @@ namespace GameLogic
             Vector3 rotatedOffset = Quaternion.Euler(0f, _yawAngle, 0f) * _followOffset;
             Vector3 targetPos = _followTarget.position + rotatedOffset;
 
-            // 平滑跟随
-            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime / _followSmoothTime);
+            // 硬跟随：相机与玩家像素级锁定，玩家相对屏幕位置恒定，
+            // 不会因平滑阻尼产生"摄像机没跟上"的滞后/顿挫感
+            transform.position = targetPos;
 
             // 应用俯视角度
             transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);

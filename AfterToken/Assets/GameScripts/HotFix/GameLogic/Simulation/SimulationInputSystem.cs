@@ -13,7 +13,6 @@ namespace GameLogic
 
         private void Update()
         {
-            if (Time.frameCount % 15 == 0) TEngine.Log.Info($"[hb] SimInput f={Time.frameCount}");
             HandleEscapeInput();
         }
 

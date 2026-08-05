@@ -25,6 +25,11 @@ namespace GameLogic
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
         private const float HEALTH_BAR_OFFSET_Y = 0.6f;
 
+        // 血条的固定世界朝向与偏移（EnsureHealthBar 时捕获）：敌人刚体不锁 Y 旋转，
+        // 物理推挤会让根节点打转，血条挂在根节点下会跟着转，因此每帧钉住。
+        private Quaternion _healthBarFixedRotation;
+        private Vector3 _healthBarFixedOffset;
+
         // 已迁移到 PlaceholderSpriteProvider.GetWhiteSprite4()
 
         private IFsm<EnemyEntity> _fsm;
@@ -304,6 +309,22 @@ namespace GameLogic
                 _healthBarFill.sprite = whiteSprite;
                 _healthBarFill.sortingOrder = 11;
                 _healthBarFill.transform.localScale = new Vector3(HEALTH_BAR_WIDTH, HEALTH_BAR_FILL_HEIGHT, 1f);
+            }
+
+            // 捕获生成时刻的世界朝向与偏移，作为血条的固定基准
+            _healthBarFixedRotation = _healthBarRoot.rotation;
+            _healthBarFixedOffset = _healthBarRoot.position - transform.position;
+        }
+
+        /// <summary>
+        /// 每帧钉住血条的世界朝向与位置：敌人根节点被物理推挤旋转时血条不跟着转。
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (_healthBarRoot != null)
+            {
+                _healthBarRoot.rotation = _healthBarFixedRotation;
+                _healthBarRoot.position = transform.position + _healthBarFixedOffset;
             }
         }
 

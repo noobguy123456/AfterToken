@@ -9,6 +9,7 @@
 - [x] 加载玩家角色：`SpawnPlayerAsync` 复用战斗 `Player` prefab（移除 `PlayerEntity`），挂 `SimulationPlayerController`（WASD/面向/±24 边界钳制，移速读 `TbPlayer`）；`Visual` 占位视觉实例放大 5 倍并抬高 0.05m（与地面共面 z-fighting 会导致角色闪烁/消失）；相机跟随玩家
 - [x] `SimulationInputSystem`：Esc 键关闭最上层弹窗 / 打开设置面板
 - [x] `BuildingPlacementSystem` 挂载到 `SimulationRoot`（建筑 3D 摆放，详见 building-system）
+- [x] 2026-08-05 移动抖动修复：`SimulationPlayerController` 启用 `RigidbodyInterpolation.Interpolate`（此前从未开启，50Hz 物理位置直接渲染到高帧率导致"一抖一抖"），朝向旋转从 `FixedUpdate` 移到 `Update`；`SimulationCameraController` 跟随平滑改帧率无关指数阻尼；实测匀速移动逐帧位移 cv=7.7%（平滑）
 
 ## 实现说明
 1. `ProcedureSimulation` 通过 `LoadSceneWithLoadingAsync("SimulationScene")` 加载经营场景，初始化场景内容与 `SimulationSystem`，打开 `SimulationMainUI` 后调用 `Enter()`。
@@ -17,11 +18,11 @@
 4. 相机控制使用 `SimulationCameraController` 跟随玩家（跟随模式下禁用 WASD 平移与右键拖动），战斗 `CameraSystem3D` 在进入经营流程时移除。
 
 ## 阻塞
-- 🟡 **进入经营流程卡死（疑似已修，待用户确认）**：2026-08-01 实测曾主线程死循环（100% CPU）；静态排查确认卡死在逐帧 Update 阶段而非初始化，已为 `OrderSystem` 刷新 while 加防御后多次进出 Play Mode 未复现（根因未最终定位）。8 个系统仍保留 `[hb]` 心跳日志（SimTimeSystem / OrderSystem / BuildingSystem / ProductionSystem / SimulationInputSystem / CameraSystem3D / SimulationMainUI / BuildingPlacementSystem），用户确认稳定后移除并转 ✅。
+- 无。2026-08-05：进入经营流程卡死自 `OrderSystem` while 防御后长期未复现，8 处 `[hb]` 心跳日志（SimTimeSystem / OrderSystem / BuildingSystem / ProductionSystem / SimulationInputSystem / CameraSystem3D / SimulationMainUI / BuildingPlacementSystem）已全部移除（日志爆发本身会造成编辑器周期性掉帧）。
 
 ---
 
 > 状态说明：
-> - 当前总状态：🟡（卡死疑似已修待确认，心跳日志待移除）
+> - 当前总状态：✅
 > - 每次更新后同步 `docs/TODO.md`
 > - 详细方案见 `docs/Proposal/simulation/simulation-mvp.md`
