@@ -278,6 +278,11 @@ namespace GameLogic
 
             data.Position = newPosition;
 
+            // 视觉跟随：每帧把逻辑位置/朝向同步到表现实体（逻辑/表现分离）
+            if (_entityMap.TryGetValue(data.Id, out var visualEntity))
+            {
+                visualEntity.UpdateVisual();
+            }
         }
 
         private Transform FindTarget(int targetId)
@@ -361,35 +366,9 @@ namespace GameLogic
 
         private void OnProjectileHit(int projectileId, GameObject target)
         {
-            if (!_activeProjectiles.TryGetValue(projectileId, out var data)) return;
-
-            var weaponConfig = WeaponConfigMgr.Instance?.Get(data.ConfigId);
-            if (weaponConfig != null && weaponConfig.explosionRadius > 0)
-            {
-                ApplyExplosionDamage(data, data.Position, weaponConfig);
-            }
-            else
-            {
-                var damageInfo = MemoryPool.Acquire<DamageInfo>();
-                damageInfo.AttackerId = data.OwnerId;
-                damageInfo.WeaponConfigId = data.ConfigId;
-                damageInfo.TargetGameObject = target;
-                damageInfo.BulletConfigId = data.ConfigId;
-                damageInfo.Damage = data.Damage;
-                damageInfo.HitDirection = data.Direction;
-                damageInfo.HitPoint = data.Position;
-
-                GameEvent.Get<IBattleEvent>().OnEntityDamaged(damageInfo);
-            }
-
-            if (data.PenetrateCount <= 0)
-            {
-                DestroyProjectile(data);
-            }
-            else
-            {
-                data.PenetrateCount--;
-            }
+            // 伤害结算的唯一权威路径是 Tick 中的 SphereCast（HandleHit）。
+            // 这里仅响应表现层碰撞回调（如后续接入命中特效），不再重复扣血/销毁，
+            // 避免同一发子弹被结算两次。
         }
 
         public void DestroyProjectile(ProjectileData data)

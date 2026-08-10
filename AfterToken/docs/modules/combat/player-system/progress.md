@@ -13,6 +13,7 @@
 - [x] 迁移 XZ 平面玩法：Rigidbody 3D 化（锁 Y 与 X/Z 旋转）、CapsuleCollider、贴图移至 Visual 子节点（X+90°）、`BattleBoundary` 地面边界钳制
 - [x] `PlayerEntity` 移速/闪速/闪避时长不再在代码中写死，统一由 `PlayerSystem` 从 `TbPlayer` 应用
 - [x] Play Mode 基础状态验证（Idle / Move / Dodge / Reload / Dead 已初步确认）
+- [x] 玩家状态收敛（2026-08-08）：IsDead/IsDodging/MoveInput/AimInput/IsAiming 唯一 owner 归 `PlayerStateContext`，`PlayerEntity`/`WeaponSystem` 重复字段改转发属性，零行为变化，详见 README「状态归属」
 
 ## 进行中
 - [ ] 后续新状态（瞄准、交互、受击硬直等）的扩展与调试

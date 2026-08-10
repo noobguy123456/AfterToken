@@ -15,15 +15,51 @@ namespace GameLogic
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private SpriteRenderer _spriteRenderer;
 
-        public Vector2 MoveDirection { get; private set; }
-        public Vector2 AimPosition { get; private set; }
+        // 以下四项运行时状态的唯一数据源是黑板 PlayerStateContext（见下方 Context 属性），
+        // 本实体不再持有副本，属性全部转发到黑板；黑板未赋值（创建流程中）时读取回退默认值、写入丢弃，
+        // 与原来的字段初始值行为一致。
+
+        /// <summary>
+        /// 移动输入方向（转发自黑板 <see cref="PlayerStateContext.MoveInput"/>）。
+        /// </summary>
+        public Vector2 MoveDirection
+        {
+            get => Context?.MoveInput ?? Vector2.zero;
+            private set { if (Context != null) Context.MoveInput = value; }
+        }
+
+        /// <summary>
+        /// 瞄准位置（转发自黑板 <see cref="PlayerStateContext.AimInput"/>）。
+        /// </summary>
+        public Vector2 AimPosition
+        {
+            get => Context?.AimInput ?? Vector2.zero;
+            private set { if (Context != null) Context.AimInput = value; }
+        }
+
         public float BaseMoveSpeed { get; set; }
         public float MoveSpeed { get; set; }
         public float DodgeSpeed { get; set; }
         public float DodgeDuration { get; set; }
         public bool IsMoving => MoveDirection.sqrMagnitude > 0.001f;
-        public bool IsDead { get; private set; }
-        public bool IsDodging { get; private set; }
+
+        /// <summary>
+        /// 是否死亡（转发自黑板 <see cref="PlayerStateContext.IsDead"/>）。
+        /// </summary>
+        public bool IsDead
+        {
+            get => Context != null && Context.IsDead;
+            private set { if (Context != null) Context.IsDead = value; }
+        }
+
+        /// <summary>
+        /// 是否正在闪避（转发自黑板 <see cref="PlayerStateContext.IsDodging"/>）。
+        /// </summary>
+        public bool IsDodging
+        {
+            get => Context != null && Context.IsDodging;
+            private set { if (Context != null) Context.IsDodging = value; }
+        }
 
         #region IWeaponOwner
 

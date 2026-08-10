@@ -14,8 +14,10 @@
   1. 移除每 15 帧爆发的 `[hb]` 心跳日志（编辑器 Console 写入造成周期性掉帧）；
   2. **根因：帧生产差拍**。原 `targetFrameRate=120`（RootModule 序列化值）与 144Hz 显示器非整数倍错配，限帧器睡眠粒度粗导致帧时间 3ms/15ms 交替（实测），呈现节奏不均——静止时不可见，移动时变成可见顿挫，且平滑跟随的相机把世界平移也染上同样节奏（"摄像机没跟上"的错觉来源）。修复：`CameraSystem3D` 改**硬跟随**（玩家与屏幕像素级锁定，删除 `_followSmoothTime` 与阻尼代码；`TbCamera3D.FollowSmoothTime` 字段遗留未用）；`GameEntry.Start` 按 `Screen.currentResolution` 动态设置 `targetFrameRate`（覆盖 RootModule 的 120）。用户实测确认不抖。教训：位置时间戳正确 ≠ 呈现平滑，帧生产节奏必须与显示刷新率整数倍对齐
 
+- [x] 2026-08-05 `CameraSystem3D` Duckov 式狙击镜：`SetScopeActive(bool, scopeFov)` + 懒创建 ScopeCamera（CopyFrom 主相机，1024² RT）。**定位坑**：不能用 `瞄准点 + 主相机 offset`（主相机 offset(0,5,-3.5)+俯角 60° 的视轴落点偏 -0.61m，小 FOV 下瞄准点会出画），需沿当前俯仰/偏航的视线方向从瞄准点回推到主相机等高处（`t = _followOffset.y / -forward.y`）。RT 在 `OnDestroy` 释放
+
 ## 进行中
-- [ ] 狙击镜 RenderTexture 集成优化
+- [ ] 无
 
 ## 待办
 - [ ] 死亡/胜利镜头表现

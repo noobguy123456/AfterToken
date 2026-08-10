@@ -33,6 +33,7 @@ docs/Proposal/
 | 提案 | 路径 | 状态 | 关联模块 |
 |---|---|---|---|
 | 逻辑子弹与视觉表现分离方案 | [`combat/bullet-logic-visual-separation.md`](./combat/bullet-logic-visual-separation.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system` |
+| 纯 C# 数据导向架构演进路线（ECS 思维，非 DOTS） | [`combat/pure-csharp-data-oriented-roadmap.md`](./combat/pure-csharp-data-oriented-roadmap.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system`、`combat/enemy-system`、`player/player-system` |
 
 ---
 

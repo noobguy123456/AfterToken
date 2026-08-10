@@ -132,19 +132,37 @@ namespace GameLogic
             _instance?.ShowInternal(damage, screenPos, isCritical);
         }
 
+        /// <summary>
+        /// 在指定父节点的局部坐标处显示伤害数字（狙击镜镜窗内飘字用）。
+        /// 与 Show 共用对象池与飘字动画，仅父节点与坐标系不同。
+        /// </summary>
+        public static void ShowLocal(RectTransform parent, int damage, Vector2 localPos, bool isCritical = false)
+        {
+            if (parent == null) return;
+            _instance?.SpawnNumber(parent, damage, localPos, isCritical);
+        }
+
         private void ShowInternal(int damage, Vector2 screenPos, bool isCritical)
         {
             if (_textTemplate == null || _rootRect == null) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rootRect, screenPos, null, out var localPos)) return;
+            SpawnNumber(_rootRect, damage, localPos, isCritical);
+        }
+
+        private void SpawnNumber(RectTransform parent, int damage, Vector2 localPos, bool isCritical)
+        {
+            if (_textTemplate == null || parent == null) return;
 
             TextMeshProUGUI txt;
             if (_pool.Count > 0)
             {
                 txt = _pool.Dequeue();
+                // 池内节点默认挂在 _rootRect 下，镜内飘字需换父到镜窗容器
+                txt.transform.SetParent(parent, false);
             }
             else
             {
-                txt = Object.Instantiate(_textTemplate, _rootRect, false);
+                txt = Object.Instantiate(_textTemplate, parent, false);
             }
 
             txt.gameObject.SetActive(true);
@@ -175,6 +193,13 @@ namespace GameLogic
             for (int i = _activeNumbers.Count - 1; i >= 0; i--)
             {
                 var item = _activeNumbers[i];
+                // 镜内飘字会随狙击镜窗口一起销毁（关镜时），此处剔除已销毁的条目，
+                // 避免访问已销毁的 TextMeshProUGUI 抛 MissingReferenceException
+                if (item.Text == null)
+                {
+                    _activeNumbers.RemoveAt(i);
+                    continue;
+                }
                 item.Timer += delta;
                 float t = item.Timer / _fadeDuration;
                 if (t >= 1f)
@@ -196,8 +221,25 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 外部驱动飘字更新（狙击镜打开时本窗口被框架隐藏、OnUpdate 停走，
+        /// 由 SniperScopeUI.OnUpdate 代调；窗口可见时跳过避免双重推进）。
+        /// </summary>
+        public static void TickExternal(float delta)
+        {
+            if (_instance != null && !_instance.Visible)
+            {
+                _instance.UpdateNumbers(delta);
+            }
+        }
+
         private void ReturnToPool(TextMeshProUGUI txt)
         {
+            // 镜内飘字用完后归位到本窗口根节点，保持池内节点父节点一致
+            if (_rootRect != null && txt.transform.parent != _rootRect)
+            {
+                txt.transform.SetParent(_rootRect, false);
+            }
             txt.gameObject.SetActive(false);
             _pool.Enqueue(txt);
         }

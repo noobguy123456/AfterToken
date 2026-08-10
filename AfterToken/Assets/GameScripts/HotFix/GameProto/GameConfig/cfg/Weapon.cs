@@ -41,6 +41,7 @@ public sealed partial class Weapon : Luban.BeanBase
         MoveSpeedMultiplier = (float)_obj.GetValue("moveSpeedMultiplier");
         FireMoveSpeedMultiplier = (float)_obj.GetValue("fireMoveSpeedMultiplier");
         AimFov = (float)_obj.GetValue("aimFov");
+        ScopeFov = (float)_obj.GetValue("scopeFov");
         AimSensitivityMultiplier = (float)_obj.GetValue("aimSensitivityMultiplier");
         AimAssistEnabled = (bool)_obj.GetValue("aimAssistEnabled");
         TracerSpeed = (float)_obj.GetValue("tracerSpeed");
@@ -148,6 +149,10 @@ public sealed partial class Weapon : Luban.BeanBase
     /// 瞄准FOV
     /// </summary>
     public readonly float AimFov;
+    /// <summary>
+    /// 狙击镜FOV(0=无狙击镜)
+    /// </summary>
+    public readonly float ScopeFov;
     /// <summary>
     /// 瞄准灵敏度系数
     /// </summary>
@@ -293,6 +298,7 @@ public sealed partial class Weapon : Luban.BeanBase
         + "moveSpeedMultiplier:" + MoveSpeedMultiplier + ","
         + "fireMoveSpeedMultiplier:" + FireMoveSpeedMultiplier + ","
         + "aimFov:" + AimFov + ","
+        + "scopeFov:" + ScopeFov + ","
         + "aimSensitivityMultiplier:" + AimSensitivityMultiplier + ","
         + "aimAssistEnabled:" + AimAssistEnabled + ","
         + "tracerSpeed:" + TracerSpeed + ","

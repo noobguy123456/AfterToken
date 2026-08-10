@@ -50,6 +50,7 @@ namespace GameLogic
         {
             if (!IsActive) return;
 
+            // 仅转发碰撞回调，伤害结算由 ProjectileSystem.Tick 的 SphereCast 统一处理，避免重复扣血
             GameEvent.Get<IProjectileEvent>().OnProjectileHit(Data.Id, other.gameObject);
         }
     }

@@ -2,7 +2,9 @@ namespace GameLogic
 {
     /// <summary>
     /// 道具堆叠。背包/仓库中的最小存储单元。
+    /// [Serializable] 是 JsonUtility 存档序列化的硬性要求（缺少时列表字段会被静默跳过）。
     /// </summary>
+    [System.Serializable]
     public struct ItemStack
     {
         /// <summary>
@@ -14,6 +16,22 @@ namespace GameLogic
         /// 分配下一个获取序号。
         /// </summary>
         public static long NextSeq() => ++_nextSeq;
+
+        /// <summary>
+        /// 当前序号水位（存档用）。
+        /// </summary>
+        public static long CurrentSeq => _nextSeq;
+
+        /// <summary>
+        /// 从存档恢复序号水位。只升不降，避免与运行中已分配的序号冲突。
+        /// </summary>
+        public static void RestoreSeq(long value)
+        {
+            if (value > _nextSeq)
+            {
+                _nextSeq = value;
+            }
+        }
 
         /// <summary>
         /// 道具 ID（对应 cfg.Item.id）。

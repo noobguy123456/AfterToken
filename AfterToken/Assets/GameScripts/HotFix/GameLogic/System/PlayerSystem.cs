@@ -150,21 +150,15 @@ namespace GameLogic
         private void OnMoveInput(Vector2 direction)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
+            // SetMoveDirection 内部转发写入黑板 MoveInput（唯一数据源）
             _playerEntity.SetMoveDirection(direction);
-            if (_playerEntity.Context != null)
-            {
-                _playerEntity.Context.MoveInput = direction;
-            }
         }
 
         private void OnAimInput(Vector2 worldPosition)
         {
             if (_playerEntity == null || _playerEntity.IsDead) return;
+            // SetAimPosition 内部转发写入黑板 AimInput（唯一数据源）
             _playerEntity.SetAimPosition(worldPosition);
-            if (_playerEntity.Context != null)
-            {
-                _playerEntity.Context.AimInput = worldPosition;
-            }
         }
 
         private void OnReloadPressed()
@@ -236,7 +230,7 @@ namespace GameLogic
 
             if (_currentHp <= 0 && _playerEntity != null)
             {
-                _playerEntity.Context.IsDead = true;
+                // SetDead 内部转发写入黑板 IsDead（唯一数据源）
                 _playerEntity.SetDead();
             }
         }

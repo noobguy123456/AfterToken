@@ -11,37 +11,58 @@
 
 ## 核心类与文件
 
-| 类/文件 | 说明 |
-|---|---|
-| `SaveSystem` | 存档系统总入口，提供 Save/Load/Delete 接口 |
-| `PlayerProfileSystem` | 玩家档案（等级/经验/解锁），依赖 SaveSystem |
-| `CurrencySystem` | 货币系统，依赖 SaveSystem |
-| `SettingsSystem` | 设置持久化，依赖 SaveSystem |
-| `Warehouse` | 仓库数据，持久化由 SaveSystem 接管 |
+| 类/文件 | 路径 | 说明 |
+|---|---|---|
+| `SaveSystem` | `Assets/GameScripts/HotFix/GameLogic/Shared/SaveSystem.cs` | 存档总入口（含 `SaveData` 各数据段定义） |
+| `CurrencySystem` | `GameLogic/Shared/CurrencySystem.cs` | 货币，已接入持久化 |
+| `PlayerProfileSystem` | `GameLogic/Shared/PlayerProfileSystem.cs` | 玩家档案，已接入持久化 |
+| `Warehouse` | `GameLogic/Item/Warehouse.cs` | 仓库，已接入持久化（含 `ItemStack` 获取序号水位） |
+| `SensitivitySetting` / `SniperAimModeSetting` | `GameLogic/Module/SettingModule/` | 设置项，已从 PlayerPrefs 迁移到 SaveSystem |
 
-## 对外接口
+## 实现方案（2026-08-06 定稿）
+
+- **后端**：单个 JSON 文件 `Application.persistentDataPath/save.json`，序列化用 `JsonUtility`（被序列化的 struct/class 必须带 `[Serializable]`，否则字段被静默跳过——`ItemStack` 踩过这个坑）。
+- **写盘时机**：变动即存。模块修改数据后调用 `SaveSystem.Flush()` 立即写整份文件（文件很小，无性能问题）。
+- **加载时机**：懒加载。各模块首次访问时从 `SaveSystem.Data` 自己的数据段恢复；`initialized` 标记区分"无存档"（用默认值 / 导入旧 PlayerPrefs）。
+- **版本迁移**：`SaveSystem.CurrentVersion` 递增 + `Migrate()` 钩子逐级升级。
+- **结构**：根对象 `SaveData` 每模块一段：`currency` / `profile` / `warehouse` / `settings`。
+
+## 接入新模块的模式
 
 ```csharp
-public static class SaveSystem
+private static bool _loaded;
+
+private static void EnsureLoaded()
 {
-    public static void Save<T>(string key, T data);
-    public static T Load<T>(string key);
-    public static void Delete(string key);
+    if (_loaded) return;
+    _loaded = true;
+    var d = SaveSystem.Data.xxx;
+    if (!d.initialized) return;
+    // 从 d 恢复字段
+}
+
+private static void Persist()
+{
+    var d = SaveSystem.Data.xxx;
+    d.initialized = true;
+    // 把字段写回 d
+    SaveSystem.Flush();
 }
 ```
 
+事件调用注意加 `?.`（`GameEvent.Get<IXxxEvent>()?.On...`），否则 GM/编辑模式下无事件系统会 NRE。
+
+## GM 调试命令
+
+- `save` / `save path`：显示存档文件路径
+- `save export`：输出存档内容到 GM 控制台
+- `save clear`：删除存档并重置货币/档案/仓库为默认值
+
 ## 依赖关系
 
-- 依赖：Unity `PlayerPrefs` / JSON 文件 / 可选 AES 加密
-- 被依赖：PlayerProfileSystem、CurrencySystem、SettingsSystem、Warehouse
-
-## 设计要点
-
-- 采用键值对存储，按模块分组（`profile_*`、`currency_*`、`inventory_*`、`settings_*`）。
-- 存档版本号管理，支持版本迁移。
-- 大厅流程初始化时统一加载，战斗流程只读不写。
-- 敏感数据（如货币）可考虑加密或校验和。
+- 依赖：Unity `JsonUtility` + `Application.persistentDataPath`
+- 被依赖：PlayerProfileSystem、CurrencySystem、Warehouse、SettingModule
 
 ---
 
-> 状态：待实现。详细进度见 [progress.md](./progress.md)。
+> 状态：✅ 基础版已完成（四件套）。模拟经营存档、加密/校验和、云存档待后续。详细进度见 [progress.md](./progress.md)。

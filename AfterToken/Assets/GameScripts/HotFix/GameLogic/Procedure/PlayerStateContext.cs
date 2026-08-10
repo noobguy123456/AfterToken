@@ -5,6 +5,9 @@ namespace GameLogic.Portal
     /// <summary>
     /// 传送门玩家状态快照。
     /// 用于在传送门触发时保存玩家状态，并在目标场景加载后恢复。
+    /// 职责边界：本类只是跨场景传送的静态暂存（保存/恢复时各读写一次），
+    /// 不负责运行期实时状态——运行期实时状态的唯一数据源是 PlayerStateContext（黑板）、
+    /// PlayerSystem（血量/体力）与 WeaponInstance（弹药），此处字段不做实时同步。
     /// </summary>
     public static class PortalPlayerState
     {

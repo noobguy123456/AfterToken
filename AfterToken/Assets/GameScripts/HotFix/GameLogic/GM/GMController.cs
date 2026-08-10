@@ -197,6 +197,9 @@ namespace GameLogic.GM
                 LogToConsole("  time <scale>      设置时间缩放");
                 LogToConsole("  level <id>        切换关卡");
                 LogToConsole("  reload            重新加载配置表");
+                LogToConsole("  save [path]       显示存档文件路径");
+                LogToConsole("  save export       输出存档内容到控制台");
+                LogToConsole("  save clear        删除存档并重置货币/档案/仓库");
                 LogToConsole("  clear             清空控制台");
             };
 
@@ -299,6 +302,41 @@ namespace GameLogic.GM
             _commands["clear"] = args =>
             {
                 _logs.Clear();
+            };
+
+            _commands["save"] = args =>
+            {
+                if (args.Length == 0 || args[0] == "path")
+                {
+                    LogToConsole($"存档路径: {SaveSystem.SaveFilePath}");
+                    return;
+                }
+
+                switch (args[0])
+                {
+                    case "export":
+                        if (System.IO.File.Exists(SaveSystem.SaveFilePath))
+                        {
+                            LogToConsole(System.IO.File.ReadAllText(SaveSystem.SaveFilePath));
+                        }
+                        else
+                        {
+                            LogToConsole("存档文件不存在");
+                        }
+                        break;
+
+                    case "clear":
+                        SaveSystem.DeleteSave();
+                        CurrencySystem.Reset();
+                        PlayerProfileSystem.Reset();
+                        Warehouse.Clear();
+                        LogToConsole("存档已删除，货币/档案/仓库已重置为默认值");
+                        break;
+
+                    default:
+                        LogToConsole($"未知子命令: {args[0]}（可用: path / export / clear）");
+                        break;
+                }
             };
         }
 

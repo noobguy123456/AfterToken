@@ -19,7 +19,17 @@
   - `Exponential`：指数平滑，无最大速度上限，适合希望轻微平滑感的场景。
   - `SmoothDamp`：传统 SmoothDamp，有明显平滑滞后感。
 - 支持 `_lookAheadFactor` 根据玩家速度加入提前量。
-- 狙击镜使用 RenderTexture 实现局部放大效果。
+- 狙击镜使用 RenderTexture 实现局部放大效果（2D 遗留）。
+
+## 3D Duckov 式狙击镜（CameraSystem3D）
+
+- 形态：跟鼠标的圆形镜窗（`SniperScopeUI`，Overlay Canvas），镜窗外全屏暗角半透明压暗（隐约可见）。
+- 倍率：走 `TbWeapon.scopeFov`（0=无狙击镜；1004 狙击=37.5，即主相机 FOV 45 的 1.2 倍放大），运行时经 `WeaponInstance.ScopeFov` 读取，配件系统将来在该属性叠加修正。
+- 开镜模式：Hold/Toggle 由设置面板开关决定（`SniperAimModeSetting`，仅狙击枪生效）。
+- 开镜射击：直接命中镜窗中心——`WeaponSystem.IsScopedSniping` 为 true 时跳过辅助瞄准与扩散，`BallisticSystem` 不生成 tracer 飞行动画。
+- 链路：`WeaponSystem.SetAimState` → `CameraSystem3D.SetScopeActive(bool, scopeFov)` → 懒创建 ScopeCamera（`CopyFrom` 主相机，1024² RT）→ `SniperScopeUI.m_raw_Scope` 显示。
+- 镜窗中心 = 子弹落点：视轴对准 `PlayerEntity.AimPosition`。
+- **定位坑**：ScopeCamera 位置不能用「瞄准点 + 主相机 offset」——主相机 offset(0,5,-3.5) + 俯角 60° 的视轴落点偏移约 0.61m，小 FOV 下瞄准点会出画。需沿当前俯仰/偏航的视线方向从瞄准点回推到主相机等高处：`t = _followOffset.y / -forward.y`，`pos = aimPoint - forward * t`。
 - 受击/开火相机抖动已接入 `ICameraEvent.OnCameraShake`。
 - 边界限制待根据实际关卡尺寸接入。
 

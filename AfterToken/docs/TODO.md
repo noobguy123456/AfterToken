@@ -52,7 +52,7 @@
 | 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线 |
 | 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
-| 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、狙击镜，待抖动 |
+| 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、抖动、Duckov 式狙击镜（跟鼠标圆窗+压暗，`TbWeapon.scopeFov` 驱动）已完成 |
 | 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；待 Play Mode 验证绕过障碍物、攻击伤害判定接入 |
 | 掉落与拾取系统 | ✅ | - | - | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入临时背包已完成 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
@@ -85,8 +85,8 @@
 | 道具系统 | ✅ | - | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
 | 解锁系统 | ⏳ | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | 内容解锁条件与校验 |
 | 跨玩法联动 | ⏳ | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 战斗奖励 → 经营资源 → 战斗强化 |
-| 存档系统 | ⏳ | P1 | - | `docs/modules/shared/save-system/`（新增） | 本地 JSON/PlayerPrefs 存档（新增模块） |
-| 设置系统 | 🟡 | P2 | 存档系统 | `docs/modules/shared/settings-system/`（新增） | 灵敏度已可用；音量、画质、操作设置持久化待 `save-system` |
+| 存档系统 | ✅ | P1 | - | `docs/modules/shared/save-system/` | 单 JSON 文件 + 变动即存 + 版本迁移；货币/档案/仓库/设置四件套已接入并实测跨重启保留；GM `save` 命令可用 |
+| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度、狙击开镜模式已可用并已迁入 SaveSystem；音量、画质、操作设置待补充 |
 
 ### 模拟经营系统
 
@@ -113,7 +113,7 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 设置系统 | ⏳ | P2 | 存档系统 | `docs/modules/shared/settings-system/`（新增） | 音量、画质、操作设置持久化（新增模块） |
+| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度/开镜模式已持久化；音量、画质、操作设置待补充 |
 | 性能优化 | 🟡 | P3 | - | `docs/modules/pipeline/performance-optimization/`（新增） | A* 分配、敌人对象池、爆炸非分配查询已落地；画质/血条 Draw Call/构建加速待继续 |
 | GM / 调试工具 | 🟡 | P3 | - | `docs/modules/pipeline/gm-tools/`（新增） | 编辑器/Development Build 中已提供 `GMController` 控制台与面板（无敌、刷怪、跳关、改时间、重载配置）；显示碰撞盒等工具待补充 |
 
@@ -139,7 +139,7 @@ Luban 配置表数据补充
 共享系统（Currency / Inventory / PlayerProfile / Save）
     ├── 背包/道具已实现（内存态）
     ├── 阻塞 → 奖励系统、跨玩法联动、经营系统消耗/产出
-    └── 待实现 → 存档系统、货币系统、玩家档案系统
+    └── 存档系统已落地（四件套持久化） → 货币/档案已接入；待实现 → 奖励系统、解锁系统
 ```
 
 ---
@@ -150,7 +150,7 @@ Luban 配置表数据补充
 2. **补齐事件接口**：`ILevelEvent`、`IBattleResultEvent`、共享层事件接口。
 3. **实现关卡胜负判定**：全灭敌人/生存目标触发 `IBattleResultEvent`，并打开结算/传送门。
 4. **实现奖励系统**：战斗胜利奖励分发，临时背包转入仓库。
-5. **实现共享层持久化**：`SaveSystem` → `CurrencySystem` / `PlayerProfileSystem` / `SettingsSystem` 持久化。
+5. ~~实现共享层持久化~~（已完成 2026-08-06）：`SaveSystem` 单 JSON + 货币/档案/仓库/设置已接入。
 6. **Play Mode 验证**：`MainMenu → Lobby → Battle → 返回/下一关` 跑通，无明显报错。
 
 ---
@@ -230,3 +230,7 @@ Luban 配置表数据补充
 - 2026-08-03 经营 UI 归拢目录：三个窗口脚本移到 `GameLogic/UI/Simulation/{Name}/`，prefab 移到 `AssetRaw/UI/Simulation/{Name}/`（地址按文件名解析不受影响，已 Play 实测加载正常）；UI_STANDARDS §2.1 三者一致原则补充模块子目录规则
 
 - 2026-08-05 修复敌人血条跟随敌人打转：`EnemyEntity` 刚体不锁 Y 旋转，物理推挤导致根节点旋转、血条跟着转；改为 EnsureHealthBar 捕获固定世界朝向/偏移 + LateUpdate 每帧钉住，实测敌人转 137° 血条不动。详见 docs/modules/combat/enemy-system/progress.md
+
+- 2026-08-08 战斗三系统 review 与整改：①子弹系统修复 3 个存量 bug——双重命中（伤害唯一权威路径收敛为 `ProjectileSystem.Tick` SphereCast→HandleHit，`OnProjectileHit` 事件处理器改空钩子）、火箭追踪失效（`FireProjectile` 传 `Transform.GetInstanceID()` 改为 `EnemyEntity` 组件 InstanceID，与 `_enemyMap` 键语义统一）、飞行中视觉不跟随（Tick 每帧驱动 `UpdateVisual`）。②玩家状态收敛——IsDead/IsDodging/MoveInput/AimInput/IsAiming 唯一 owner 归 `PlayerStateContext` 黑板，`PlayerEntity`/`WeaponSystem` 重复字段改转发属性，零行为变化；三条实现原理与状态归属表记入 `docs/modules/combat/player-system/README.md`。③产出提案 `docs/Proposal/combat/pure-csharp-data-oriented-roadmap.md`（纯 C# 数据导向演进路线：子弹 SoA 样板/敌人数据层/敌人感知黑板，待评审，评审前不改代码）。热更程序集编译通过、Console 0 错误 |
+
+- 2026-08-08 狙击镜优化两批：①效果调整——倍率减半（`TbWeapon.scopeFov` 37.5→75，即 1.2x→0.6x，Excel+JSON 同步）、镜外暗角更通透（有效不透明度约 30%）、开镜命中伤害数字入镜窗（`BattleSystem`→`SniperScopeUI.ShowScopeDamage`，镜相机取景换算，复用 `DamageNumberUI` 池与动画）；顺带修复开镜期间 `DamageNumberUI` 被框架隐藏导致飘字冻结（`TickExternal` 代驱动）与关镜残留销毁对象两个存量问题。②开镜/不开镜灵敏度分离——`SensitivitySetting.ScopedValue` 独立存档、设置面板新增 Scope Sensitivity 滑块、`CrosshairUpdater` 开镜时切换灵敏度；镜窗改跟随准星而非原始鼠标位置，统一镜窗/准星/子弹落点。均 Play Mode 实测截图验证。详见 weapon-system、settings-ui progress |

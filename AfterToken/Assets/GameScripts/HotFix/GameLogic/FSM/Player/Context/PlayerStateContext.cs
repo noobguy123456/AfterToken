@@ -5,6 +5,9 @@ namespace GameLogic
     /// <summary>
     /// 玩家状态机黑板。
     /// 承载输入、意图与运行时状态，供输入系统、状态机、武器系统等共享。
+    /// 本类是玩家运行期实时状态（死亡/闪避/换弹/瞄准/输入）的唯一数据源：
+    /// PlayerEntity、WeaponSystem 等处的同名属性均为转发或本地兜底，不持有副本。
+    /// 血量/体力归 PlayerSystem，弹药归 WeaponInstance，跨场景暂存归 PortalPlayerState，均不在此重复。
     /// </summary>
     public class PlayerStateContext
     {
@@ -64,7 +67,9 @@ namespace GameLogic
         public bool IsDead;
 
         /// <summary>
-        /// 是否正在换弹。
+        /// 是否正在换弹（玩家 FSM 语义：处于 PlayerReloadState）。
+        /// 与 WeaponInstance.IsReloading（武器换弹计时器）是两个概念：
+        /// 武器打空自动换弹时后者为 true 而本字段未必为 true，二者互不转发。
         /// </summary>
         public bool IsReloading;
 
@@ -74,7 +79,8 @@ namespace GameLogic
         public bool IsDodging;
 
         /// <summary>
-        /// 是否正在瞄准。
+        /// 是否正在瞄准。由 WeaponSystem.SetAimState 写入（WeaponSystem.IsAiming 转发到此处），
+        /// AimAssistSystem 等读取方经 WeaponSystem.IsAiming 访问。
         /// </summary>
         public bool IsAiming;
 

@@ -1,4 +1,5 @@
-# 玩家系统
+
++# 玩家系统
 
 ## 职责
 
@@ -38,3 +39,23 @@
 - 普通状态切换通过 `RequestState<T>()` 写入黑板，由 `PlayerStateBase` 统一消费。
 - `PlayerEntity` 只负责表现，逻辑由 `PlayerSystem` 与状态机驱动。
 - 已接入 Luban `TbPlayer`：最大血量、最大体力、体力恢复速率、闪避消耗、移动速度、闪避速度、闪避持续时间均从配置读取；关卡 `playerMaxHp` 可覆盖血量。
+
+## 状态归属（单一数据源，2026-08-08 收敛）
+
+每份状态有且只有一个 owner，其他位置只持有访问路径（转发属性），不持有副本：
+
+| 状态 | 唯一 owner | 说明 |
+|---|---|---|
+| IsDead / IsDodging / MoveInput / AimInput / IsAiming | `PlayerStateContext` 黑板 | `PlayerEntity` 四个重复字段已改为转发属性；`WeaponSystem._isAiming` 改名 `_isAimingFallback` 仅作 owner 注入前兜底，`AimAssistSystem` 直读 `WeaponSystem.IsAiming` |
+| IsReloading（玩家语义） | `PlayerStateContext` 黑板 | `WeaponInstance.IsReloading` 是武器换弹计时器，语义不同，勿混用 |
+| HP / 体力 | `PlayerSystem` | 无第二副本 |
+| 弹药 | `WeaponInstance` | 属武器实例数据，不属玩家状态 |
+| 跨场景传送快照 | `PortalPlayerState`（静态类） | 仅跨场景暂存，不负责运行期实时状态 |
+
+背后的三条实现原理：
+
+1. **数据只能有一个家，引用可以有无数个**——副本是 bug 温床，同步不能靠人肉。
+2. **收敛不等于集中**——单一数据源是"按字段"说的，每份状态归属最懂它的系统，避免上帝类。
+3. **用访问器隔离变化**——数据搬家保持属性签名不变，调用方无感。
+
+> 详细论述见 `docs/Proposal/combat/pure-csharp-data-oriented-roadmap.md` 第 3.2 节。

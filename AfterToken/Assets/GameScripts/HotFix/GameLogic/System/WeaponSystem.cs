@@ -22,7 +22,9 @@ namespace GameLogic
         private int _currentSlot = 0;
         private IWeaponOwner _owner;
         private int[] _defaultWeaponIds;
-        private bool _isAiming;
+        // 瞄准状态的唯一数据源是玩家黑板 PlayerStateContext.IsAiming（通过 _owner 转发访问）；
+        // 本字段仅是黑板未就绪（SetOwner 之前）时的本地兜底，行为与原私有字段一致。
+        private bool _isAimingFallback;
         private bool _isFiring;
         private bool _firePending;
         private float _lastSwitchTime;
@@ -97,7 +99,7 @@ namespace GameLogic
             var weapon = CurrentWeapon;
             if (weapon != null)
             {
-                weapon.Tick(Time.deltaTime, _owner?.IsMoving ?? false, _isAiming);
+                weapon.Tick(Time.deltaTime, _owner?.IsMoving ?? false, IsAiming);
             }
 
             if (_firePending || (_isFiring && weapon != null && weapon.Config.fireMode == FireMode.Auto))
@@ -108,7 +110,16 @@ namespace GameLogic
 
         public WeaponInstance CurrentWeapon => Slots[_currentSlot];
         public int CurrentSlotIndex => _currentSlot;
-        public bool IsAiming => _isAiming;
+
+        /// <summary>
+        /// 玩家黑板（瞄准状态的宿主）。_owner 由 PlayerSystem 在创建黑板之后注入，故非空时黑板必然存在。
+        /// </summary>
+        private PlayerStateContext AimContext => (_owner as PlayerEntity)?.Context;
+
+        /// <summary>
+        /// 是否正在瞄准（转发自玩家黑板 <see cref="PlayerStateContext.IsAiming"/>，黑板未就绪时读本地兜底）。
+        /// </summary>
+        public bool IsAiming => AimContext?.IsAiming ?? _isAimingFallback;
         public bool IsFiring => _isFiring;
         public AimMode CurrentAimMode => _aimMode;
 
@@ -193,7 +204,7 @@ namespace GameLogic
                 CurrentWeapon?.Config.clipSize ?? 0);
 
             // 切换武器时取消瞄准
-            if (_isAiming)
+            if (IsAiming)
             {
                 SetAimState(false);
             }
@@ -251,54 +262,93 @@ namespace GameLogic
 
         private void OnAimPressed()
         {
-            if (_aimMode == AimMode.Hold)
+            if (GetEffectiveAimMode() == AimMode.Hold)
             {
                 SetAimState(true);
             }
             else
             {
-                SetAimState(!_isAiming);
+                SetAimState(!IsAiming);
             }
         }
 
         private void OnAimReleased()
         {
-            if (_aimMode == AimMode.Hold)
+            if (GetEffectiveAimMode() == AimMode.Hold)
             {
                 SetAimState(false);
             }
         }
 
+        /// <summary>
+        /// 狙击枪的开镜模式走设置面板（长按/切换，见 SniperAimModeSetting），其他武器用序列化的默认模式。
+        /// </summary>
+        private AimMode GetEffectiveAimMode()
+        {
+            if (CurrentWeapon?.Config.weaponType == WeaponType.Sniper)
+            {
+                return SniperAimModeSetting.IsToggle ? AimMode.Toggle : AimMode.Hold;
+            }
+            return _aimMode;
+        }
+
+        /// <summary>
+        /// 当前是否处于狙击开镜状态（弹道系统据此跳过 tracer 视觉，实现“直接命中”观感）。
+        /// </summary>
+        public bool IsScopedSniping => IsAiming
+            && CurrentWeapon != null
+            && CurrentWeapon.Config.weaponType == WeaponType.Sniper
+            && CurrentWeapon.Config.scopeFov > 0f;
+
         private void SetAimState(bool aiming)
         {
-            if (_isAiming == aiming) return;
-            _isAiming = aiming;
+            if (IsAiming == aiming) return;
 
-            GameEvent.Get<IWeaponEvent>().OnAimStateChanged(_owner?.OwnerId ?? 0, _isAiming);
-
-            // 更新相机 FOV
-            float defaultFov = 60f;
-            try
+            // 写入唯一数据源：玩家黑板；黑板未就绪时写本地兜底（与原私有字段行为一致）
+            var context = AimContext;
+            if (context != null)
             {
-                defaultFov = ConfigSystem.Instance?.Tables?.TbCamera?.GetOrDefault(1)?.DefaultFov ?? 60f;
+                context.IsAiming = aiming;
             }
-            catch
+            else
             {
-                // ignored
+                _isAimingFallback = aiming;
             }
-            float targetFov = _isAiming && CurrentWeapon != null
-                ? CurrentWeapon.Config.aimFov
-                : defaultFov;
-            GameEvent.Get<ICameraEvent>().OnAimFovChanged(targetFov);
 
-            // 狙击枪开镜时打开瞄准镜 UI
+            GameEvent.Get<IWeaponEvent>().OnAimStateChanged(_owner?.OwnerId ?? 0, aiming);
+
+            // 更新相机 FOV（狙击枪走 Duckov 式狙击镜，主相机不变焦）
             bool isSniper = CurrentWeapon?.Config.weaponType == WeaponType.Sniper;
+            if (!isSniper)
+            {
+                float defaultFov = 60f;
+                try
+                {
+                    defaultFov = ConfigSystem.Instance?.Tables?.TbCamera?.GetOrDefault(1)?.DefaultFov ?? 60f;
+                }
+                catch
+                {
+                    // ignored
+                }
+                float targetFov = IsAiming && CurrentWeapon != null
+                    ? CurrentWeapon.Config.aimFov
+                    : defaultFov;
+                GameEvent.Get<ICameraEvent>().OnAimFovChanged(targetFov);
+            }
+
+            // 狙击枪开镜时启用狙击镜相机 + 打开瞄准镜 UI（镜内倍率读武器配置，配件扩展见 WeaponInstance.ScopeFov）
             if (isSniper)
             {
-                if (_isAiming)
+                if (IsAiming)
+                {
+                    CameraSystem3D.Instance?.SetScopeActive(true, CurrentWeapon.ScopeFov);
                     GameModule.UI.ShowUIAsync<SniperScopeUI>();
+                }
                 else
+                {
+                    CameraSystem3D.Instance?.SetScopeActive(false);
                     GameModule.UI.CloseUI<SniperScopeUI>();
+                }
             }
         }
 
@@ -339,19 +389,28 @@ namespace GameLogic
             Vector2 origin = _owner.Position;
             Vector2 aimPos = _owner.AimPosition;
             Vector2 rawDirection = (aimPos - origin).normalized;
+            Vector2 direction;
 
-            // 辅助瞄准修正
-            Vector2 direction = AimAssistSystem.Instance?.ApplyAimAssist(
-                origin,
-                rawDirection,
-                weapon.Config.id,
-                _isAiming) ?? rawDirection;
+            if (IsScopedSniping)
+            {
+                // 开镜狙击：直接命中镜窗中心（= AimPosition），跳过辅助瞄准与扩散
+                direction = rawDirection;
+            }
+            else
+            {
+                // 辅助瞄准修正
+                direction = AimAssistSystem.Instance?.ApplyAimAssist(
+                    origin,
+                    rawDirection,
+                    weapon.Config.id,
+                    IsAiming) ?? rawDirection;
 
-            // 扩散
-            float spread = weapon.CalculateSpread(
-                _owner.IsMoving,
-                _isAiming);
-            direction = ApplySpread(direction, spread);
+                // 扩散
+                float spread = weapon.CalculateSpread(
+                    _owner.IsMoving,
+                    IsAiming);
+                direction = ApplySpread(direction, spread);
+            }
 
             weapon.Fire(origin, direction, _owner.OwnerId);
 
@@ -392,7 +451,7 @@ namespace GameLogic
         /// </summary>
         public float GetCurrentAimSensitivityMultiplier()
         {
-            if (CurrentWeapon == null || !_isAiming) return 1f;
+            if (CurrentWeapon == null || !IsAiming) return 1f;
             return CurrentWeapon.Config.aimSensitivityMultiplier;
         }
 

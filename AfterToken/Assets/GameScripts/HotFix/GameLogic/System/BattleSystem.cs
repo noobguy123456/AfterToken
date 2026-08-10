@@ -36,6 +36,13 @@ namespace GameLogic
                 worldPos = damageInfo.TargetGameObject.transform.position;
             }
 
+            // 开镜狙击：伤害数字显示在狙击镜镜窗内（按镜相机取景变换换算），不走主相机屏幕坐标
+            if (WeaponSystem.Instance != null && WeaponSystem.Instance.IsScopedSniping
+                && SniperScopeUI.ShowScopeDamage((int)damageInfo.Damage, worldPos, false))
+            {
+                return;
+            }
+
             var screenPos = mainCamera.WorldToScreenPoint(worldPos);
             DamageNumberUI.Show((int)damageInfo.Damage, screenPos, false);
         }

@@ -33,7 +33,7 @@ namespace GameLogic
         private Transform _lockedTarget;
         private float _lockTimer;
         private bool _isLocked;
-        private bool _isAiming;
+        // 瞄准状态不再本地缓存，直接读 WeaponSystem.IsAiming（其唯一数据源为玩家黑板 PlayerStateContext.IsAiming）。
 
         private void Awake()
         {
@@ -50,7 +50,7 @@ namespace GameLogic
 
         private void Update()
         {
-            if (_isAiming && WeaponSystem.Instance?.CurrentWeapon?.Config.weaponType == WeaponType.Rocket)
+            if ((WeaponSystem.Instance?.IsAiming ?? false) && WeaponSystem.Instance.CurrentWeapon?.Config.weaponType == WeaponType.Rocket)
             {
                 UpdateRocketLockOn();
             }
@@ -60,10 +60,12 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 瞄准状态变化时只需处理锁定副作用；瞄准状态本身直读 WeaponSystem.IsAiming，不做本地缓存。
+        /// </summary>
         private void OnAimStateChanged(int ownerId, bool isAiming)
         {
-            _isAiming = isAiming;
-            if (!_isAiming)
+            if (!isAiming)
             {
                 ClearLockOn();
             }

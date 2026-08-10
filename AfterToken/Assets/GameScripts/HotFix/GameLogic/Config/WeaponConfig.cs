@@ -36,6 +36,9 @@ namespace GameLogic
         public float aimSensitivityMultiplier;
         public bool aimAssistEnabled;
 
+        // 狙击镜（0 = 无狙击镜；后续配件系统在此基础值上叠加修正）
+        public float scopeFov;
+
         // 弹道
         public float tracerSpeed;
         public float tracerDelay;
@@ -101,6 +104,7 @@ namespace GameLogic
             aimFov = w.AimFov;
             aimSensitivityMultiplier = w.AimSensitivityMultiplier;
             aimAssistEnabled = w.AimAssistEnabled;
+            scopeFov = w.ScopeFov;
             tracerSpeed = w.TracerSpeed;
             tracerDelay = w.TracerDelay;
             projectileSpeed = w.ProjectileSpeed;

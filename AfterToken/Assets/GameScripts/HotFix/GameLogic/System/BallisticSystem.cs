@@ -238,8 +238,11 @@ namespace GameLogic
                 DrawDebugRaycast(origin, direction, hitPoint, maxDistance, hasHit, config);
             }
 
-            // 延迟 tracer 视觉
-            SpawnTracer(origin, hitPoint, direction, config);
+            // 延迟 tracer 视觉（开镜狙击直接命中镜窗中心，不播放子弹飞行动画）
+            if (WeaponSystem.Instance == null || !WeaponSystem.Instance.IsScopedSniping)
+            {
+                SpawnTracer(origin, hitPoint, direction, config);
+            }
 
             // 枪口特效（占位）
             // SpawnMuzzleEffect(origin, config);
@@ -274,8 +277,14 @@ namespace GameLogic
                 var lockTarget = AimAssistSystem.Instance?.GetLockedTarget();
                 if (lockTarget != null)
                 {
-                    targetId = lockTarget.GetInstanceID();
-                    tracking = true;
+                    // 追踪目标 ID 需与 ProjectileSystem._enemyMap 的键一致，
+                    // 即 EnemyEntity 组件的 InstanceID（不能用 Transform 的 InstanceID）
+                    var enemy = lockTarget.GetComponent<EnemyEntity>();
+                    if (enemy != null)
+                    {
+                        targetId = enemy.GetInstanceID();
+                        tracking = true;
+                    }
                 }
             }
 

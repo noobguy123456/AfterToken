@@ -25,7 +25,22 @@ namespace GameLogic
         [Header("俯视角度")]
         [SerializeField] private float _pitchAngle = 60f;
 
+        [Header("狙击镜")]
+        [Tooltip("狙击镜渲染纹理边长（正方形），越大镜内画面越清晰")]
+        [SerializeField] private int _scopeRenderSize = 1024;
+
         private Camera _mainCamera;
+
+        // 狙击镜（Duckov 式）：开镜时把一台小 FOV 相机架在"鼠标瞄准的地面点"上方，
+        // 渲染到 RenderTexture，由 SniperScopeUI 显示为跟随鼠标的圆形镜窗
+        private Camera _scopeCamera;
+        private RenderTexture _scopeRenderTexture;
+        private bool _scopeActive;
+
+        /// <summary>
+        /// 狙击镜渲染纹理（未开镜时为 null）。
+        /// </summary>
+        public RenderTexture ScopeRenderTexture => _scopeRenderTexture;
 
         private void Awake()
         {
@@ -59,6 +74,7 @@ namespace GameLogic
         private void OnDestroy()
         {
             Instance = null;
+            ReleaseScopeRenderTexture();
         }
 
         private void LateUpdate()
@@ -66,6 +82,10 @@ namespace GameLogic
             // 相机跟随放在 LateUpdate：等本帧所有移动/旋转（FixedUpdate 物理同步、Update 朝向）结束后再取目标位置，避免跟拍抖动
             HandleRotationInput();
             UpdateCameraPosition();
+            if (_scopeActive)
+            {
+                UpdateScopeCamera();
+            }
         }
 
         private void HandleRotationInput()
@@ -122,5 +142,133 @@ namespace GameLogic
         {
             return _mainCamera;
         }
+
+        #region 狙击镜
+
+        /// <summary>
+        /// 开关狙击镜。开镜时创建（或复用）狙击镜相机并指定镜内 FOV（越小倍率越高）。
+        /// </summary>
+        public void SetScopeActive(bool active, float scopeFov = 15f)
+        {
+            if (active)
+            {
+                EnsureScopeCamera();
+                _scopeCamera.fieldOfView = scopeFov > 0f ? scopeFov : 15f;
+                _scopeCamera.enabled = true;
+                _scopeActive = true;
+            }
+            else
+            {
+                _scopeActive = false;
+                if (_scopeCamera != null)
+                {
+                    _scopeCamera.enabled = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 懒创建狙击镜相机与渲染纹理。
+        /// </summary>
+        private void EnsureScopeCamera()
+        {
+            if (_scopeCamera != null)
+            {
+                return;
+            }
+
+            var go = new GameObject("ScopeCamera");
+            _scopeCamera = go.AddComponent<Camera>();
+            _scopeCamera.CopyFrom(_mainCamera);
+            _scopeCamera.clearFlags = CameraClearFlags.SolidColor;
+            _scopeCamera.backgroundColor = new Color(0.05f, 0.05f, 0.08f);
+
+            _scopeRenderTexture = new RenderTexture(_scopeRenderSize, _scopeRenderSize, 24);
+            _scopeRenderTexture.Create();
+            _scopeCamera.targetTexture = _scopeRenderTexture;
+            _scopeCamera.enabled = false;
+        }
+
+        /// <summary>
+        /// 每帧把狙击镜相机架到鼠标瞄准的地面点上方，姿态与主相机一致（同俯角/偏航）。
+        /// </summary>
+        private void UpdateScopeCamera()
+        {
+            if (_scopeCamera == null)
+            {
+                return;
+            }
+
+            Vector3 aimPoint = GetAimGroundPoint();
+            // 让视轴精确穿过瞄准点（镜窗中心=子弹落点）：沿视线方向按跟随高度回推相机位置。
+            // 不能简单 aim+offset——主相机的 offset 与俯角并不互为中心（视轴落点偏 -0.61m），
+            // 小 FOV 下这点偏移足以把瞄准点挤出画面
+            Vector3 forward = Quaternion.Euler(_pitchAngle, _yawAngle, 0f) * Vector3.forward;
+            float t = _followOffset.y / -forward.y;
+            _scopeCamera.transform.position = aimPoint - forward * t;
+            _scopeCamera.transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
+        }
+
+        /// <summary>
+        /// 鼠标瞄准的地面点：优先取玩家实体的 AimPosition（与子弹落点一致），
+        /// 取不到时用主相机射线与 y=0 平面求交兜底。
+        /// </summary>
+        private Vector3 GetAimGroundPoint()
+        {
+            if (_followTarget != null)
+            {
+                var player = _followTarget.GetComponent<PlayerEntity>();
+                if (player != null)
+                {
+                    Vector2 aim = player.AimPosition;
+                    return new Vector3(aim.x, 0f, aim.y);
+                }
+            }
+
+            if (_mainCamera != null)
+            {
+                Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+                var plane = new Plane(Vector3.up, Vector3.zero);
+                if (plane.Raycast(ray, out float enter))
+                {
+                    return ray.GetPoint(enter);
+                }
+            }
+            return _followTarget != null ? _followTarget.position : Vector3.zero;
+        }
+
+        /// <summary>
+        /// 世界坐标 → 狙击镜视口坐标（0~1，中心 0.5）。
+        /// 未开镜或目标在镜相机后方时返回 false。供 SniperScopeUI 把镜内伤害数字定位到镜窗局部坐标。
+        /// </summary>
+        public bool TryWorldToScopeViewportPoint(Vector3 worldPos, out Vector2 viewportPoint)
+        {
+            viewportPoint = default;
+            if (!_scopeActive || _scopeCamera == null)
+            {
+                return false;
+            }
+
+            Vector3 vp = _scopeCamera.WorldToViewportPoint(worldPos);
+            if (vp.z <= 0f)
+            {
+                return false;
+            }
+
+            viewportPoint = new Vector2(vp.x, vp.y);
+            return true;
+        }
+
+        private void ReleaseScopeRenderTexture()
+        {
+            if (_scopeRenderTexture != null)
+            {
+                _scopeRenderTexture.Release();
+                Destroy(_scopeRenderTexture);
+                _scopeRenderTexture = null;
+            }
+        }
+
+        #endregion
     }
 }

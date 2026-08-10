@@ -25,10 +25,13 @@ namespace GameLogic
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
         private const float HEALTH_BAR_OFFSET_Y = 0.6f;
 
-        // 血条的固定世界朝向与偏移（EnsureHealthBar 时捕获）：敌人刚体不锁 Y 旋转，
+        // 血条的固定世界偏移（EnsureHealthBar 时捕获）：敌人刚体不锁 Y 旋转，
         // 物理推挤会让根节点打转，血条挂在根节点下会跟着转，因此每帧钉住。
-        private Quaternion _healthBarFixedRotation;
         private Vector3 _healthBarFixedOffset;
+        private Quaternion _healthBarFixedRotation;
+
+        // 血条朝向基准相机（屏幕对齐 billboard 用），静态缓存避免每个敌人每帧 Find
+        private static Camera _healthBarCamera;
 
         // 已迁移到 PlaceholderSpriteProvider.GetWhiteSprite4()
 
@@ -317,15 +320,23 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 每帧钉住血条的世界朝向与位置：敌人根节点被物理推挤旋转时血条不跟着转。
+        /// 每帧钉住血条：位置固定在敌人头顶偏移处，朝向与主相机保持一致（屏幕对齐 billboard），
+        /// 敌人被物理推挤打转、相机偏航/俯仰变化时，血条在屏幕上的角度都保持不变。
         /// </summary>
         private void LateUpdate()
         {
-            if (_healthBarRoot != null)
+            if (_healthBarRoot == null) return;
+
+            if (_healthBarCamera == null)
             {
-                _healthBarRoot.rotation = _healthBarFixedRotation;
-                _healthBarRoot.position = transform.position + _healthBarFixedOffset;
+                _healthBarCamera = Camera.main;
             }
+
+            // 血条平面平行屏幕（X=屏幕右、Y=屏幕上）；无相机时退回生成时刻的固定朝向
+            _healthBarRoot.rotation = _healthBarCamera != null
+                ? _healthBarCamera.transform.rotation
+                : _healthBarFixedRotation;
+            _healthBarRoot.position = transform.position + _healthBarFixedOffset;
         }
 
         private void UpdateHealthBar()

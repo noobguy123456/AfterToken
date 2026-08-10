@@ -15,6 +15,16 @@ namespace GameLogic
         public bool IsReloading { get; private set; }
         public bool IsFiring { get; set; }
 
+        /// <summary>
+        /// 狙击镜 FOV（越小放大倍率越高）。基础值读 TbWeapon.scopeFov；
+        /// 后续武器配件系统接入时在此叠加配件修正（如高倍镜配件乘以配件系数），
+        /// 调用方（WeaponSystem/狙击镜 UI）只读本属性，不关心来源。
+        /// </summary>
+        public float ScopeFov => Config != null && Config.scopeFov > 0f ? Config.scopeFov : DefaultScopeFov;
+
+        /// <summary>未配置 scopeFov 时的兜底狙击镜 FOV（约 4 倍于默认 60 FOV）。</summary>
+        public const float DefaultScopeFov = 15f;
+
         private int _reloadTimerId;
 
         public WeaponInstance(WeaponConfig config)

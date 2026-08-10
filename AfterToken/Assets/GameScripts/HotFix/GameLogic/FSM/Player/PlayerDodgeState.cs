@@ -14,8 +14,8 @@ namespace GameLogic
         protected override void OnEnterState(IFsm<PlayerEntity> fsm)
         {
             _elapsed = 0f;
+            // StartDodge 内部转发写入黑板 IsDodging（唯一数据源）
             Owner.StartDodge();
-            Context.IsDodging = true;
             PlayerSystem.Instance?.ConsumeStamina(PlayerSystem.Instance.GetDodgeStaminaCost());
         }
 
@@ -30,8 +30,8 @@ namespace GameLogic
 
         protected override void OnLeaveState(IFsm<PlayerEntity> fsm, bool isShutdown)
         {
+            // EndDodge 内部转发写入黑板 IsDodging（唯一数据源）
             Owner.EndDodge();
-            Context.IsDodging = false;
         }
     }
 }

@@ -76,9 +76,43 @@ namespace GameLogic
             Vector2 dir = new Vector2(
                 Input.GetAxisRaw("Horizontal"),
                 Input.GetAxisRaw("Vertical")
-            ).normalized;
+            );
+
+            if (dir.sqrMagnitude > 0f)
+            {
+                // 相机系相对移动：WASD 始终对齐屏幕方向（相机偏航旋转后 W 仍是屏幕上方），
+                // 无相机时退回世界系（ yaw=0 时两者一致）
+                dir = ToCameraSpace(dir).normalized;
+            }
+            else
+            {
+                dir = Vector2.zero;
+            }
 
             BattleInputEvent?.OnMoveInput(dir);
+        }
+
+        /// <summary>
+        /// 将屏幕系输入（x=右, y=上）映射到玩法平面 XZ 上的相机相对方向。
+        /// </summary>
+        private Vector2 ToCameraSpace(Vector2 dir)
+        {
+            // Start 时相机可能尚未就绪，这里懒获取兜底
+            if (_mainCamera == null)
+            {
+                _mainCamera = CameraSystem3D.Instance?.GetMainCamera();
+            }
+            if (_mainCamera == null) return dir;
+
+            Vector3 forward = _mainCamera.transform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 1e-6f) return dir;
+            forward.Normalize();
+
+            // 俯仰角不影响方向映射，只取偏航分量
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            Vector3 world = right * dir.x + forward * dir.y;
+            return new Vector2(world.x, world.z);
         }
 
         private void HandleAimInput()

@@ -5,29 +5,100 @@ using TEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 狙击镜 UI。
-    /// 黑屏遮罩，只在中心留一个圆形视野，显示 ScopeCamera 的 RenderTexture。
+    /// 狙击镜 UI（Escape from Duckov 式）。
+    /// 一个跟随鼠标的圆形镜窗：窗内显示 ScopeCamera 的放大画面（RenderTexture），
+    /// 窗外用带圆孔的暗角遮罩压暗（半透明，隐约可见）。
+    /// 全部图形关闭 raycastTarget，不拦截战斗输入。
     /// </summary>
     [Window(UILayer.Top, location: "SniperScopeUI", fullScreen: true)]
     public class SniperScopeUI : UIWindow
     {
         #region 脚本工具生成的代码
         private Image _vignetteImage;
+        private RectTransform _scopeRect;
+        private Image _maskImage;
         private RawImage _scopeImage;
+        private Image _ringImage;
+
+        // 镜内伤害数字容器（运行时创建，挂在镜窗下，随镜窗一起跟随鼠标）
+        private RectTransform _damageRoot;
+        private static SniperScopeUI _instance;
 
         protected override void ScriptGenerator()
         {
             _vignetteImage = FindChildComponent<Image>("m_img_Vignette");
-            _scopeImage = FindChildComponent<RawImage>("m_raw_Scope");
+            _scopeRect = FindChild("m_rect_Scope") as RectTransform;
+            _maskImage = FindChildComponent<Image>("m_rect_Scope/m_mask_Scope");
+            _scopeImage = FindChildComponent<RawImage>("m_rect_Scope/m_mask_Scope/m_raw_Scope");
+            _ringImage = FindChildComponent<Image>("m_rect_Scope/m_img_Ring");
         }
         #endregion
+
+        // 参考分辨率 1920x1080 下镜窗直径
+        private const float SCOPE_DIAMETER = 480f;
+        // 暗角遮罩边长：足够大，保证圆孔跟随鼠标到屏幕任意角落后暗角仍能盖住全屏
+        private const float VIGNETTE_SIZE = 5000f;
+        // 镜外压暗程度（0~1，越大越黑；取较低值保持窗外画面清晰可见）
+        private const float VIGNETTE_ALPHA = 0.39f;
 
         protected override void OnCreate()
         {
             base.OnCreate();
             FixFullScreenCanvas();
-            ApplyVignetteSprite();
+            ApplySprites();
+            DisableRaycastTargets();
+            EnsureDamageRoot();
             RefreshScopeTexture();
+            _instance = this;
+        }
+
+        protected override void OnDestroy()
+        {
+            _instance = null;
+            base.OnDestroy();
+        }
+
+        /// <summary>
+        /// 运行时创建镜内伤害数字容器：铺满镜窗，随 _scopeRect 一起跟随鼠标。
+        /// 飘字本体复用 DamageNumberUI 的对象池与动画（见 DamageNumberUI.ShowLocal）。
+        /// </summary>
+        private void EnsureDamageRoot()
+        {
+            if (_damageRoot != null || _scopeRect == null) return;
+            var go = new GameObject("m_rect_ScopeDamage", typeof(RectTransform));
+            _damageRoot = (RectTransform)go.transform;
+            _damageRoot.SetParent(_scopeRect, false);
+            _damageRoot.anchorMin = Vector2.zero;
+            _damageRoot.anchorMax = Vector2.one;
+            _damageRoot.offsetMin = Vector2.zero;
+            _damageRoot.offsetMax = Vector2.zero;
+            // 飘字显示在准星（十字线）之上
+            _damageRoot.SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// 开镜命中时在镜窗内显示伤害数字。
+        /// 按狙击镜相机的取景变换把世界坐标换算到镜窗局部坐标，复用 DamageNumberUI 飘字。
+        /// </summary>
+        /// <returns>是否成功在镜内生成；false 时调用方应走主相机屏幕坐标原路径。</returns>
+        public static bool ShowScopeDamage(int damage, Vector3 worldPos, bool isCritical = false)
+        {
+            return _instance != null && _instance.ShowScopeDamageInternal(damage, worldPos, isCritical);
+        }
+
+        private bool ShowScopeDamageInternal(int damage, Vector3 worldPos, bool isCritical)
+        {
+            var camSys = CameraSystem3D.Instance;
+            if (camSys == null || _damageRoot == null) return false;
+            if (!camSys.TryWorldToScopeViewportPoint(worldPos, out var viewport)) return false;
+
+            // 镜内视口坐标（0~1，中心 0.5）→ 镜窗局部坐标（与镜窗显示区同尺寸，中心为原点）
+            Vector2 scopeSize = _scopeImage != null
+                ? _scopeImage.rectTransform.rect.size
+                : new Vector2(SCOPE_DIAMETER, SCOPE_DIAMETER);
+            Vector2 localPos = (viewport - new Vector2(0.5f, 0.5f)) * scopeSize;
+            DamageNumberUI.ShowLocal(_damageRoot, damage, localPos, isCritical);
+            return true;
         }
 
         protected override void OnRefresh()
@@ -45,41 +116,139 @@ namespace GameLogic
             }
         }
 
-        private void ApplyVignetteSprite()
+        protected override void OnUpdate()
+        {
+            // 镜窗与暗角圆孔整体跟随准星（灵敏度驱动），保证镜窗中心 = 子弹落点；
+            // 准星不可用时（非战斗场景）退回原始鼠标位置
+            Vector3 mousePos = CrosshairUpdater.Instance != null
+                ? (Vector3)CrosshairUpdater.Instance.CurrentScreenPos
+                : Input.mousePosition;
+            if (_scopeRect != null)
+            {
+                _scopeRect.position = mousePos;
+            }
+            if (_vignetteImage != null)
+            {
+                _vignetteImage.rectTransform.position = mousePos;
+            }
+
+            // 开镜期间 DamageNumberUI 被框架隐藏（OnUpdate 停走），代驱动镜内飘字动画
+            DamageNumberUI.TickExternal(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 运行时生成占位精灵：带圆孔的暗角、圆形遮罩、镜框圆环。
+        /// </summary>
+        private void ApplySprites()
         {
             if (_vignetteImage != null)
             {
-                _vignetteImage.sprite = CreateCircleMaskSprite();
+                _vignetteImage.sprite = CreateVignetteSprite();
                 _vignetteImage.type = Image.Type.Simple;
+                _vignetteImage.rectTransform.sizeDelta = new Vector2(VIGNETTE_SIZE, VIGNETTE_SIZE);
             }
+
+            if (_maskImage != null)
+            {
+                _maskImage.sprite = CreateCircleSprite(256, 0f);
+                _maskImage.type = Image.Type.Simple;
+            }
+
+            if (_ringImage != null)
+            {
+                _ringImage.sprite = CreateRingSprite();
+                _ringImage.type = Image.Type.Simple;
+                _ringImage.rectTransform.sizeDelta = new Vector2(SCOPE_DIAMETER, SCOPE_DIAMETER);
+            }
+        }
+
+        private void DisableRaycastTargets()
+        {
+            // 狙击镜 UI 永不拦截点击（十字线在 prefab 中已关闭 raycastTarget）
+            if (_vignetteImage != null) _vignetteImage.raycastTarget = false;
+            if (_maskImage != null) _maskImage.raycastTarget = false;
+            if (_scopeImage != null) _scopeImage.raycastTarget = false;
+            if (_ringImage != null) _ringImage.raycastTarget = false;
         }
 
         private void RefreshScopeTexture()
         {
-            if (_scopeImage != null && CameraSystem.Instance != null)
+            if (_scopeImage != null)
             {
-                _scopeImage.texture = CameraSystem.Instance.ScopeRenderTexture;
+                _scopeImage.texture = CameraSystem3D.Instance != null
+                    ? CameraSystem3D.Instance.ScopeRenderTexture
+                    : null;
             }
         }
 
-        private Sprite CreateCircleMaskSprite()
+        /// <summary>
+        /// 暗角遮罩：中心圆形透明孔（与镜窗同半径），四周黑色半透明。
+        /// </summary>
+        private Sprite CreateVignetteSprite()
         {
-            // 中心透明、四周黑色的遮罩纹理
-            int size = 512;
-            var tex = new Texture2D(size, size);
-            int radius = size / 4;
-            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
-            for (int x = 0; x < size; x++)
+            const int texSize = 1024;
+            float texScale = VIGNETTE_SIZE / texSize; // 纹理像素 -> 屏幕像素
+            float holeRadius = (SCOPE_DIAMETER * 0.5f) / texScale;
+            float feather = 6f; // 边缘过渡（纹理像素）
+
+            var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+            Vector2 center = new Vector2(texSize * 0.5f, texSize * 0.5f);
+            for (int y = 0; y < texSize; y++)
             {
-                for (int y = 0; y < size; y++)
+                for (int x = 0; x < texSize; x++)
                 {
                     float dist = Vector2.Distance(new Vector2(x, y), center);
-                    Color c = dist < radius ? Color.clear : Color.black;
-                    tex.SetPixel(x, y, c);
+                    float alpha = Mathf.Clamp01((dist - holeRadius) / feather) * VIGNETTE_ALPHA;
+                    tex.SetPixel(x, y, new Color(0f, 0f, 0f, alpha));
                 }
             }
             tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+            return Sprite.Create(tex, new Rect(0, 0, texSize, texSize), new Vector2(0.5f, 0.5f));
+        }
+
+        /// <summary>
+        /// 实心圆（Mask 用，边缘羽化 anti-aliasing）。
+        /// </summary>
+        private Sprite CreateCircleSprite(int texSize, float feather)
+        {
+            var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+            float radius = texSize * 0.5f - 1f;
+            Vector2 center = new Vector2(texSize * 0.5f, texSize * 0.5f);
+            for (int y = 0; y < texSize; y++)
+            {
+                for (int x = 0; x < texSize; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), center);
+                    float alpha = Mathf.Clamp01(radius - dist + Mathf.Max(feather, 1f));
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, texSize, texSize), new Vector2(0.5f, 0.5f));
+        }
+
+        /// <summary>
+        /// 圆环（镜框描边）。
+        /// </summary>
+        private Sprite CreateRingSprite()
+        {
+            const int texSize = 256;
+            const float ringWidth = 8f;
+            var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+            float outer = texSize * 0.5f - 1f;
+            float inner = outer - ringWidth;
+            Vector2 center = new Vector2(texSize * 0.5f, texSize * 0.5f);
+            for (int y = 0; y < texSize; y++)
+            {
+                for (int x = 0; x < texSize; x++)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), center);
+                    bool inRing = dist <= outer && dist >= inner;
+                    tex.SetPixel(x, y, inRing ? new Color(0.1f, 0.1f, 0.1f, 0.95f) : Color.clear);
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, texSize, texSize), new Vector2(0.5f, 0.5f));
         }
     }
 }

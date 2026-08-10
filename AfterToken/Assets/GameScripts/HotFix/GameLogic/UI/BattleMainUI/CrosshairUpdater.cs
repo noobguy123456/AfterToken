@@ -86,8 +86,13 @@ namespace GameLogic
             var parent = _crosshair.parent as RectTransform;
             if (parent == null) return;
 
-            _currentScreenPos.x += Input.GetAxis("Mouse X") * SensitivitySetting.Value;
-            _currentScreenPos.y += Input.GetAxis("Mouse Y") * SensitivitySetting.Value;
+            // 开镜（狙击镜）时使用独立的开镜灵敏度，与不开镜灵敏度互不影响
+            float sensitivity = WeaponSystem.Instance != null && WeaponSystem.Instance.IsScopedSniping
+                ? SensitivitySetting.ScopedValue
+                : SensitivitySetting.Value;
+
+            _currentScreenPos.x += Input.GetAxis("Mouse X") * sensitivity;
+            _currentScreenPos.y += Input.GetAxis("Mouse Y") * sensitivity;
             _currentScreenPos.x = Mathf.Clamp(_currentScreenPos.x, 0f, Screen.width);
             _currentScreenPos.y = Mathf.Clamp(_currentScreenPos.y, 0f, Screen.height);
 
