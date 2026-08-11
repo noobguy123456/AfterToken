@@ -193,6 +193,14 @@ namespace GameLogic
                 prevWeapon.CancelReload(_owner?.OwnerId ?? 0);
             }
 
+            // 切换武器时取消瞄准——必须在换槽之前执行：
+            // SetAimState 内部按 CurrentWeapon 判断是否狙击枪来决定关狙击镜，
+            // 换槽后旧狙击镜会漏关（狙击镜 UI/相机卡在开镜状态）
+            if (IsAiming)
+            {
+                SetAimState(false);
+            }
+
             _currentSlot = slot;
             _lastSwitchTime = Time.time;
             _isFiring = false;
@@ -202,12 +210,6 @@ namespace GameLogic
             GameEvent.Get<IPlayerEvent>().OnAmmoChanged(
                 CurrentWeapon?.CurrentAmmo ?? 0,
                 CurrentWeapon?.Config.clipSize ?? 0);
-
-            // 切换武器时取消瞄准
-            if (IsAiming)
-            {
-                SetAimState(false);
-            }
         }
 
         private bool CanSwitch()
@@ -294,11 +296,11 @@ namespace GameLogic
 
         /// <summary>
         /// 当前是否处于狙击开镜状态（弹道系统据此跳过 tracer 视觉，实现“直接命中”观感）。
+        /// 开镜即有镜窗图案（纯视觉），是否放大由 scopeFov 决定（0=无放大，见 SetAimState）。
         /// </summary>
         public bool IsScopedSniping => IsAiming
             && CurrentWeapon != null
-            && CurrentWeapon.Config.weaponType == WeaponType.Sniper
-            && CurrentWeapon.Config.scopeFov > 0f;
+            && CurrentWeapon.Config.weaponType == WeaponType.Sniper;
 
         private void SetAimState(bool aiming)
         {
@@ -336,12 +338,16 @@ namespace GameLogic
                 GameEvent.Get<ICameraEvent>().OnAimFovChanged(targetFov);
             }
 
-            // 狙击枪开镜时启用狙击镜相机 + 打开瞄准镜 UI（镜内倍率读武器配置，配件扩展见 WeaponInstance.ScopeFov）
+            // 狙击枪开镜时打开瞄准镜 UI（纯视觉镜窗）；scopeFov>0 时才启用镜相机放大，
+            // scopeFov=0 表示无放大——镜内外画面一致，仅灰色蒙版 + 镜窗图案
             if (isSniper)
             {
                 if (IsAiming)
                 {
-                    CameraSystem3D.Instance?.SetScopeActive(true, CurrentWeapon.ScopeFov);
+                    if (CurrentWeapon.ScopeFov > 0f)
+                    {
+                        CameraSystem3D.Instance?.SetScopeActive(true, CurrentWeapon.ScopeFov);
+                    }
                     GameModule.UI.ShowUIAsync<SniperScopeUI>();
                 }
                 else

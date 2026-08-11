@@ -19,6 +19,8 @@ namespace GameLogic
         private Image _maskImage;
         private RawImage _scopeImage;
         private Image _ringImage;
+        private Image _crossHImage;
+        private Image _crossVImage;
 
         // 镜内伤害数字容器（运行时创建，挂在镜窗下，随镜窗一起跟随鼠标）
         private RectTransform _damageRoot;
@@ -31,15 +33,18 @@ namespace GameLogic
             _maskImage = FindChildComponent<Image>("m_rect_Scope/m_mask_Scope");
             _scopeImage = FindChildComponent<RawImage>("m_rect_Scope/m_mask_Scope/m_raw_Scope");
             _ringImage = FindChildComponent<Image>("m_rect_Scope/m_img_Ring");
+            _crossHImage = FindChildComponent<Image>("m_rect_Scope/m_img_CrossH");
+            _crossVImage = FindChildComponent<Image>("m_rect_Scope/m_img_CrossV");
         }
         #endregion
 
-        // 参考分辨率 1920x1080 下镜窗直径
-        private const float SCOPE_DIAMETER = 480f;
-        // 暗角遮罩边长：足够大，保证圆孔跟随鼠标到屏幕任意角落后暗角仍能盖住全屏
-        private const float VIGNETTE_SIZE = 5000f;
-        // 镜外压暗程度（0~1，越大越黑；取较低值保持窗外画面清晰可见）
-        private const float VIGNETTE_ALPHA = 0.39f;
+        // 镜窗直径（UI 逻辑像素）。根 Canvas scaleFactor≈2.56，1080p 下实际显示 ≈640px，
+        // 约 0.59 屏高，对齐 Duckov 狙击镜比例（约 0.55~0.6 屏高）
+        private const float SCOPE_DIAMETER = 250f;
+        // 灰色蒙版不透明度（0~1）。全屏均匀压灰但不遮挡场景信息（Duckov 式）
+        private const float VIGNETTE_ALPHA = 0.3f;
+        // 灰色蒙版颜色（中性灰）
+        private static readonly Color VIGNETTE_COLOR = new Color(0.5f, 0.5f, 0.5f, VIGNETTE_ALPHA);
 
         protected override void OnCreate()
         {
@@ -118,7 +123,7 @@ namespace GameLogic
 
         protected override void OnUpdate()
         {
-            // 镜窗与暗角圆孔整体跟随准星（灵敏度驱动），保证镜窗中心 = 子弹落点；
+            // 镜窗（圆环+十字线）跟随准星（灵敏度驱动），保证镜窗中心 = 子弹落点；
             // 准星不可用时（非战斗场景）退回原始鼠标位置
             Vector3 mousePos = CrosshairUpdater.Instance != null
                 ? (Vector3)CrosshairUpdater.Instance.CurrentScreenPos
@@ -127,25 +132,26 @@ namespace GameLogic
             {
                 _scopeRect.position = mousePos;
             }
-            if (_vignetteImage != null)
-            {
-                _vignetteImage.rectTransform.position = mousePos;
-            }
 
             // 开镜期间 DamageNumberUI 被框架隐藏（OnUpdate 停走），代驱动镜内飘字动画
             DamageNumberUI.TickExternal(Time.deltaTime);
         }
 
         /// <summary>
-        /// 运行时生成占位精灵：带圆孔的暗角、圆形遮罩、镜框圆环。
+        /// 运行时生成/设置占位图形：全屏灰色蒙版、圆形遮罩、镜框圆环。
         /// </summary>
         private void ApplySprites()
         {
             if (_vignetteImage != null)
             {
-                _vignetteImage.sprite = CreateVignetteSprite();
-                _vignetteImage.type = Image.Type.Simple;
-                _vignetteImage.rectTransform.sizeDelta = new Vector2(VIGNETTE_SIZE, VIGNETTE_SIZE);
+                // 均匀灰色蒙版：铺满全屏、不随鼠标移动，不影响观察场景信息
+                _vignetteImage.sprite = null;
+                _vignetteImage.color = VIGNETTE_COLOR;
+                var rt = _vignetteImage.rectTransform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
             }
 
             if (_maskImage != null)
@@ -159,6 +165,20 @@ namespace GameLogic
                 _ringImage.sprite = CreateRingSprite();
                 _ringImage.type = Image.Type.Simple;
                 _ringImage.rectTransform.sizeDelta = new Vector2(SCOPE_DIAMETER, SCOPE_DIAMETER);
+            }
+
+            // 镜窗整体与十字线长度对齐圆环直径（prefab 里是旧值 480，运行时统一为 SCOPE_DIAMETER）
+            if (_scopeRect != null)
+            {
+                _scopeRect.sizeDelta = new Vector2(SCOPE_DIAMETER, SCOPE_DIAMETER);
+            }
+            if (_crossHImage != null)
+            {
+                _crossHImage.rectTransform.sizeDelta = new Vector2(SCOPE_DIAMETER, 2f);
+            }
+            if (_crossVImage != null)
+            {
+                _crossVImage.rectTransform.sizeDelta = new Vector2(2f, SCOPE_DIAMETER);
             }
         }
 
@@ -178,32 +198,9 @@ namespace GameLogic
                 _scopeImage.texture = CameraSystem3D.Instance != null
                     ? CameraSystem3D.Instance.ScopeRenderTexture
                     : null;
+                // scopeFov=0（无放大）时没有镜相机/渲染纹理，隐藏放大画面，只留镜窗图案
+                _scopeImage.enabled = _scopeImage.texture != null;
             }
-        }
-
-        /// <summary>
-        /// 暗角遮罩：中心圆形透明孔（与镜窗同半径），四周黑色半透明。
-        /// </summary>
-        private Sprite CreateVignetteSprite()
-        {
-            const int texSize = 1024;
-            float texScale = VIGNETTE_SIZE / texSize; // 纹理像素 -> 屏幕像素
-            float holeRadius = (SCOPE_DIAMETER * 0.5f) / texScale;
-            float feather = 6f; // 边缘过渡（纹理像素）
-
-            var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
-            Vector2 center = new Vector2(texSize * 0.5f, texSize * 0.5f);
-            for (int y = 0; y < texSize; y++)
-            {
-                for (int x = 0; x < texSize; x++)
-                {
-                    float dist = Vector2.Distance(new Vector2(x, y), center);
-                    float alpha = Mathf.Clamp01((dist - holeRadius) / feather) * VIGNETTE_ALPHA;
-                    tex.SetPixel(x, y, new Color(0f, 0f, 0f, alpha));
-                }
-            }
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, texSize, texSize), new Vector2(0.5f, 0.5f));
         }
 
         /// <summary>

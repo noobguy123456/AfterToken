@@ -234,3 +234,9 @@ Luban 配置表数据补充
 - 2026-08-08 战斗三系统 review 与整改：①子弹系统修复 3 个存量 bug——双重命中（伤害唯一权威路径收敛为 `ProjectileSystem.Tick` SphereCast→HandleHit，`OnProjectileHit` 事件处理器改空钩子）、火箭追踪失效（`FireProjectile` 传 `Transform.GetInstanceID()` 改为 `EnemyEntity` 组件 InstanceID，与 `_enemyMap` 键语义统一）、飞行中视觉不跟随（Tick 每帧驱动 `UpdateVisual`）。②玩家状态收敛——IsDead/IsDodging/MoveInput/AimInput/IsAiming 唯一 owner 归 `PlayerStateContext` 黑板，`PlayerEntity`/`WeaponSystem` 重复字段改转发属性，零行为变化；三条实现原理与状态归属表记入 `docs/modules/combat/player-system/README.md`。③产出提案 `docs/Proposal/combat/pure-csharp-data-oriented-roadmap.md`（纯 C# 数据导向演进路线：子弹 SoA 样板/敌人数据层/敌人感知黑板，待评审，评审前不改代码）。热更程序集编译通过、Console 0 错误 |
 
 - 2026-08-08 狙击镜优化两批：①效果调整——倍率减半（`TbWeapon.scopeFov` 37.5→75，即 1.2x→0.6x，Excel+JSON 同步）、镜外暗角更通透（有效不透明度约 30%）、开镜命中伤害数字入镜窗（`BattleSystem`→`SniperScopeUI.ShowScopeDamage`，镜相机取景换算，复用 `DamageNumberUI` 池与动画）；顺带修复开镜期间 `DamageNumberUI` 被框架隐藏导致飘字冻结（`TickExternal` 代驱动）与关镜残留销毁对象两个存量问题。②开镜/不开镜灵敏度分离——`SensitivitySetting.ScopedValue` 独立存档、设置面板新增 Scope Sensitivity 滑块、`CrosshairUpdater` 开镜时切换灵敏度；镜窗改跟随准星而非原始鼠标位置，统一镜窗/准星/子弹落点。均 Play Mode 实测截图验证。详见 weapon-system、settings-ui progress |
+
+- 2026-08-08 狙击镜视觉模型修正：①修复开镜切武器卡镜（`SwitchToSlot` 取消瞄准移到换槽前）；②镜相机改"视场放大镜"模型——与主相机同位仅旋转对准瞄准点，镜内=主相机视野放大裁剪，解决开镜后只能看到玩家附近的问题；③scopeFov 75→37.5 恢复 1.2x。实测切武器关镜、镜内远景可见。详见 camera-system README 与 weapon-system progress
+
+- 2026-08-08 狙击镜抬高+压边平移（二版，后废弃）：镜相机架到瞄准点上空 12m、FOV 按高度比例换算保持视觉 1.2x；开镜瞄准射线改从镜相机发出，准星压边驱动瞄准点限速平移（8m/s），射程不再受主相机视锥限制。两个反馈环陷阱：镜相机旋转必须固定（LookRotation 跟踪会在平滑滞后期拉平视轴致瞄准距离发散）、平移必须限速。实测平移 7.9m/s 线性、回中即停。用户按鸭科夫参考图拍板改纯放大镜，机制回退。详见 camera-system README 留档
+
+- 2026-08-08 狙击镜改纯视觉镜窗（三版，按鸭科夫参考图+用户四点需求）：①开镜=全屏均匀灰色蒙版（alpha 0.3，不遮挡场景）+跟随准星的镜窗图案（圆环+贯径十字线，≈0.59 屏高，去中心点）；②默认无放大无畸变——`TbWeapon.scopeFov` 语义改 0=无放大纯视觉镜窗、>0=放大镜模式（1004 默认 0，Excel+JSON+__beans__ 注释同步）；③`WeaponInstance.ScopeFov` 删 15 兜底直接透传、`IsScopedSniping` 不再要求 scopeFov>0；④开镜射击直接命中镜窗中心（瞄准射线始终来自主相机过准星）。实测灰蒙版/图案/无放大/开火命中全过，Console 0 错误。详见 camera-system README 与 weapon-system progress

@@ -127,6 +127,7 @@ namespace GameLogic
 
             // 透视相机下 ScreenToWorldPoint 必须指定深度，直接传 Vector2（z=0）会得到相机自身位置。
             // 统一用“相机射线 × 玩法平面（y=0 的 XZ 地面）”求交，正交/透视相机都适用。
+            // 开镜狙击也是主相机射线：狙击镜为 Duckov 式放大镜，活动范围=主相机渲染区域。
             Ray ray = _mainCamera.ScreenPointToRay(aimScreenPos);
             var gameplayPlane = new Plane(Vector3.up, Vector3.zero);
             if (!gameplayPlane.Raycast(ray, out float enter))

@@ -210,7 +210,7 @@
     "moveSpeedMultiplier": 0.7,
     "fireMoveSpeedMultiplier": 0.5,
     "aimFov": 25,
-    "scopeFov": 75,
+    "scopeFov": 0,
     "aimSensitivityMultiplier": 0.4,
     "aimAssistEnabled": false,
     "tracerSpeed": 100,

@@ -31,7 +31,7 @@ namespace GameLogic
 
         private Camera _mainCamera;
 
-        // 狙击镜（Duckov 式）：开镜时把一台小 FOV 相机架在"鼠标瞄准的地面点"上方，
+        // 狙击镜（Duckov 式放大镜）：镜相机与主相机同位、只旋转对准瞄准点，
         // 渲染到 RenderTexture，由 SniperScopeUI 显示为跟随鼠标的圆形镜窗
         private Camera _scopeCamera;
         private RenderTexture _scopeRenderTexture;
@@ -168,6 +168,11 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 开镜中的狙击镜相机（未开镜为 null）。供镜内伤害数字换算取景坐标等使用。
+        /// </summary>
+        public Camera GetScopeCamera() => _scopeActive ? _scopeCamera : null;
+
+        /// <summary>
         /// 懒创建狙击镜相机与渲染纹理。
         /// </summary>
         private void EnsureScopeCamera()
@@ -190,23 +195,27 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 每帧把狙击镜相机架到鼠标瞄准的地面点上方，姿态与主相机一致（同俯角/偏航）。
+        /// 每帧更新狙击镜相机（Duckov 式视场放大镜模型）：
+        /// 位置与主相机重合、不位移，仅把视轴转向瞄准点——镜窗看到的是主相机视野的放大裁剪，
+        /// 镜内外同一视点无视差，镜窗活动范围 = 主相机渲染区域（瞄准射线始终来自主相机）。
         /// </summary>
         private void UpdateScopeCamera()
         {
-            if (_scopeCamera == null)
+            if (_scopeCamera == null || _mainCamera == null)
             {
                 return;
             }
 
             Vector3 aimPoint = GetAimGroundPoint();
-            // 让视轴精确穿过瞄准点（镜窗中心=子弹落点）：沿视线方向按跟随高度回推相机位置。
-            // 不能简单 aim+offset——主相机的 offset 与俯角并不互为中心（视轴落点偏 -0.61m），
-            // 小 FOV 下这点偏移足以把瞄准点挤出画面
-            Vector3 forward = Quaternion.Euler(_pitchAngle, _yawAngle, 0f) * Vector3.forward;
-            float t = _followOffset.y / -forward.y;
-            _scopeCamera.transform.position = aimPoint - forward * t;
-            _scopeCamera.transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
+            Vector3 camPos = _mainCamera.transform.position;
+            // 让视轴精确穿过瞄准点（镜窗中心 = 子弹落点）：只旋转、不平移
+            Vector3 dir = aimPoint - camPos;
+            if (dir.sqrMagnitude < 0.0001f)
+            {
+                dir = _mainCamera.transform.forward;
+            }
+            _scopeCamera.transform.position = camPos;
+            _scopeCamera.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
         }
 
         /// <summary>
