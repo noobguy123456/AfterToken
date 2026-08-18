@@ -71,13 +71,7 @@ namespace GameLogic
                 GraphicRaycaster.blockingObjects = GraphicRaycaster.BlockingObjects.None;
             }
 
-            // 框架根 Canvas 带 CanvasScaler（参考 750x1334 按宽适配，1920x1080 下放大 2.56 倍），
-            // 本界面按 1920x1080 像素设计，反向缩放保持设计尺寸
-            var rootCanvas = rectTransform.GetComponentInParent<Canvas>()?.rootCanvas;
-            if (rootCanvas != null && rootCanvas.scaleFactor > 0f && _simRoot != null)
-            {
-                _simRoot.localScale = Vector3.one / rootCanvas.scaleFactor;
-            }
+            // 框架根 Canvas 的 CanvasScaler 已统一为 1920x1080 横屏参考分辨率，本界面按 1920x1080 像素设计，无需额外缩放
 
             BindButtons();
             RegisterSimulationEvents();

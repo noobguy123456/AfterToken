@@ -23,10 +23,12 @@
 
 ## 3D Duckov 式狙击镜（CameraSystem3D）
 
-- **当前形态（2026-08-08 三版起，纯视觉镜窗）**：开镜 = 全屏均匀灰色蒙版（不遮挡场景信息，alpha 0.3）+ 跟随准星的狙击镜图案（圆环 + 贯径十字线，直径约 0.59 屏高），**默认无放大、无镜头畸变**。镜相机/RenderTexture 只在配置要求放大时才启用。
+- **当前形态（2026-08-08 三版起，纯视觉镜窗）**：开镜 = 跟随准星的狙击镜图案（圆环 + 贯径十字线，直径约 0.59 屏高）+ 带圆孔的灰色蒙版（中性灰 alpha 0.3）：**圆孔与镜窗同径，孔内零遮挡正常渲染、孔外压灰**，引导玩家注意力聚焦镜窗画面。**默认无放大、无镜头畸变**。镜相机/RenderTexture 只在配置要求放大时才启用。
 - 倍率：走 `TbWeapon.scopeFov`——**0 = 无放大（纯视觉镜窗，当前 1004 狙击的默认值）**；>0 = 启用镜相机的放大镜模式（镜内 FOV，越小倍率越高）。运行时经 `WeaponInstance.ScopeFov` 读取（该属性直接透传配置值，不再兜底 15），配件系统将来在该属性叠加修正。
 - 开镜模式：Hold/Toggle 由设置面板开关决定（`SniperAimModeSetting`，仅狙击枪生效）。
 - 开镜射击：子弹从镜窗中心射出直接命中——`WeaponSystem.IsScopedSniping`（= 开镜 && 当前武器为狙击枪，不再要求 scopeFov>0）为 true 时跳过辅助瞄准与扩散，`BallisticSystem` 不生成 tracer 飞行动画。
+- **开镜命中/击杀标记（hitmarker）**：`SniperScopeUI` 订阅 `IHitFeedbackEvent.OnHitTarget`（白/暴击橙）与 `IBattleEvent.OnEntityKilled`（红，仅攻击者是玩家时），在镜窗中心显示四刺 × 标记（运行时生成精灵，punch 缩放 1.35→1 + 0.25s 淡出）。开镜期间 `HitFeedbackUI` 被框架隐藏，故镜内标记由 `SniperScopeUI` 自绘。
+- **开镜后坐力**：订阅 `IWeaponEvent.OnFire`，镜窗（连同蒙版圆孔）上跳 30px + 横向随机 ±7px，指数回弹（速率 12/s）；与既有相机抖动（`ICameraEvent.OnCameraShake`）叠加。
 - 链路：`WeaponSystem.SetAimState` →（仅 `ScopeFov > 0` 时）`CameraSystem3D.SetScopeActive(bool, scopeFov)` 懒创建 ScopeCamera（`CopyFrom` 主相机，1024² RT）→ `SniperScopeUI.m_raw_Scope` 显示；`ScopeFov == 0` 时 `m_raw_Scope` 自动隐藏（`RefreshScopeTexture` 按纹理是否存在开关）。
 - 镜窗中心 = 子弹落点：镜窗跟随准星，瞄准射线始终来自主相机过准星（`InputSystem.HandleAimInput`），落点即 `PlayerEntity.AimPosition`。
 - **放大模式的相机模型（视场放大镜）**：ScopeCamera 与主相机同位、只旋转 `LookRotation` 对准瞄准点——镜窗 = 主相机视野的放大裁剪，镜内外同视点无视差，活动范围 = 主相机渲染区域。

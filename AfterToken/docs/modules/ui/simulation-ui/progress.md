@@ -4,7 +4,7 @@
 - [x] SimulationMainUI（2026-08-01 重设计）
   - 顶部常驻 HUD 条：金币 / 等级 / 时间 / 暂停·1x·2x / `[Tab] Panel` 提示
   - 管理面板默认隐藏，Tab 切换：建筑列表 + 订单列表 + Build / Upgrade / Back to Menu
-  - 渲染：**框架 UIRoot（Screen Space - Overlay）下**（2026-08-01 统一，见下「渲染架构统一」）；`SimulationUIRoot` 为纯 RectTransform 容器（无 Canvas），按设计分辨率 1920x1080 固定尺寸 + 反向缩放抵消框架 CanvasScaler（750x1334 按宽适配）影响，正式 Prefab 化后移除
+  - 渲染：**框架 UIRoot（Screen Space - Overlay）下**（2026-08-01 统一，见下「渲染架构统一」）；`SimulationUIRoot` 为纯 RectTransform 容器（无 Canvas），按设计分辨率 1920x1080 固定尺寸（2026-08-18 根 CanvasScaler 修正为 1920x1080 横屏参考后，反向缩放补偿代码已从三个经营窗口移除）
   - 滚动列表裁剪用 `RectMask2D`（`Mask` 模板缓冲在 SSC 渲染路径下会导致内容全不可见）
 - [x] 建筑头顶牌子：World Space（`BuildingEntity.CreateLabel`）
 - [x] UI 渲染架构统一（2026-08-01，`docs/Proposal/ui/ui-render-architecture.md`）：
@@ -18,10 +18,11 @@
 - [x] 三个经营窗口 Prefab 化（2026-08-03）：`SimulationMainUI`/`BuildingSelectionUI`/`BuildingInfoUI` 从"TestUI 占位 + 代码拼装"迁移为正式 Prefab（`Assets/AssetRaw/UI/{Name}/{Name}.prefab`，由一次性编辑器工具生成后已删除，Prefab 为唯一事实来源）；脚本改为 `ScriptGenerator()` 绑定节点（HUD/面板/按钮/滚动列表静态结构全在 Prefab，建筑/订单/配方**列表项仍运行时生成**，属正常模式）；1920x1080 容器 + 反向缩放保留在 OnCreate（根 CanvasScaler 横屏修正后移除）；Play 实测：HUD、Management 面板（含 Unlock 按钮/提升条件行）、Select Building、信息面板升级失败红字全部正常
 - [x] 面向用户文本全部改英文（2026-08-03 用户决策，恢复中文需用户明确许可）：`CanBuild`/`CanUpgrade`/`TryPurchaseSlot` 失败原因、解锁失败默认原因等全部英文化；`BuildingInfoUI` 失败红字由 legacy Text 改回 TMP（英文无需中文字体兜底）；规则已写入 `docs/standards/UI_STANDARDS.md` §1
 
+- [x] CanvasScaler 参考分辨率统一（2026-08-18）：`UIRoot.prefab` 的 UICanvas CanvasScaler 由 TEngine 竖屏默认 750×1334 / match=宽（1920×1080 下整体放大 2.56 倍，导致 LobbyUI 等硬编码像素布局溢出屏幕）改为 **1920×1080 / match=0.5**；`LobbyUI` 标题/功能按钮锚点修正（标题顶部中心 (0,-80)，底部按钮底部中心 y=60）；三个经营窗口的反向缩放补偿代码同步移除；规范见 `docs/standards/UI_STANDARDS.md` §5.2。Play 实测：主菜单 / Lobby（标题、6 关卡按钮、底部 3 按钮均在窗口内）显示正常
+
 ## 待办
 - [ ] BuildingWidget / ResourceWidget / OrderWidget（列表项拆分为正式 Prefab 组件；窗口本体已 Prefab 化 2026-08-03）
 - [ ] UI 特效接入（首选序列帧在 Overlay 内播放；3D 粒子需求再启用 UICamera 特效层，待美术资源）
-- [ ] CanvasScaler 参考分辨率 750x1334（竖屏默认）→ 1920x1080 横屏（单独做，影响全部 UI 缩放）
 
 ---
 

@@ -36,6 +36,9 @@ namespace GameLogic
 
         private void OnHitTarget(bool isCritical, Vector2 screenPos)
         {
+            // 开镜狙击期间命中标记由 SniperScopeUI 在镜窗内自绘；
+            // 本窗口被全屏狙击镜遮挡后 OnUpdate 停走，再生成标记会冻结残留，直接拦截。
+            if (WeaponSystem.Instance != null && WeaponSystem.Instance.IsScopedSniping) return;
             HitFeedbackUI.Instance?.ShowHitMarker(isCritical, screenPos);
         }
     }

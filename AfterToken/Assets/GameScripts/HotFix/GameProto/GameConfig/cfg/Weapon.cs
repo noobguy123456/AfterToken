@@ -150,7 +150,7 @@ public sealed partial class Weapon : Luban.BeanBase
     /// </summary>
     public readonly float AimFov;
     /// <summary>
-    /// 瞄准镜FOV(0=无放大纯视觉镜窗,>0=放大倍率FOV)
+    /// 瞄准镜FOV(0=无放大纯视觉镜窗,&gt;0=放大倍率FOV)
     /// </summary>
     public readonly float ScopeFov;
     /// <summary>

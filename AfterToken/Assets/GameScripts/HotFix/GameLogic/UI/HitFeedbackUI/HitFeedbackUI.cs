@@ -105,6 +105,29 @@ namespace GameLogic
             base.OnDestroy();
         }
 
+        protected override void OnSetVisible(bool visible)
+        {
+            base.OnSetVisible(visible);
+            if (!visible)
+            {
+                // 隐藏只是切到 Ignore Raycast 层（UI 相机仍渲染），且 OnUpdate 停走：
+                // 进行中的命中标记/方向指示会冻结在画面上，隐藏时必须立即清场。
+                ClearHitMarkers();
+                ResetDamageIndicators();
+            }
+        }
+
+        private void ResetDamageIndicators()
+        {
+            for (int i = 0; i < _directionIndicators.Length; i++)
+            {
+                if (_directionIndicators[i] == null) continue;
+                var c = _directionIndicators[i].color;
+                c.a = 0f;
+                _directionIndicators[i].color = c;
+            }
+        }
+
         private void InitializeIndicators()
         {
             for (int i = 0; i < _directionIndicators.Length; i++)
@@ -200,11 +223,26 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 立即清除所有进行中的命中标记（回收入池）。
+        /// 用于开狙击镜前清场：狙击镜为全屏窗口，本窗口被遮挡后 OnUpdate 停走，
+        /// 残留标记会冻结在画面上不淡出，开镜时必须先清掉。
+        /// </summary>
+        public void ClearHitMarkers()
+        {
+            for (int i = 0; i < _activeHitMarkers.Count; i++)
+            {
+                ReturnHitMarker(_activeHitMarkers[i].Image);
+            }
+            _activeHitMarkers.Clear();
+        }
+
+        /// <summary>
         /// 显示受击方向指示。
         /// </summary>
         /// <param name="angle">攻击来源角度，0-360，0 表示正前方。</param>
         public void ShowDamageIndicator(float angle)
         {
+            if (!Visible) return;
             int index = Mathf.RoundToInt(angle / 45f) % 8;
             if (index >= 0 && index < _directionIndicators.Length && _directionIndicators[index] != null)
             {
@@ -220,6 +258,8 @@ namespace GameLogic
         public void ShowHitMarker(bool isCritical, Vector2 screenPos)
         {
             if (_indicatorRoot == null) return;
+            // 窗口隐藏时（如被狙击镜遮挡）不生成：生成了也只会冻结在画面上。
+            if (!Visible) return;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_indicatorRoot, screenPos, null, out var localPos)) return;
 
             Image marker;

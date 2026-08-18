@@ -89,6 +89,10 @@ public partial class Tables
     /// 3D摄像机配置
     /// </summary>
     public cfg.TbCamera3D TbCamera3D {get; }
+    /// <summary>
+    /// 容器掉落表
+    /// </summary>
+    public cfg.TbLootContainer TbLootContainer {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -112,6 +116,7 @@ public partial class Tables
         TbOrder = new cfg.TbOrder(loader("cfg_tborder"));
         TbSimTimeConfig = new cfg.TbSimTimeConfig(loader("cfg_tbsimtimeconfig"));
         TbCamera3D = new cfg.TbCamera3D(loader("cfg_tbcamera3d"));
+        TbLootContainer = new cfg.TbLootContainer(loader("cfg_tblootcontainer"));
         ResolveRef();
     }
     
@@ -136,6 +141,7 @@ public partial class Tables
         TbOrder.ResolveRef(this);
         TbSimTimeConfig.ResolveRef(this);
         TbCamera3D.ResolveRef(this);
+        TbLootContainer.ResolveRef(this);
     }
 }
 

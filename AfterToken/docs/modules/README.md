@@ -37,6 +37,7 @@ docs/modules/
 | `ballistic-system` | [README](./combat/ballistic-system/README.md) | [progress](./combat/ballistic-system/progress.md) |
 | `battle-system` | [README](./combat/battle-system/README.md) | [progress](./combat/battle-system/progress.md) |
 | `pickup-system` | [README](./combat/pickup-system/README.md) | [progress](./combat/pickup-system/progress.md) |
+| `loot-container-system` | [README](./combat/loot-container-system/README.md) | [progress](./combat/loot-container-system/progress.md) |
 | `camera-system` | [README](./combat/camera-system/README.md) | [progress](./combat/camera-system/progress.md) |
 | `enemy-system` | [README](./combat/enemy-system/README.md) | [progress](./combat/enemy-system/progress.md) |
 | `input-system` | [README](./combat/input-system/README.md) | [progress](./combat/input-system/progress.md) |

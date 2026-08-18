@@ -1,4 +1,5 @@
 using TMPro;
+using TEngine;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -93,8 +94,13 @@ namespace GameLogic
                 var iconLocation = ItemConfigMgr.Instance.Get(stack.ItemId)?.Icon;
                 if (!string.IsNullOrEmpty(iconLocation))
                 {
+                    // 配置表填了图标但资源尚未制作时静默跳过（保持占位白图），避免加载报错。
                     // SetSprite 内置缓存池，无需手动释放
-                    _icon.SetSprite(iconLocation);
+                    var hasResult = GameModule.Resource.HasAsset(iconLocation);
+                    if (hasResult == HasAssetResult.AssetOnDisk || hasResult == HasAssetResult.AssetOnFileSystem)
+                    {
+                        _icon.SetSprite(iconLocation);
+                    }
                 }
                 // 无图标配置时保持占位白图
                 _icon.color = Color.white;

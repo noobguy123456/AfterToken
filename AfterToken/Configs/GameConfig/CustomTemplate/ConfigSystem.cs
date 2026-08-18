@@ -57,6 +57,7 @@ namespace GameLogic
             "cfg_tborder",
             "cfg_tbsimtimeconfig",
             "cfg_tbcamera3d",
+            "cfg_tblootcontainer",
         };
 
         /// <summary>

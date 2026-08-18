@@ -55,6 +55,7 @@
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、抖动、Duckov 式狙击镜（跟鼠标圆窗+压暗，`TbWeapon.scopeFov` 驱动）已完成 |
 | 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；待 Play Mode 验证绕过障碍物、攻击伤害判定接入 |
 | 掉落与拾取系统 | ✅ | - | - | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入临时背包已完成 |
+| 战利品容器系统 | 🚧 | P1 | - | `docs/modules/combat/loot-container-system/` | 搜打撤开箱：`TbLootContainer` 权重表 + E 键开箱面板；待 Play 实测；交互仲裁器（Portal/Container 统一 IInteractable）待做 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P1 | 事件系统 | `docs/modules/combat/level-system/` | `TbLevel` 已接入；硬编码表已替换；待波次/胜负/配置化 |
 | 奖励系统 | ⏳ | P1 | 共享层 | `docs/modules/combat/reward-system/` | 战斗奖励分发 |
@@ -239,4 +240,12 @@ Luban 配置表数据补充
 
 - 2026-08-08 狙击镜抬高+压边平移（二版，后废弃）：镜相机架到瞄准点上空 12m、FOV 按高度比例换算保持视觉 1.2x；开镜瞄准射线改从镜相机发出，准星压边驱动瞄准点限速平移（8m/s），射程不再受主相机视锥限制。两个反馈环陷阱：镜相机旋转必须固定（LookRotation 跟踪会在平滑滞后期拉平视轴致瞄准距离发散）、平移必须限速。实测平移 7.9m/s 线性、回中即停。用户按鸭科夫参考图拍板改纯放大镜，机制回退。详见 camera-system README 留档
 
-- 2026-08-08 狙击镜改纯视觉镜窗（三版，按鸭科夫参考图+用户四点需求）：①开镜=全屏均匀灰色蒙版（alpha 0.3，不遮挡场景）+跟随准星的镜窗图案（圆环+贯径十字线，≈0.59 屏高，去中心点）；②默认无放大无畸变——`TbWeapon.scopeFov` 语义改 0=无放大纯视觉镜窗、>0=放大镜模式（1004 默认 0，Excel+JSON+__beans__ 注释同步）；③`WeaponInstance.ScopeFov` 删 15 兜底直接透传、`IsScopedSniping` 不再要求 scopeFov>0；④开镜射击直接命中镜窗中心（瞄准射线始终来自主相机过准星）。实测灰蒙版/图案/无放大/开火命中全过，Console 0 错误。详见 camera-system README 与 weapon-system progress
+- 2026-08-08 狙击镜改纯视觉镜窗（三版，按鸭科夫参考图+用户四点需求）：①开镜=灰色蒙版+跟随准星的镜窗图案（圆环+贯径十字线，≈0.59 屏高，去中心点）；②默认无放大无畸变——`TbWeapon.scopeFov` 语义改 0=无放大纯视觉镜窗、>0=放大镜模式（1004 默认 0，Excel+JSON+__beans__ 注释同步）；③`WeaponInstance.ScopeFov` 删 15 兜底直接透传、`IsScopedSniping` 不再要求 scopeFov>0；④开镜射击直接命中镜窗中心（瞄准射线始终来自主相机过准星）；⑤蒙版随后改带圆孔——孔内零遮挡正常渲染、孔外压灰，注意力聚焦镜窗（像素级验证通过）。实测开火命中、Console 0 错误。详见 camera-system README 与 weapon-system progress
+
+- 2026-08-08 狙击镜命中/后坐力反馈：①命中标记——订阅 `IHitFeedbackEvent.OnHitTarget`（白/暴击橙）+ `IBattleEvent.OnEntityKilled`（红，仅玩家击杀），镜窗中心四刺 × 标记 punch 缩放+0.25s 淡出（开镜时 HitFeedbackUI 被框架隐藏，镜内自绘）；②后坐力——订阅 `IWeaponEvent.OnFire`，镜窗连同蒙版圆孔上跳 30px+横向 ±7px，指数回弹。实测 kick 回弹归零、标记 punch+淡出逐帧衰减、开火命中正常。详见 camera-system README 与 weapon-system progress
+
+- 2026-08-17 新增搜打撤「战利品容器（开箱）」功能：Luban 新表 `TbLootContainer`（权重掉落表）；`LootContainerEntity`/`LootContainerSystem`/`LootContainerUI` 全套（复用传送门交互范式与 ItemSlot 格子）；Esc 关闭链与 `ProcedureBattle` 系统挂载已接入；101 关放 2 个测试容器。遗留：Portal/Container 触发区重叠时需统一 IInteractable 仲裁器
+
+- 2026-08-18 UI 缩放体系统一（修复 LobbyUI 关卡界面溢出屏幕）：根因——`UIRoot.prefab` 的 UICanvas CanvasScaler 沿用 TEngine 竖屏默认 750×1334 / match=宽，1920×1080 下 scaleFactor=2.56，逻辑屏仅 750×422，所有按 1920×1080 编写的硬编码像素布局整体放大 2.56 倍出屏（且随窗口宽度变化）。修复：①`UIRoot.prefab` CanvasScaler 改 1920×1080 / match=0.5（1920×1080 下 sf=1）；②`LobbyUI` 代码原假设中心锚点硬写坐标（标题 (0,400)、底部按钮 y=-400），与 prefab 实际锚点（标题顶部中心、按钮左下角）叠加导致二次偏移——改为显式设锚点：标题顶部中心 (0,-80)，Back/Warehouse/Simulation 底部中心 (±300/0, 60)；③三个经营窗口（SimulationMainUI/BuildingSelectionUI/BuildingInfoUI）的 `1/scaleFactor` 反向缩放补偿代码移除（sf=1 后已无意义）。规范更新：`docs/standards/UI_STANDARDS.md` §5.2 统一设计分辨率 1920×1080、禁止反向缩放。Play 实测：主菜单/Lobby 全部元素在窗口内，编译 0 错误 |
+
+- 2026-08-18 修复战利品箱子占位图标闪烁：容器根节点在 y=0，平躺 SpriteRenderer 与地面共面 z-fighting，`EnsureVisualRenderer` 将 Visual 抬高 0.05m；经验：贴地占位 SpriteRenderer 都要留离地偏移。并在 loot-container-system progress 补充「如何新增可开启箱子」配置流程 |

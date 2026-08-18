@@ -51,11 +51,13 @@ namespace GameLogic
                 _titleText.fontSize = 48;
                 _titleText.alignment = TextAlignmentOptions.Center;
                 
-                // 调整标题位置到顶部
+                // 调整标题位置到顶部（标题锚点为顶部中心，向下偏移）
                 var titleRect = _titleText.transform as RectTransform;
                 if (titleRect != null)
                 {
-                    titleRect.anchoredPosition = new Vector2(0, 400);
+                    titleRect.anchorMin = new Vector2(0.5f, 1f);
+                    titleRect.anchorMax = new Vector2(0.5f, 1f);
+                    titleRect.anchoredPosition = new Vector2(0, -80);
                 }
             }
 
@@ -135,17 +137,13 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 设置功能按钮位置到底部。
+        /// 设置功能按钮位置到底部（统一改为底部中心锚点，避免受 Prefab 锚点差异影响）。
         /// </summary>
         private void SetupFunctionButtons()
         {
             if (_backButton != null)
             {
-                var backRect = _backButton.transform as RectTransform;
-                if (backRect != null)
-                {
-                    backRect.anchoredPosition = new Vector2(-300, -400);
-                }
+                SetBottomAnchor(_backButton.transform as RectTransform, new Vector2(-300, 60));
                 
                 _backButton.onClick.RemoveAllListeners();
                 _backButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureMainMenu>());
@@ -153,15 +151,22 @@ namespace GameLogic
 
             if (_warehouseButton != null)
             {
-                var warehouseRect = _warehouseButton.transform as RectTransform;
-                if (warehouseRect != null)
-                {
-                    warehouseRect.anchoredPosition = new Vector2(0, -400);
-                }
+                SetBottomAnchor(_warehouseButton.transform as RectTransform, new Vector2(0, 60));
                 
                 _warehouseButton.onClick.RemoveAllListeners();
                 _warehouseButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<WarehouseUI>());
             }
+        }
+
+        /// <summary>
+        /// 将按钮锚点设为底部中心并设置偏移。
+        /// </summary>
+        private static void SetBottomAnchor(RectTransform rect, Vector2 position)
+        {
+            if (rect == null) return;
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = position;
         }
 
         /// <summary>
@@ -178,10 +183,7 @@ namespace GameLogic
             go.name = "m_btn_Simulation";
 
             var rect = go.transform as RectTransform;
-            if (rect != null)
-            {
-                rect.anchoredPosition = new Vector2(300, -400);
-            }
+            SetBottomAnchor(rect, new Vector2(300, 60));
 
             _simulationButton = go.GetComponent<Button>();
             if (_simulationButton != null)

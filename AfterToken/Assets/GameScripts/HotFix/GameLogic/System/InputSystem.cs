@@ -274,9 +274,10 @@ namespace GameLogic
             }
 
             // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
-            // 顺序：SettingsUI > BattleBagUI（后续可扩展 WeaponWheelUI 等）
+            // 顺序：SettingsUI > BattleBagUI > LootContainerUI（后续可扩展 WeaponWheelUI 等）
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<BattleBagUI>()) return;
+            if (TryCloseUI<LootContainerUI>()) return;
 
             // 没有可关闭 UI 时打开设置面板
             GameModule.UI.ShowUIAsync<SettingsUI>();
