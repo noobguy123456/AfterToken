@@ -71,6 +71,22 @@ namespace GameLogic
                 return;
             }
 
+            // 兜底：战斗中无菜单类 UI（背包/开箱/纸条/武器轮盘）时，光标必须处于隐藏锁定状态。
+            // 若某个 UI 的 ShowCursor/HideCursor 未严格配对导致引用计数泄漏（表现为关掉 UI 后
+            // Windows 系统鼠标仍显示），这里强制恢复战斗光标状态，避免泄漏扩散到后续 UI 开关。
+            bool menuOpen = InputSystem.IsMenuUIOpen() || GameModule.UI.HasWindow<WeaponWheelUI>();
+            if (!menuOpen && CursorManager.Instance != null && CursorManager.Instance.IsCursorVisible)
+            {
+                CursorManager.Instance.ForceHideCursor();
+            }
+
+            // 系统光标可见（背包/开箱/纸条等 UI 打开）时冻结准星，
+            // 避免隐藏的准星继续累加鼠标位移，导致关掉 UI 后瞄准点被"强制挪动"。
+            if (CursorManager.Instance != null && CursorManager.Instance.IsCursorVisible)
+            {
+                return;
+            }
+
             UpdatePosition();
             UpdateRotation();
         }

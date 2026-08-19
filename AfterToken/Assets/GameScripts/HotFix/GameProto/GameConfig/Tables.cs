@@ -93,6 +93,10 @@ public partial class Tables
     /// 容器掉落表
     /// </summary>
     public cfg.TbLootContainer TbLootContainer {get; }
+    /// <summary>
+    /// 小纸条表
+    /// </summary>
+    public cfg.TbNote TbNote {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -117,6 +121,7 @@ public partial class Tables
         TbSimTimeConfig = new cfg.TbSimTimeConfig(loader("cfg_tbsimtimeconfig"));
         TbCamera3D = new cfg.TbCamera3D(loader("cfg_tbcamera3d"));
         TbLootContainer = new cfg.TbLootContainer(loader("cfg_tblootcontainer"));
+        TbNote = new cfg.TbNote(loader("cfg_tbnote"));
         ResolveRef();
     }
     
@@ -142,6 +147,7 @@ public partial class Tables
         TbSimTimeConfig.ResolveRef(this);
         TbCamera3D.ResolveRef(this);
         TbLootContainer.ResolveRef(this);
+        TbNote.ResolveRef(this);
     }
 }
 

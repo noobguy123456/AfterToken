@@ -73,6 +73,7 @@ namespace GameLogic
             _battleRoot.AddComponent<NavigationSystem>();
             _battleRoot.AddComponent<PortalSystem>();
             _battleRoot.AddComponent<LootContainerSystem>();
+            _battleRoot.AddComponent<NoteSystem>();
             _battleRoot.AddComponent<PlayerDeathHandler>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

@@ -25,6 +25,7 @@ namespace GameLogic
         private Camera _mainCamera;
         private bool _isAimPressed;
         private bool _isWheelOpen;
+        private bool _menuUIOpenLast;
         private WeaponWheelUI _weaponWheelUI;
         private IBattleInputEvent _battleInputEvent;
         private CancellationTokenSource _weaponWheelCts;
@@ -59,9 +60,30 @@ namespace GameLogic
             }
 
             HandleMoveInput();
-            HandleAimInput();
-            HandleFireInput();
-            HandleAimButtonInput();
+
+            // 菜单类 UI（背包/开箱/纸条）打开时屏蔽鼠标战斗输入，防止点 UI 时开枪；
+            // 打开瞬间补发释放事件，避免按住开火/瞄准键开 UI 后武器卡在按下状态
+            bool menuUIOpen = IsMenuUIOpen();
+            if (menuUIOpen && !_menuUIOpenLast)
+            {
+                BattleInputEvent?.OnFireReleased();
+                if (_isAimPressed)
+                {
+                    _isAimPressed = false;
+                    BattleInputEvent?.OnAimReleased();
+                }
+            }
+            _menuUIOpenLast = menuUIOpen;
+
+            if (!menuUIOpen)
+            {
+                // 瞄准射线也要屏蔽：菜单打开时准星已冻结（CrosshairUpdater），
+                // 继续发瞄准事件会让角色/武器朝向跟着一个不动的点之外的状态走
+                HandleAimInput();
+                HandleFireInput();
+                HandleAimButtonInput();
+            }
+
             HandleReloadInput();
             HandleWeaponSwitchInput();
             HandleWeaponWheelInput();
@@ -274,10 +296,11 @@ namespace GameLogic
             }
 
             // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
-            // 顺序：SettingsUI > BattleBagUI > LootContainerUI（后续可扩展 WeaponWheelUI 等）
+            // 顺序：SettingsUI > BattleBagUI > LootContainerUI > NoteUI（后续可扩展 WeaponWheelUI 等）
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<BattleBagUI>()) return;
             if (TryCloseUI<LootContainerUI>()) return;
+            if (TryCloseUI<NoteUI>()) return;
 
             // 没有可关闭 UI 时打开设置面板
             GameModule.UI.ShowUIAsync<SettingsUI>();
@@ -291,6 +314,17 @@ namespace GameLogic
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// 是否有菜单类 UI 打开（背包/开箱/纸条）。打开期间屏蔽射击与瞄准输入，
+        /// 并冻结准星与角色朝向（PlayerEntity/CrosshairUpdater 也读取此状态）。
+        /// </summary>
+        public static bool IsMenuUIOpen()
+        {
+            return GameModule.UI.HasWindow<BattleBagUI>()
+                || GameModule.UI.HasWindow<LootContainerUI>()
+                || GameModule.UI.HasWindow<NoteUI>();
         }
 
         private void HandleBagInput()

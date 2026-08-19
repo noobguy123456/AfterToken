@@ -249,3 +249,9 @@ Luban 配置表数据补充
 - 2026-08-18 UI 缩放体系统一（修复 LobbyUI 关卡界面溢出屏幕）：根因——`UIRoot.prefab` 的 UICanvas CanvasScaler 沿用 TEngine 竖屏默认 750×1334 / match=宽，1920×1080 下 scaleFactor=2.56，逻辑屏仅 750×422，所有按 1920×1080 编写的硬编码像素布局整体放大 2.56 倍出屏（且随窗口宽度变化）。修复：①`UIRoot.prefab` CanvasScaler 改 1920×1080 / match=0.5（1920×1080 下 sf=1）；②`LobbyUI` 代码原假设中心锚点硬写坐标（标题 (0,400)、底部按钮 y=-400），与 prefab 实际锚点（标题顶部中心、按钮左下角）叠加导致二次偏移——改为显式设锚点：标题顶部中心 (0,-80)，Back/Warehouse/Simulation 底部中心 (±300/0, 60)；③三个经营窗口（SimulationMainUI/BuildingSelectionUI/BuildingInfoUI）的 `1/scaleFactor` 反向缩放补偿代码移除（sf=1 后已无意义）。规范更新：`docs/standards/UI_STANDARDS.md` §5.2 统一设计分辨率 1920×1080、禁止反向缩放。Play 实测：主菜单/Lobby 全部元素在窗口内，编译 0 错误 |
 
 - 2026-08-18 修复战利品箱子占位图标闪烁：容器根节点在 y=0，平躺 SpriteRenderer 与地面共面 z-fighting，`EnsureVisualRenderer` 将 Visual 抬高 0.05m；经验：贴地占位 SpriteRenderer 都要留离地偏移。并在 loot-container-system progress 补充「如何新增可开启箱子」配置流程 |
+
+- 2026-08-19 新增小纸条叙事系统：Luban 新表 `TbNote`（id/title/content，content 支持 `\n` 换行，2 条英文测试数据，白名单同步）；`NoteEntity`（trigger + 纸白色占位视觉，抬 0.05m 防 z-fighting）/ `NoteSystem`（E 阅读、提示 UI、死亡闸、出区自动关，ProcedureBattle 挂载）/ `NoteUI`（640x360 ≈ 1/3 屏，不暂停，Esc 链接入）；101 关放测试纸条 Note_1。实测：提示→E 开→E 关链路通，0 错误。详见 docs/modules/combat/note-system/
+- 2026-08-19 修复开箱/背包/纸条 UI 打开时仍可射击：`InputSystem.IsMenuUIOpen()` 拦截射击与瞄准输入，UI 打开瞬间补发释放事件防卡键。详见 docs/modules/combat/input-system/progress.md
+- 2026-08-19 修复看纸条/开箱时鼠标被"强制挪动"：菜单 UI 打开期间隐藏的准星仍累加鼠标位移、瞄准射线继续驱动角色朝向；改为 `CrosshairUpdater` 在系统光标可见时冻结 + `InputSystem` 屏蔽瞄准事件，关 UI 后准星原地继续。详见 input-system progress
+
+- 2026-08-19 修复纸条两条遗留：①"瞄点还是会变"——瞄准输入屏蔽后 AimPosition 冻结但 `PlayerEntity.Update` 仍朝旧瞄点旋转，玩家移动时角色自转；改为菜单 UI 打开时朝向完全冻结（`InputSystem.IsMenuUIOpen()` 改 public static）。②关闭纸条后 Windows 鼠标仍显示（光标引用计数泄漏，实测关后 refCount=1）；`CrosshairUpdater.Update` 新增兜底——战斗中无菜单类 UI（含 WeaponWheelUI 豁免）且光标可见时 `ForceHideCursor()` 强制恢复隐藏+锁定。编译 0 错误，待用户手动验收。详见 input-system progress

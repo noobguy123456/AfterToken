@@ -154,6 +154,11 @@ namespace GameLogic
         {
             if (IsDead) return;
 
+            // 菜单类 UI（背包/开箱/纸条）打开期间冻结朝向：
+            // 此时瞄准输入已被 InputSystem 屏蔽（AimPosition 不再更新），
+            // 若继续朝旧瞄点旋转，玩家移动时角色会原地自转（"瞄点还是会变"）。
+            if (InputSystem.IsMenuUIOpen()) return;
+
             // 朝向瞄准位置（渲染帧更新，保证视觉流畅）；XZ 平面上绕 Y 轴旋转
             Vector2 aimDir = (AimPosition - transform.position.ToXZ()).normalized;
             if (aimDir.sqrMagnitude > 0.001f)
