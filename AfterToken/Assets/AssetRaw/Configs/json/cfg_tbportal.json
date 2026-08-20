@@ -1,13 +1,13 @@
 [
   {
     "id": 1001,
-    "portalType": "portal_return_lobby",
+    "portalType": "portal_return_base",
     "targetLevelId": 0,
     "targetSceneName": "",
     "spawnCondition": "none",
     "conditionParam": "",
     "keepPlayerState": false,
-    "promptText": "Press E to return to lobby",
+    "promptText": "Press E to return to base",
     "transitionType": "fade_to_gray",
     "transitionDuration": 0.5
   },
@@ -44,6 +44,42 @@
     "conditionParam": "",
     "keepPlayerState": false,
     "promptText": "Press E to go to Stage 3",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 1101,
+    "portalType": "portal_next_level",
+    "targetLevelId": 102,
+    "targetSceneName": "",
+    "spawnCondition": "all_enemies_defeated",
+    "conditionParam": "",
+    "keepPlayerState": true,
+    "promptText": "Press E to go to Stage 102",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 1102,
+    "portalType": "portal_next_level",
+    "targetLevelId": 103,
+    "targetSceneName": "",
+    "spawnCondition": "all_enemies_defeated",
+    "conditionParam": "",
+    "keepPlayerState": true,
+    "promptText": "Press E to go to Stage 103",
+    "transitionType": "fade_to_gray",
+    "transitionDuration": 0.5
+  },
+  {
+    "id": 2001,
+    "portalType": "portal_select_level",
+    "targetLevelId": 0,
+    "targetSceneName": "",
+    "spawnCondition": "none",
+    "conditionParam": "",
+    "keepPlayerState": false,
+    "promptText": "Press E to deploy",
     "transitionType": "fade_to_gray",
     "transitionDuration": 0.5
   }

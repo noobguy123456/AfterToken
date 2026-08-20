@@ -55,6 +55,16 @@ namespace GameLogic
         /// </summary>
         public int enemyMaxHp;
 
+        /// <summary>
+        /// 通关（成功撤离）奖励金币。
+        /// </summary>
+        public int rewardGold;
+
+        /// <summary>
+        /// 通关（成功撤离）奖励经验。
+        /// </summary>
+        public int rewardExp;
+
         public LevelConfig() { }
 
         public LevelConfig(GameConfig.cfg.Level level)
@@ -69,6 +79,8 @@ namespace GameLogic
             enemySpawnRadius = level.EnemySpawnRadius;
             enemyConfigId = level.EnemyConfigId;
             enemyMaxHp = level.EnemyMaxHp;
+            rewardGold = level.RewardGold;
+            rewardExp = level.RewardExp;
         }
     }
 }

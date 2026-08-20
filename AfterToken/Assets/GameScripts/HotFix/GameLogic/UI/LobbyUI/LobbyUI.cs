@@ -17,7 +17,6 @@ namespace GameLogic
         private Button _levelButtonTemplate;
         private Button _backButton;
         private Button _warehouseButton;
-        private Button _simulationButton;
 
         private readonly List<GameObject> _levelButtonInstances = new List<GameObject>();
 
@@ -76,9 +75,6 @@ namespace GameLogic
 
             // 调整功能按钮位置到底部
             SetupFunctionButtons();
-
-            // 动态创建模拟经营入口按钮
-            CreateSimulationButton();
         }
 
         /// <summary>
@@ -144,9 +140,10 @@ namespace GameLogic
             if (_backButton != null)
             {
                 SetBottomAnchor(_backButton.transform as RectTransform, new Vector2(-300, 60));
-                
+
+                // 选关窗口从基地内打开，Back 仅关闭窗口回到基地场景
                 _backButton.onClick.RemoveAllListeners();
-                _backButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureMainMenu>());
+                _backButton.onClick.AddListener(Close);
             }
 
             if (_warehouseButton != null)
@@ -169,41 +166,15 @@ namespace GameLogic
             rect.anchoredPosition = position;
         }
 
-        /// <summary>
-        /// 动态创建模拟经营入口按钮（Prefab 未包含该节点时的临时方案）。
-        /// </summary>
-        private void CreateSimulationButton()
-        {
-            if (_warehouseButton == null) return;
-
-            var parent = _warehouseButton.transform.parent;
-            if (parent == null) return;
-
-            var go = Object.Instantiate(_warehouseButton.gameObject, parent, false);
-            go.name = "m_btn_Simulation";
-
-            var rect = go.transform as RectTransform;
-            SetBottomAnchor(rect, new Vector2(300, 60));
-
-            _simulationButton = go.GetComponent<Button>();
-            if (_simulationButton != null)
-            {
-                _simulationButton.onClick.RemoveAllListeners();
-                _simulationButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureSimulation>());
-            }
-
-            var text = go.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null)
-            {
-                text.text = "Simulation";
-            }
-        }
-
         private void CreateLevelButton(LevelConfig level)
         {
             var go = Object.Instantiate(_levelButtonTemplate.gameObject, _levelListRoot, false);
             go.SetActive(true);
             go.name = $"Btn_Level_{level.id}";
+
+            // 解锁判定：TbUnlock 未配置的关卡默认开放；锁定的关卡按钮禁点并显示解锁条件
+            string lockHint = UnlockSystem.GetLockHint(GameConfig.cfg.UnlockContentType.Level, level.id);
+            bool unlocked = lockHint == null;
 
             var btn = go.GetComponent<Button>();
             if (btn != null)
@@ -215,12 +186,13 @@ namespace GameLogic
                     BattleContext.CurrentLevelId = levelId;
                     GameApp.ChangeProcedure<ProcedureBattle>();
                 });
+                btn.interactable = unlocked;
             }
 
             var text = go.GetComponentInChildren<TextMeshProUGUI>();
             if (text != null)
             {
-                text.text = $"Stage {level.id}";
+                text.text = unlocked ? $"Stage {level.id}" : $"Stage {level.id}\n[{lockHint}]";
                 text.fontSize = 24;
                 text.alignment = TextAlignmentOptions.Center;
             }

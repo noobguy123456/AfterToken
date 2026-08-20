@@ -72,7 +72,7 @@
 |------|------|--------|-----------|----------|------|
 | 事件系统 | 🟡 | P0 | - | `docs/modules/infra/event-system/` | 战斗事件已定义，待补齐 `ILevelEvent`/`IBattleResultEvent`/经营/共享事件 |
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
-| 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/大厅/战斗 |
+| 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
 | 音频系统 | ⏳ | P1 | - | `docs/modules/infra/audio-system/` | BGM / SFX / 音量管理 |
 | 特效系统 | ⏳ | P1 | - | `docs/modules/infra/effect-system/` | 特效生成、播放、回收 |
 
@@ -80,12 +80,12 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 玩家档案系统 | ⏳ | P1 | - | `docs/modules/shared/player-profile-system/`（新增） | 等级、经验、解锁（从共享数据层拆分） |
-| 货币系统 | ⏳ | P1 | - | `docs/modules/shared/currency-system/`（新增） | 金币、钻石、体力（从共享数据层拆分） |
+| 玩家档案系统 | 🟡 | P1 | - | `docs/modules/shared/player-profile-system/`（新增） | 等级/经验已持久化；经验表已配置化（TbPlayerLevel）；通关记录已接入解锁系统 |
+| 货币系统 | 🟡 | P1 | - | `docs/modules/shared/currency-system/`（新增） | 金币/钻石/体力已持久化；CurrencyType 通用接口；撤离奖励与经营消耗已对接 |
 | 背包系统 | ✅ | - | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库（内存态）已完成；仓库持久化待 `save-system` |
 | 道具系统 | ✅ | - | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
-| 解锁系统 | ⏳ | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | 内容解锁条件与校验 |
-| 跨玩法联动 | ⏳ | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 战斗奖励 → 经营资源 → 战斗强化 |
+| 解锁系统 | 🟡 | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | TbUnlock（等级/通关链/金币条件）+ UnlockSystem + LobbyUI 关卡锁已落地；武器解锁消费侧待接入 |
+| 跨玩法联动 | 🟡 | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 撤离→金币/经验/通关记录已落地（CrossPlayLink）；经营产出→战斗强化待强化系统立项 |
 | 存档系统 | ✅ | P1 | - | `docs/modules/shared/save-system/` | 单 JSON 文件 + 变动即存 + 版本迁移；货币/档案/仓库/设置四件套已接入并实测跨重启保留；GM `save` 命令可用 |
 | 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度、狙击开镜模式已可用并已迁入 SaveSystem；音量、画质、操作设置待补充 |
 
@@ -255,3 +255,17 @@ Luban 配置表数据补充
 - 2026-08-19 修复看纸条/开箱时鼠标被"强制挪动"：菜单 UI 打开期间隐藏的准星仍累加鼠标位移、瞄准射线继续驱动角色朝向；改为 `CrosshairUpdater` 在系统光标可见时冻结 + `InputSystem` 屏蔽瞄准事件，关 UI 后准星原地继续。详见 input-system progress
 
 - 2026-08-19 修复纸条两条遗留：①"瞄点还是会变"——瞄准输入屏蔽后 AimPosition 冻结但 `PlayerEntity.Update` 仍朝旧瞄点旋转，玩家移动时角色自转；改为菜单 UI 打开时朝向完全冻结（`InputSystem.IsMenuUIOpen()` 改 public static）。②关闭纸条后 Windows 鼠标仍显示（光标引用计数泄漏，实测关后 refCount=1）；`CrosshairUpdater.Update` 新增兜底——战斗中无菜单类 UI（含 WeaponWheelUI 豁免）且光标可见时 `ForceHideCursor()` 强制恢复隐藏+锁定。编译 0 错误，待用户手动验收。详见 input-system progress
+
+- 2026-08-20 共享/联动侧四模块落地：①解锁系统——Luban 新表 `TbUnlock`（unlock.xlsx；条件=玩家等级+通关关卡链+金币价格；`UnlockContentType` 枚举 Level/Weapon；未配置内容默认开放）+ `UnlockSystem`（IsUnlocked/TryUnlock/GetLockHint/Reset）+ `IUnlockEvent` + 存档 unlock 段；②玩家档案——经验表配置化 `TbPlayerLevel`（playerlevel.xlsx，缺配置回退 level*100）+ 通关记录 `MarkLevelCompleted/IsLevelCompleted`（profile 段 `completedLevels`）；③货币——`CurrencyType` 枚举与通用 GetAmount/Has/Add/TryConsume；④跨玩法联动——`CrossPlayLink.OnBattleExtracted` 挂接 PortalSystem 撤离分支，`TbLevel` 新增 rewardGold/rewardExp 列（LevelConfig 适配器透传），撤离发金币/经验并记录通关驱动关卡链解锁；LobbyUI 关卡按钮按 UnlockSystem 置灰+英文条件提示；GM 新增 gold/exp/unlock/profile 命令，save clear 重置解锁记录。坑位记录：Luban bean 必须在 `__beans__.xlsx` 显式定义（数据 xlsx 只放数据行），新表两处 `_tableFiles` 白名单照旧同步。编译 0 错误，待用户手动验收。详见 shared 各模块文档
+
+- 2026-08-20 传送门职责重划（用户拍板）：`PortalPlayerState` 不再快照玩家属性，瘦身为场景上下文（`RecordTransition` 记录目标关卡/场景 + keepPlayerState 语义）；玩家血量/体力/武器弹药改由新建 `PlayerAttrStore` 承担——订阅 `IPlayerEvent`（Hp/Stamina/AmmoChanged）与 `IWeaponEvent`（Equipped/Switched）变动即存，`PlayerSystem`/`WeaponSystem` 恢复路径改读 store（恢复前先把值拷到本地防初始化/装备广播覆盖，`PlayerAttrStore.SetWeapon` 公开写口修正恢复中间值）；一局结束清理点：ProcedureLobby 进入 + PlayerDeathHandler 死亡。编译 0 错误，待用户手动验收跨场景 HP/弹药保留。详见 portal-system progress 与 player-system README
+
+- 2026-08-20 101 场景补放传送门：portal.xlsx 新增 1101（next level→102）/1102（→103）并导表；`BattleScene_3D_L01` 经 MCP 摆放 Portal_Next_102（1101，(0,0,-5)，全灭激活+保留属性）与 Portal_ReturnLobby（1001，(-6,0,-3)），场景已保存。3D_L02/L03 仍未放传送门，待补。详见 portal-system progress
+
+- 2026-08-20 B 方案落地（用户拍板）：废弃"大厅"概念——模拟经营场景即基地（据点）。`PortalType.RETURN_TO_LOBBY` 改名 `RETURN_BASE`（portal.xlsx 1001 行同步，prompt "Press E to return to base"）；撤离（PortalSystem RETURN_BASE 分支：仓库转入+CrossPlayLink 奖励）与死亡（PlayerDeathHandler.ReturnToBase，PlayerDeathUI "Back to Base"）均回 `ProcedureSimulation`；主菜单 Start 直进基地并删除动态 Simulation 按钮（MainMenuUI）；LobbyUI 复用为基地内选关窗口（Back 改 Close()、删 Simulation 按钮，解锁置灰逻辑不变）；SimulationMainUI prefab 的 HudBar 新增 m_btn_Deploy（x=880，克隆 m_btn_Panel）打开 LobbyUI；一局结束清理（RunInventory/PlayerAttrStore/PortalPlayerState.Clear）从 ProcedureLobby 挪入 `ProcedureSimulation.EnterAsync`；ProcedureLobby 注销并删文件（GameApp 注册数组+热更重进 switch 同步，LobbyScene.unity 保留磁盘仅标记废弃）。编译 0 错误，待用户验收闭环：主菜单 Start→基地→Deploy 选关→101→撤离/死亡回基地
+
+- 2026-08-20 基地内选关传送门 + LobbyUI 关闭修复：新增 `PortalType.SELECT_LEVEL`（portal.xlsx 2001）——交互直接开 LobbyUI 选关窗口不切场景（ExecuteTransition 前置分支绕过死亡判定/转场记录，OnInteractPressed 对选关门放行）；经营场景接入交互：ProcedureSimulation 挂 PortalSystem 到 SimulationRoot，SimulationInputSystem 新增 E 键发 OnInteractPressed；SimulationScene 摆放 Portal_Deploy（(5,0,5)，已保存）。修复 Deploy 打开的选关 UI "关不掉"：SimulationInputSystem 的 ESC 关闭链漏了 LobbyUI，ESC 只会叠开设置面板。编译 0 错误，待用户验收（E 开门选关、ESC/Back 关窗、HUD Deploy 按钮保留可用）
+
+- 2026-08-20 修复传送门无法交互根因（2D 遗留）：`Portal_Placeholder.prefab` 的 CircleCollider2D 与 3D 玩家刚体互不检测，OnTriggerEnter 永不触发——prefab 改 SphereCollider(trigger,r=1.5)，PortalEntity.Awake 加运行时兜底自动补 3D 碰撞体；ExecuteTransition 的选关门分支前移到 IsPlayerDead 之前。Play Mode 验证：进触发区→交互开 LobbyUI→Back 关闭，全链路通过
+
+- 2026-08-20 武器轮盘优化：槽位武器名挪到图标下方（原叠在图标中心，prefab 标签锚点/位置调整）；新增悬停属性面板 `m_text_WeaponStats`（名称/伤害/射速/弹匣/换弹/射程，悬停槽位变化时刷新，空槽清空）。Play Mode 验证通过。详见 weapon-system progress

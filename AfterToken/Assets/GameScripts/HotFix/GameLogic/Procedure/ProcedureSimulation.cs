@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using GameLogic.Portal;
 using TEngine;
 using UnityEngine;
 
@@ -18,6 +19,12 @@ namespace GameLogic
         {
             return LoadSceneWithLoadingAsync("SimulationScene", async ct =>
             {
+                // 进入基地 = 一局结束（或全新开始）：清空关卡临时背包（撤离转仓库已在 PortalSystem 完成）、
+                // 战斗属性暂存与传送门转场记录，下一局从全新状态开始
+                RunInventory.Clear();
+                PlayerAttrStore.Clear();
+                PortalPlayerState.Clear();
+
                 Log.Info("[ProcedureSimulation] step1 InitializeSceneContent");
                 InitializeSceneContent();
                 Log.Info("[ProcedureSimulation] step2 InitializeSimulationSystems");
@@ -187,9 +194,12 @@ namespace GameLogic
             SingletonSystem.Retain(_simulationRoot, null);
             _simulationSystem = _simulationRoot.AddComponent<SimulationSystem>();
 
-            // 添加 SimulationInputSystem，处理 Esc 键（打开/关闭设置菜单）
+            // 添加 SimulationInputSystem，处理 Esc 键（打开/关闭设置菜单）与 E 键（传送门交互）
             var inputSystem = _simulationRoot.AddComponent<SimulationInputSystem>();
-            Log.Info("[ProcedureSimulation] SimulationInputSystem 已添加，处理 Esc 键");
+            Log.Info("[ProcedureSimulation] SimulationInputSystem 已添加，处理 Esc/E 键");
+
+            // 基地内传送门支持（选关门）：扫描场景中 PortalEntity 并处理交互
+            _simulationRoot.AddComponent<Portal.PortalSystem>();
 
             GrantTestMaterials();
         }

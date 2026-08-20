@@ -129,6 +129,7 @@ namespace GameLogic
         public ProfileSaveData profile = new ProfileSaveData();
         public WarehouseSaveData warehouse = new WarehouseSaveData();
         public SettingsSaveData settings = new SettingsSaveData();
+        public UnlockSaveData unlock = new UnlockSaveData();
     }
 
     [Serializable]
@@ -148,6 +149,21 @@ namespace GameLogic
         public int level;
         public int exp;
         public int expToNextLevel;
+        /// <summary>
+        /// 已通关（成功撤离）的关卡 ID 列表，供解锁系统判定关卡链解锁。
+        /// </summary>
+        public List<int> completedLevels = new List<int>();
+    }
+
+    [Serializable]
+    public class UnlockSaveData
+    {
+        public bool initialized;
+        /// <summary>
+        /// 已付费解锁的 TbUnlock 记录 ID。
+        /// 免费项满足条件即视为解锁，不入此列表。
+        /// </summary>
+        public List<int> unlockedIds = new List<int>();
     }
 
     [Serializable]

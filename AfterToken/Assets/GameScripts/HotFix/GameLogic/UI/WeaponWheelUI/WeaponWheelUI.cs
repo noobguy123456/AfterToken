@@ -15,6 +15,7 @@ namespace GameLogic
         private Transform _wheelRoot;
         private Image[] _slotIcons = new Image[WeaponSystem.MAX_WEAPON_SLOTS];
         private TextMeshProUGUI[] _slotLabels = new TextMeshProUGUI[WeaponSystem.MAX_WEAPON_SLOTS];
+        private TextMeshProUGUI _statsText;
         private Image _highlight;
 
         protected override void ScriptGenerator()
@@ -26,10 +27,12 @@ namespace GameLogic
                 _slotLabels[i] = FindChildComponent<TextMeshProUGUI>($"m_rect_WheelRoot/m_img_Slot_{i}/m_text_Label");
             }
             _highlight = FindChildComponent<Image>("m_rect_WheelRoot/m_img_Highlight");
+            _statsText = FindChildComponent<TextMeshProUGUI>("m_text_WeaponStats");
         }
         #endregion
 
         private int _selectedSlot = -1;
+        private int _lastStatsSlot = -1;
 
         protected override void OnCreate()
         {
@@ -83,6 +86,34 @@ namespace GameLogic
             if (angle < 120f) _selectedSlot = 0;
             else if (angle < 240f) _selectedSlot = 1;
             else _selectedSlot = 2;
+
+            // 悬停槽位变化时刷新武器属性面板
+            if (_selectedSlot != _lastStatsSlot)
+            {
+                _lastStatsSlot = _selectedSlot;
+                RefreshStatsText(_selectedSlot);
+            }
+        }
+
+        /// <summary>
+        /// 刷新悬停武器的属性面板（空槽位清空显示）。
+        /// </summary>
+        private void RefreshStatsText(int slot)
+        {
+            if (_statsText == null) return;
+
+            var weapon = WeaponSystem.Instance?.GetWeaponInSlot(slot);
+            if (weapon?.Config == null)
+            {
+                _statsText.text = string.Empty;
+                return;
+            }
+
+            var cfg = weapon.Config;
+            _statsText.text =
+                $"{cfg.name}\n" +
+                $"Damage: {cfg.damage:0.#}   Fire Rate: {cfg.fireRate:0.#}/s   Clip: {cfg.clipSize}\n" +
+                $"Reload: {cfg.reloadTime:0.#}s   Range: {cfg.maxRange:0.#}m";
         }
 
         protected override void OnDestroy()

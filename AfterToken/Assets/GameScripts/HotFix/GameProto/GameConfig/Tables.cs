@@ -97,6 +97,14 @@ public partial class Tables
     /// 小纸条表
     /// </summary>
     public cfg.TbNote TbNote {get; }
+    /// <summary>
+    /// 玩家等级经验表
+    /// </summary>
+    public cfg.TbPlayerLevel TbPlayerLevel {get; }
+    /// <summary>
+    /// 内容解锁表
+    /// </summary>
+    public cfg.TbUnlock TbUnlock {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -122,6 +130,8 @@ public partial class Tables
         TbCamera3D = new cfg.TbCamera3D(loader("cfg_tbcamera3d"));
         TbLootContainer = new cfg.TbLootContainer(loader("cfg_tblootcontainer"));
         TbNote = new cfg.TbNote(loader("cfg_tbnote"));
+        TbPlayerLevel = new cfg.TbPlayerLevel(loader("cfg_tbplayerlevel"));
+        TbUnlock = new cfg.TbUnlock(loader("cfg_tbunlock"));
         ResolveRef();
     }
     
@@ -148,6 +158,8 @@ public partial class Tables
         TbCamera3D.ResolveRef(this);
         TbLootContainer.ResolveRef(this);
         TbNote.ResolveRef(this);
+        TbPlayerLevel.ResolveRef(this);
+        TbUnlock.ResolveRef(this);
     }
 }
 

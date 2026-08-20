@@ -7,7 +7,8 @@ namespace GameLogic
     /// 承载输入、意图与运行时状态，供输入系统、状态机、武器系统等共享。
     /// 本类是玩家运行期实时状态（死亡/闪避/换弹/瞄准/输入）的唯一数据源：
     /// PlayerEntity、WeaponSystem 等处的同名属性均为转发或本地兜底，不持有副本。
-    /// 血量/体力归 PlayerSystem，弹药归 WeaponInstance，跨场景暂存归 PortalPlayerState，均不在此重复。
+    /// 血量/体力归 PlayerSystem，弹药归 WeaponInstance；跨场景连续性由 PlayerAttrStore
+    /// 变动即存承担（PortalPlayerState 只记录场景上下文），均不在此重复。
     /// </summary>
     public class PlayerStateContext
     {

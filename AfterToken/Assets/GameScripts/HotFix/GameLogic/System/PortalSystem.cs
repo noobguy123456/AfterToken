@@ -126,6 +126,14 @@ namespace GameLogic.Portal
         {
             if (portal?.Config == null) return;
 
+            // 选关传送门（基地内）：不切场景、无转场，直接打开选关窗口。
+            // 基地没有战斗玩家实体，IsPlayerDead 恒 true，必须在死亡判定之前分支。
+            if (portal.Config.portalType == PortalType.SELECT_LEVEL)
+            {
+                GameModule.UI.ShowUIAsync<LobbyUI>();
+                return;
+            }
+
             // 死亡判定第二道闸：已死亡的玩家不允许传送（第一道闸在 OnInteractPressed）。
             if (IsPlayerDead())
             {
@@ -133,10 +141,9 @@ namespace GameLogic.Portal
             }
 
             var config = portal.Config;
-            if (config.keepPlayerState)
-            {
-                PortalPlayerState.Save(PlayerSystem.Instance, WeaponSystem.Instance);
-            }
+            // 传送门只记录场景上下文（目标场景 + 是否保留属性）；
+            // 玩家属性由 PlayerAttrStore 变动即存，转场时无需快照
+            PortalPlayerState.RecordTransition(config.targetLevelId, config.targetSceneName, config.keepPlayerState);
 
             PortalTransitionMgr.PlayAsync(
                 config.transitionType,
@@ -151,10 +158,12 @@ namespace GameLogic.Portal
                 {
                     switch (config.portalType)
                     {
-                        case PortalType.RETURN_TO_LOBBY:
-                            // 胜利结算：临时背包整体转入仓库，随后由大厅流程统一清空
+                        case PortalType.RETURN_BASE:
+                            // 撤离结算：临时背包整体转入仓库，回基地（经营场景即据点）后统一清空
                             Warehouse.AddAll(RunInventory.Items);
-                            GameApp.ChangeProcedure<ProcedureLobby>();
+                            // 跨玩法联动：撤离奖励（金币/经验）+ 通关记录（驱动关卡链解锁）
+                            CrossPlayLink.OnBattleExtracted(BattleContext.CurrentLevelId);
+                            GameApp.ChangeProcedure<ProcedureSimulation>();
                             break;
                         case PortalType.NEXT_LEVEL:
                             SwitchToNextLevel(config.targetLevelId);
@@ -192,7 +201,15 @@ namespace GameLogic.Portal
 
         private void OnInteractPressed()
         {
-            // 死亡判定优先：玩家已死亡时必须走死亡确认（Restart / Back to Lobby），
+            // 基地内无战斗玩家实体，选关传送门不做死亡判定，直接放行
+            if (_currentPortal != null && _currentPortal.IsActivated
+                && _currentPortal.Config != null && _currentPortal.Config.portalType == PortalType.SELECT_LEVEL)
+            {
+                _currentPortal.TryInteract();
+                return;
+            }
+
+            // 死亡判定优先：玩家已死亡时必须走死亡确认（Restart / Back to Base），
             // 禁止通过传送门绕过，否则会带着 timeScale=0 的暂停状态进入下一场景。
             var player = PlayerSystem.Instance?.GetPlayerEntity();
             if (player == null || player.IsDead)
@@ -282,8 +299,8 @@ namespace GameLogic.Portal
             var config = LevelConfigMgr.Instance.Get(nextLevelId);
             if (config == null)
             {
-                Log.Error($"[PortalSystem] Next level config not found: {nextLevelId}, returning to lobby.");
-                GameApp.ChangeProcedure<ProcedureLobby>();
+                Log.Error($"[PortalSystem] Next level config not found: {nextLevelId}, returning to base.");
+                GameApp.ChangeProcedure<ProcedureSimulation>();
                 return;
             }
 
@@ -295,8 +312,8 @@ namespace GameLogic.Portal
         {
             if (string.IsNullOrEmpty(targetSceneName))
             {
-                Log.Error("[PortalSystem] Custom scene target is empty, returning to lobby.");
-                GameApp.ChangeProcedure<ProcedureLobby>();
+                Log.Error("[PortalSystem] Custom scene target is empty, returning to base.");
+                GameApp.ChangeProcedure<ProcedureSimulation>();
                 return;
             }
 

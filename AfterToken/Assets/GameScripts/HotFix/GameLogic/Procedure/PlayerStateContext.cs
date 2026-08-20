@@ -3,122 +3,58 @@ using UnityEngine;
 namespace GameLogic.Portal
 {
     /// <summary>
-    /// 传送门玩家状态快照。
-    /// 用于在传送门触发时保存玩家状态，并在目标场景加载后恢复。
-    /// 职责边界：本类只是跨场景传送的静态暂存（保存/恢复时各读写一次），
-    /// 不负责运行期实时状态——运行期实时状态的唯一数据源是 PlayerStateContext（黑板）、
-    /// PlayerSystem（血量/体力）与 WeaponInstance（弹药），此处字段不做实时同步。
+    /// 传送门场景上下文。
+    /// 职责边界：只记录玩家经传送门前往的场景，以及到达场景是否保留战斗属性；
+    /// 玩家属性（血量/体力/武器弹药）不在此快照——属性由 PlayerAttrStore 变动即存，
+    /// 传送门触发时无需也不应捕获属性。
     /// </summary>
     public static class PortalPlayerState
     {
         /// <summary>
-        /// 是否已保存状态。
+        /// 是否有转场记录。
         /// </summary>
-        public static bool HasSavedState { get; private set; }
+        public static bool HasRecord { get; private set; }
 
         /// <summary>
-        /// 当前血量。
+        /// 目标关卡 ID（无目标关卡时为 0）。
         /// </summary>
-        public static int Hp { get; private set; }
+        public static int TargetLevelId { get; private set; }
 
         /// <summary>
-        /// 最大血量。
+        /// 目标场景名（无目标场景时为空）。
         /// </summary>
-        public static int MaxHp { get; private set; }
+        public static string TargetSceneName { get; private set; }
 
         /// <summary>
-        /// 当前体力。
+        /// 到达目标场景后是否恢复 PlayerAttrStore 中的战斗属性（由 portal 配置的 keepPlayerState 决定）。
         /// </summary>
-        public static int Stamina { get; private set; }
+        public static bool CarryPlayerState { get; private set; }
 
         /// <summary>
-        /// 最大体力。
+        /// 记录一次传送门转场（仅场景信息）。
         /// </summary>
-        public static int MaxStamina { get; private set; }
-
-        /// <summary>
-        /// 武器状态数据。
-        /// </summary>
-        public static WeaponStateData[] Weapons { get; private set; }
-
-        /// <summary>
-        /// 当前武器槽位。
-        /// </summary>
-        public static int CurrentWeaponSlot { get; private set; }
-
-        /// <summary>
-        /// 保存玩家状态。
-        /// </summary>
-        public static void Save(PlayerSystem playerSystem, WeaponSystem weaponSystem)
+        public static void RecordTransition(int targetLevelId, string targetSceneName, bool carryPlayerState)
         {
-            if (playerSystem == null || weaponSystem == null)
-            {
-                Debug.LogWarning("[PortalPlayerState] Save failed: playerSystem or weaponSystem is null.");
-                return;
-            }
-
-            Hp = playerSystem.CurrentHp;
-            MaxHp = playerSystem.MaxHp;
-            Stamina = playerSystem.CurrentStamina;
-            MaxStamina = playerSystem.MaxStamina;
-            CurrentWeaponSlot = weaponSystem.CurrentSlotIndex;
-
-            Weapons = new WeaponStateData[WeaponSystem.MAX_WEAPON_SLOTS];
-            for (int i = 0; i < WeaponSystem.MAX_WEAPON_SLOTS; i++)
-            {
-                var weapon = weaponSystem.GetWeaponInSlot(i);
-                if (weapon != null && weapon.Config != null)
-                {
-                    Weapons[i] = new WeaponStateData
-                    {
-                        ConfigId = weapon.Config.id,
-                        CurrentAmmo = weapon.CurrentAmmo
-                    };
-                }
-                else
-                {
-                    Weapons[i] = WeaponStateData.Empty;
-                }
-            }
-
-            HasSavedState = true;
+            TargetLevelId = targetLevelId;
+            TargetSceneName = targetSceneName;
+            CarryPlayerState = carryPlayerState;
+            HasRecord = true;
         }
 
         /// <summary>
-        /// 恢复玩家状态（血量与体力）。
-        /// 武器状态由 WeaponSystem.Start 在检测到保存状态时自动恢复。
-        /// </summary>
-        public static void Restore(PlayerSystem playerSystem)
-        {
-            if (!HasSavedState) return;
-
-            if (playerSystem == null)
-            {
-                Debug.LogWarning("[PortalPlayerState] Restore failed: playerSystem is null.");
-                return;
-            }
-
-            playerSystem.RestoreHpAndStamina(Hp, MaxHp, Stamina, MaxStamina);
-            Clear();
-        }
-
-        /// <summary>
-        /// 清除保存的状态。
+        /// 清除转场记录（一局结束/转场中止时调用）。
         /// </summary>
         public static void Clear()
         {
-            HasSavedState = false;
-            Hp = 0;
-            MaxHp = 0;
-            Stamina = 0;
-            MaxStamina = 0;
-            Weapons = null;
-            CurrentWeaponSlot = 0;
+            HasRecord = false;
+            TargetLevelId = 0;
+            TargetSceneName = null;
+            CarryPlayerState = false;
         }
     }
 
     /// <summary>
-    /// 武器状态数据。
+    /// 武器状态数据（PlayerAttrStore 的存储单元）。
     /// </summary>
     public struct WeaponStateData
     {

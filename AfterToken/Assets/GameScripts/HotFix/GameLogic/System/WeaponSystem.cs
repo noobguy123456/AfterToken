@@ -60,18 +60,22 @@ namespace GameLogic
 
         private void Start()
         {
-            if (PortalPlayerState.HasSavedState && PortalPlayerState.Weapons != null)
+            // 经"保留状态"传送门而来 → 从 PlayerAttrStore（变动即存）恢复武器与弹药；
+            // 否则按关卡默认武器开新一局（装备事件会把新状态写入 store）。
+            if (PortalPlayerState.CarryPlayerState && PlayerAttrStore.Weapons != null)
             {
-                for (int i = 0; i < MAX_WEAPON_SLOTS && i < PortalPlayerState.Weapons.Length; i++)
+                for (int i = 0; i < MAX_WEAPON_SLOTS && i < PlayerAttrStore.Weapons.Length; i++)
                 {
-                    var data = PortalPlayerState.Weapons[i];
+                    var data = PlayerAttrStore.Weapons[i];
                     if (data.IsValid)
                     {
                         EquipWeapon(i, data.ConfigId);
                         GetWeaponInSlot(i)?.SetAmmo(data.CurrentAmmo);
+                        // 装备广播会把满弹匣中间值写进 store，SetAmmo 后修正为恢复值
+                        PlayerAttrStore.SetWeapon(i, data.ConfigId, data.CurrentAmmo);
                     }
                 }
-                SwitchToSlot(PortalPlayerState.CurrentWeaponSlot);
+                SwitchToSlot(PlayerAttrStore.CurrentWeaponSlot);
             }
             else
             {

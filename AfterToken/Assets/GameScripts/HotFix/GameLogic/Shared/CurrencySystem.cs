@@ -3,6 +3,16 @@ using TEngine;
 namespace GameLogic
 {
     /// <summary>
+    /// 货币类型。
+    /// </summary>
+    public enum CurrencyType
+    {
+        Gold,
+        Diamond,
+        Energy,
+    }
+
+    /// <summary>
     /// 货币系统：金币、钻石、体力管理。
     /// 持久化由 SaveSystem 接管（变动即存），首次访问时从存档懒加载。
     /// </summary>
@@ -57,6 +67,57 @@ namespace GameLogic
 
         public static bool HasGold(long amount) => amount >= 0 && Gold >= amount;
         public static bool HasDiamond(long amount) => amount >= 0 && Diamond >= amount;
+
+        /// <summary>
+        /// 按货币类型查询余额。
+        /// </summary>
+        public static long GetAmount(CurrencyType type)
+        {
+            switch (type)
+            {
+                case CurrencyType.Gold: return Gold;
+                case CurrencyType.Diamond: return Diamond;
+                case CurrencyType.Energy: return Energy;
+                default: return 0;
+            }
+        }
+
+        /// <summary>
+        /// 按货币类型判断余额是否足够。
+        /// </summary>
+        public static bool Has(CurrencyType type, long amount) => amount >= 0 && GetAmount(type) >= amount;
+
+        /// <summary>
+        /// 按货币类型增加（amount 必须为正数）。
+        /// </summary>
+        public static void Add(CurrencyType type, long amount)
+        {
+            switch (type)
+            {
+                case CurrencyType.Gold: AddGold(amount); break;
+                case CurrencyType.Diamond: AddDiamond(amount); break;
+                case CurrencyType.Energy:
+                    if (amount > 0) SetEnergy(Energy + (int)amount, MaxEnergy);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 按货币类型消费，余额不足返回 false。
+        /// </summary>
+        public static bool TryConsume(CurrencyType type, long amount)
+        {
+            switch (type)
+            {
+                case CurrencyType.Gold: return TryConsumeGold(amount);
+                case CurrencyType.Diamond: return TryConsumeDiamond(amount);
+                case CurrencyType.Energy:
+                    if (amount <= 0 || Energy < amount) return false;
+                    SetEnergy(Energy - (int)amount, MaxEnergy);
+                    return true;
+                default: return false;
+            }
+        }
 
         public static void AddGold(long amount)
         {

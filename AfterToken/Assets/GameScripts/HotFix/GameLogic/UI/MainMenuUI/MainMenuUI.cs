@@ -21,7 +21,6 @@ namespace GameLogic
         private Button _startButton;
         private Button _exitButton;
         private Button _settingsButton;
-        private Button _simulationButton;
 
         #region 脚本工具生成的代码
         protected override void ScriptGenerator()
@@ -40,43 +39,6 @@ namespace GameLogic
             SetupDefaultCursor();
             CursorManager.Instance?.ShowCursor();
             BindEvents();
-            CreateSimulationButton();
-        }
-
-        /// <summary>
-        /// 动态创建模拟经营入口按钮（克隆 Start 按钮，插入到 Start 下方）。
-        /// </summary>
-        private void CreateSimulationButton()
-        {
-            if (_startButton == null)
-            {
-                Log.Warning("[MainMenuUI] 找不到 Start 按钮，无法创建 Simulation 按钮");
-                return;
-            }
-
-            var go = Object.Instantiate(_startButton.gameObject, _startButton.transform.parent, false);
-            go.name = "m_btn_Simulation";
-            go.transform.SetSiblingIndex(_startButton.transform.GetSiblingIndex() + 1);
-
-            _simulationButton = go.GetComponent<Button>();
-            if (_simulationButton != null)
-            {
-                _simulationButton.onClick.RemoveAllListeners();
-                _simulationButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureSimulation>());
-            }
-
-            // 与 Start 按钮区分颜色
-            var image = go.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = new Color(0.3f, 0.75f, 0.45f, 1f);
-            }
-
-            var text = go.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null)
-            {
-                text.text = "Simulation";
-            }
         }
 
         protected override void OnDestroy()
@@ -152,7 +114,8 @@ namespace GameLogic
             if (_startButton != null)
             {
                 _startButton.onClick.RemoveAllListeners();
-                _startButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureLobby>());
+                // Start 直接进入基地（模拟经营场景即据点，选关在基地内进行）
+                _startButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureSimulation>());
             }
 
             if (_exitButton != null)

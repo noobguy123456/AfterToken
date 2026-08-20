@@ -50,7 +50,8 @@
 | IsReloading（玩家语义） | `PlayerStateContext` 黑板 | `WeaponInstance.IsReloading` 是武器换弹计时器，语义不同，勿混用 |
 | HP / 体力 | `PlayerSystem` | 无第二副本 |
 | 弹药 | `WeaponInstance` | 属武器实例数据，不属玩家状态 |
-| 跨场景传送快照 | `PortalPlayerState`（静态类） | 仅跨场景暂存，不负责运行期实时状态 |
+| 跨场景属性连续性 | `PlayerAttrStore`（静态类，2026-08-20 起） | 订阅 HP/体力/弹药/装备/切枪事件**变动即存**；经 `keepPlayerState` 传送门进新场景时由 PlayerSystem/WeaponSystem 读回 |
+| 传送门场景上下文 | `PortalPlayerState`（静态类） | 只记录目标场景与是否保留属性（2026-08-20 起不再快照玩家属性） |
 
 背后的三条实现原理：
 

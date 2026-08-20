@@ -1,5 +1,6 @@
 using TEngine;
 using UnityEngine;
+using GameLogic.Portal;
 
 namespace GameLogic
 {
@@ -35,6 +36,9 @@ namespace GameLogic
             _isDead = true;
             // 死亡即丢失关卡临时背包
             RunInventory.Clear();
+            // 一局结束：清空战斗属性暂存与传送门转场记录，重开/回大厅均为全新状态
+            PlayerAttrStore.Clear();
+            PortalPlayerState.Clear();
             GamePauseManager.PushTimeScale(0f);
             CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
             CursorManager.Instance?.ForceShowCursor();
@@ -60,7 +64,7 @@ namespace GameLogic
             if (_confirmed) return;
             _confirmed = true;
             OnReturnToLobbyRequested?.Invoke();
-            ReturnToLobby();
+            ReturnToBase();
         }
 
         private void RestartBattle()
@@ -69,10 +73,10 @@ namespace GameLogic
             GameApp.ChangeProcedure<ProcedureBattle>();
         }
 
-        private void ReturnToLobby()
+        private void ReturnToBase()
         {
             GamePauseManager.PopTimeScale();
-            GameApp.ChangeProcedure<ProcedureLobby>();
+            GameApp.ChangeProcedure<ProcedureSimulation>();
         }
     }
 }

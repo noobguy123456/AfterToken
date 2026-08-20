@@ -4,16 +4,29 @@ using UnityEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 经营场景输入系统：处理 Esc 键（打开/关闭设置菜单）。
+    /// 经营场景输入系统：处理 Esc 键（打开/关闭设置菜单）与 E 键（传送门交互）。
     /// </summary>
     public class SimulationInputSystem : MonoBehaviour
     {
         [Header("输入设置")]
         [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
+        [SerializeField] private KeyCode _interactKey = KeyCode.E;
 
         private void Update()
         {
             HandleEscapeInput();
+            HandleInteractInput();
+        }
+
+        /// <summary>
+        /// E 键交互：复用战斗输入事件，PortalSystem 订阅它处理基地内传送门（选关门）。
+        /// </summary>
+        private void HandleInteractInput()
+        {
+            if (Input.GetKeyDown(_interactKey))
+            {
+                GameEvent.Get<IBattleInputEvent>()?.OnInteractPressed();
+            }
         }
 
         private void HandleEscapeInput()
@@ -35,6 +48,7 @@ namespace GameLogic
             // 仅当画面中没有任何菜单 UI（HUD/血条/物品栏等常驻 UI 不算）时，ESC 才弹出设置面板。
             if (TryCloseUI<BuildingInfoUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
+            if (TryCloseUI<LobbyUI>()) return;
             if (TryCloseUI<BuildingSelectionUI>()) return;
             if (TryCloseUI<WarehouseUI>()) return;
             if (TryCloseManagementPanel()) return;

@@ -20,6 +20,12 @@
 ## 阻塞
 - 无。2026-08-05：进入经营流程卡死自 `OrderSystem` while 防御后长期未复现，8 处 `[hb]` 心跳日志（SimTimeSystem / OrderSystem / BuildingSystem / ProductionSystem / SimulationInputSystem / CameraSystem3D / SimulationMainUI / BuildingPlacementSystem）已全部移除（日志爆发本身会造成编辑器周期性掉帧）。
 
+## 变更记录
+
+| 日期 | 变更内容 |
+|------|----------|
+| 2026-08-20 | B 方案落地：模拟经营场景正式定位为基地（据点），主菜单 Start 直进本流程；撤离/死亡均回本流程；`EnterAsync` 接手一局结束清理（RunInventory/PlayerAttrStore/PortalPlayerState.Clear）；SimulationMainUI prefab 的 HudBar 新增 m_btn_Deploy 按钮（打开 LobbyUI 选关窗口，LobbyUI 改为窗口复用，Back=Close） |
+
 ---
 
 > 状态说明：

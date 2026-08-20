@@ -108,8 +108,8 @@ namespace GameLogic
 
             switch (lastProcedure)
             {
-                case nameof(ProcedureLobby):
-                    ChangeProcedure<ProcedureLobby>();
+                case nameof(ProcedureSimulation):
+                    ChangeProcedure<ProcedureSimulation>();
                     break;
                 case nameof(ProcedureBattle):
                     ChangeProcedure<ProcedureBattle>();
@@ -125,7 +125,7 @@ namespace GameLogic
         {
             Log.Warning("======= Start Battle Game Logic =======");
 
-            // 热更后重新初始化流程管理器，注册主菜单、大厅、战斗流程。
+            // 热更后重新初始化流程管理器，注册主菜单、基地（模拟经营）、战斗流程。
             var procedureModule = GameModule.Procedure;
             var procedureModuleType = procedureModule.GetType();
             var shutdownMethod = procedureModuleType.GetMethod("Shutdown", BindingFlags.Public | BindingFlags.Instance);
@@ -135,7 +135,6 @@ namespace GameLogic
             var procedures = new ProcedureBase[]
             {
                 new ProcedureMainMenu(),
-                new ProcedureLobby(),
                 new ProcedureBattle(),
                 new ProcedureSimulation(),
             };

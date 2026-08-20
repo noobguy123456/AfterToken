@@ -103,6 +103,15 @@ namespace GameLogic
 
         private async UniTask CreatePlayerAsync(CancellationToken cancellationToken)
         {
+            // 属性来源决策必须在初始化广播之前完成：
+            // 经"保留状态"传送门而来 → 恢复 PlayerAttrStore（变动即存的最新属性）；
+            // 否则新一局——初始化广播会把全新属性写入 store。
+            bool carry = PortalPlayerState.CarryPlayerState && PlayerAttrStore.HasVitals;
+            int carryHp = PlayerAttrStore.Hp;
+            int carryMaxHp = PlayerAttrStore.MaxHp;
+            int carryStamina = PlayerAttrStore.Stamina;
+            int carryMaxStamina = PlayerAttrStore.MaxStamina;
+
             var go = await GameModule.Resource.LoadGameObjectAsync("Player", _spawnPoint, cancellationToken);
             if (go == null)
             {
@@ -141,9 +150,9 @@ namespace GameLogic
             GameEvent.Get<IPlayerEvent>().OnHpChanged(_currentHp, _maxHp);
             GameEvent.Get<IPlayerEvent>().OnStaminaChanged(_currentStamina, _maxStamina);
 
-            if (PortalPlayerState.HasSavedState)
+            if (carry)
             {
-                PortalPlayerState.Restore(this);
+                RestoreHpAndStamina(carryHp, carryMaxHp, carryStamina, carryMaxStamina);
             }
         }
 

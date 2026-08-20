@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TEngine;
 
 namespace GameLogic
@@ -15,6 +16,7 @@ namespace GameLogic
         private static int _level = DEFAULT_LEVEL;
         private static int _exp = DEFAULT_EXP;
         private static int _expToNextLevel = DEFAULT_EXP_TO_NEXT;
+        private static readonly HashSet<int> _completedLevels = new HashSet<int>();
         private static bool _loaded;
 
         public static int Level { get { EnsureLoaded(); return _level; } }
@@ -35,6 +37,12 @@ namespace GameLogic
             _level = d.level;
             _exp = d.exp;
             _expToNextLevel = d.expToNextLevel;
+
+            _completedLevels.Clear();
+            foreach (var id in d.completedLevels)
+            {
+                _completedLevels.Add(id);
+            }
         }
 
         /// <summary>
@@ -47,6 +55,8 @@ namespace GameLogic
             d.level = _level;
             d.exp = _exp;
             d.expToNextLevel = _expToNextLevel;
+            d.completedLevels.Clear();
+            d.completedLevels.AddRange(_completedLevels);
             SaveSystem.Flush();
         }
 
@@ -66,9 +76,38 @@ namespace GameLogic
             Persist();
         }
 
+        /// <summary>
+        /// 升级所需经验：优先读 TbPlayerLevel 配置表，配置缺失时回退 level*100。
+        /// </summary>
         private static int GetExpToNextLevel(int level)
         {
+            var cfg = ConfigSystem.Instance.Tables.TbPlayerLevel.GetOrDefault(level);
+            if (cfg != null && cfg.ExpToNext > 0)
+            {
+                return cfg.ExpToNext;
+            }
             return level * 100;
+        }
+
+        /// <summary>
+        /// 标记关卡已通关（成功撤离）。供解锁系统的关卡链条件判定。
+        /// </summary>
+        public static void MarkLevelCompleted(int levelId)
+        {
+            EnsureLoaded();
+            if (_completedLevels.Add(levelId))
+            {
+                Persist();
+            }
+        }
+
+        /// <summary>
+        /// 关卡是否已通关。
+        /// </summary>
+        public static bool IsLevelCompleted(int levelId)
+        {
+            EnsureLoaded();
+            return _completedLevels.Contains(levelId);
         }
 
         public static void Reset()
@@ -76,6 +115,7 @@ namespace GameLogic
             _level = DEFAULT_LEVEL;
             _exp = DEFAULT_EXP;
             _expToNextLevel = DEFAULT_EXP_TO_NEXT;
+            _completedLevels.Clear();
             GameEvent.Get<IPlayerProfileEvent>()?.OnExpChanged(_exp, _expToNextLevel);
             Persist();
         }

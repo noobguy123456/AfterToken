@@ -45,7 +45,7 @@ namespace GameLogic
             if (_returnButton != null)
             {
                 var returnText = _returnButton.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (returnText != null) returnText.text = "Back to Lobby";
+                if (returnText != null) returnText.text = "Back to Base";
             }
         }
 

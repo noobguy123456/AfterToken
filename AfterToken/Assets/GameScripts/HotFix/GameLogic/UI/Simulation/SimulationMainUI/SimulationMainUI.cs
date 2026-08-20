@@ -28,6 +28,7 @@ namespace GameLogic
         private Button _normalButton;
         private Button _fastButton;
         private Button _panelButton;
+        private Button _deployButton;
         private Button _closeButton;
         private Button _buildButton;
         private Button _backButton;
@@ -50,6 +51,7 @@ namespace GameLogic
             _normalButton = FindChildComponent<Button>("m_rect_SimRoot/m_rect_HudBar/m_btn_Normal");
             _fastButton = FindChildComponent<Button>("m_rect_SimRoot/m_rect_HudBar/m_btn_Fast");
             _panelButton = FindChildComponent<Button>("m_rect_SimRoot/m_rect_HudBar/m_btn_Panel");
+            _deployButton = FindChildComponent<Button>("m_rect_SimRoot/m_rect_HudBar/m_btn_Deploy");
 
             _panelRoot = FindChildComponent<RectTransform>("m_rect_SimRoot/m_rect_Panel");
             _closeButton = FindChildComponent<Button>("m_rect_SimRoot/m_rect_Panel/m_btn_Close");
@@ -95,6 +97,8 @@ namespace GameLogic
             _normalButton?.onClick.AddListener(() => SetSpeed(ESimSpeed.Normal));
             _fastButton?.onClick.AddListener(() => SetSpeed(ESimSpeed.Fast));
             _panelButton?.onClick.AddListener(() => SetPanelVisible(!_panelVisible));
+            // Deploy：打开基地内选关窗口（LobbyUI 复用为关卡选择面板）
+            _deployButton?.onClick.AddListener(() => GameModule.UI.ShowUIAsync<LobbyUI>());
             _closeButton?.onClick.AddListener(() => SetPanelVisible(false));
             _buildButton?.onClick.AddListener(OpenBuildingSelection);
             _backButton?.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureMainMenu>());

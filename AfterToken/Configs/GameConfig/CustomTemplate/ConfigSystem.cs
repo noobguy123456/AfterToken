@@ -59,6 +59,8 @@ namespace GameLogic
             "cfg_tbcamera3d",
             "cfg_tblootcontainer",
             "cfg_tbnote",
+            "cfg_tbplayerlevel",
+            "cfg_tbunlock",
         };
 
         /// <summary>

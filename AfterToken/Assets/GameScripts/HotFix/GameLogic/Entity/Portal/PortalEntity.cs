@@ -27,10 +27,13 @@ namespace GameLogic.Portal
         private void Awake()
         {
             var collider = GetComponent<SphereCollider>();
-            if (collider != null)
+            if (collider == null)
             {
-                collider.isTrigger = true;
+                // 热更类型 RequireComponent 不可靠：旧 prefab/场景实例可能缺 3D 碰撞体，运行时兜底补齐
+                collider = gameObject.AddComponent<SphereCollider>();
+                collider.radius = 1.5f;
             }
+            collider.isTrigger = true;
 
             EnsureVisualRenderer();
             UpdateVisual();
@@ -97,8 +100,10 @@ private void EnsureVisualRenderer()
             if (_config == null) return "???";
             switch (_config.portalType)
             {
-                case PortalType.RETURN_TO_LOBBY:
-                    return "返回大厅";
+                case PortalType.RETURN_BASE:
+                    return "Base";
+                case PortalType.SELECT_LEVEL:
+                    return "Deploy";
                 case PortalType.NEXT_LEVEL:
                     return $"关卡 {_config.targetLevelId}";
                 case PortalType.CUSTOM_SCENE:
@@ -148,7 +153,6 @@ private void EnsureVisualRenderer()
             GameEvent.Get<IPortalEvent>()?.OnPortalTriggered(_config.id, _config.portalType, _config.targetSceneName);
             PortalSystem.Instance?.ExecuteTransition(this);
         }
-
         private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;

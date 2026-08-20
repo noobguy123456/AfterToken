@@ -199,7 +199,11 @@ namespace GameLogic.GM
                 LogToConsole("  reload            重新加载配置表");
                 LogToConsole("  save [path]       显示存档文件路径");
                 LogToConsole("  save export       输出存档内容到控制台");
-                LogToConsole("  save clear        删除存档并重置货币/档案/仓库");
+                LogToConsole("  save clear        删除存档并重置货币/档案/仓库/解锁");
+                LogToConsole("  gold <n>          增加金币");
+                LogToConsole("  exp <n>           增加经验（可触发升级）");
+                LogToConsole("  unlock <id>       付费解锁 TbUnlock 记录");
+                LogToConsole("  profile           显示等级/经验/通关记录");
                 LogToConsole("  clear             清空控制台");
             };
 
@@ -299,6 +303,40 @@ namespace GameLogic.GM
                 LogToConsole("配置已重载");
             };
 
+            _commands["gold"] = args =>
+            {
+                if (!TryParseInt(args, 0, out var amount)) return;
+                CurrencySystem.AddGold(amount);
+                LogToConsole($"金币 +{amount}，当前 {CurrencySystem.Gold}G");
+            };
+
+            _commands["exp"] = args =>
+            {
+                if (!TryParseInt(args, 0, out var amount)) return;
+                PlayerProfileSystem.AddExp(amount);
+                LogToConsole($"经验 +{amount}，当前 Lv{PlayerProfileSystem.Level}（{PlayerProfileSystem.Exp}/{PlayerProfileSystem.ExpToNextLevel}）");
+            };
+
+            _commands["unlock"] = args =>
+            {
+                if (!TryParseInt(args, 0, out var unlockId)) return;
+                if (UnlockSystem.TryUnlock(unlockId, out var reason))
+                {
+                    LogToConsole($"解锁成功：{unlockId}");
+                }
+                else
+                {
+                    LogToConsole($"解锁失败：{reason}");
+                }
+            };
+
+            _commands["profile"] = args =>
+            {
+                var d = SaveSystem.Data.profile;
+                LogToConsole($"Lv{PlayerProfileSystem.Level} EXP {PlayerProfileSystem.Exp}/{PlayerProfileSystem.ExpToNextLevel}，" +
+                             $"金币 {CurrencySystem.Gold}G，通关关卡：[{string.Join(",", d.completedLevels)}]");
+            };
+
             _commands["clear"] = args =>
             {
                 _logs.Clear();
@@ -329,8 +367,9 @@ namespace GameLogic.GM
                         SaveSystem.DeleteSave();
                         CurrencySystem.Reset();
                         PlayerProfileSystem.Reset();
+                        UnlockSystem.Reset();
                         Warehouse.Clear();
-                        LogToConsole("存档已删除，货币/档案/仓库已重置为默认值");
+                        LogToConsole("存档已删除，货币/档案/仓库/解锁已重置为默认值");
                         break;
 
                     default:

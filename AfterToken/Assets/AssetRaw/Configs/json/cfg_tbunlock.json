@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "contentType": 0,
+    "targetId": 2,
+    "requirePlayerLevel": 0,
+    "requireCompleteLevelId": 1,
+    "costGold": 0,
+    "comment": "Stage 2: clear Stage 1"
+  },
+  {
+    "id": 2,
+    "contentType": 0,
+    "targetId": 3,
+    "requirePlayerLevel": 0,
+    "requireCompleteLevelId": 2,
+    "costGold": 0,
+    "comment": "Stage 3: clear Stage 2"
+  },
+  {
+    "id": 3,
+    "contentType": 0,
+    "targetId": 102,
+    "requirePlayerLevel": 0,
+    "requireCompleteLevelId": 101,
+    "costGold": 0,
+    "comment": "Stage 102: clear Stage 101"
+  },
+  {
+    "id": 4,
+    "contentType": 0,
+    "targetId": 103,
+    "requirePlayerLevel": 0,
+    "requireCompleteLevelId": 102,
+    "costGold": 0,
+    "comment": "Stage 103: clear Stage 102"
+  },
+  {
+    "id": 5,
+    "contentType": 1,
+    "targetId": 1004,
+    "requirePlayerLevel": 2,
+    "requireCompleteLevelId": 0,
+    "costGold": 300,
+    "comment": "Sniper: player Lv2 + 300G"
+  }
+]

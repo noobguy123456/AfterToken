@@ -33,6 +33,8 @@ public sealed partial class Level : Luban.BeanBase
         EnemySpawnRadius = (float)_obj.GetValue("enemySpawnRadius");
         EnemyConfigId = (int)_obj.GetValue("enemyConfigId");
         EnemyMaxHp = (int)_obj.GetValue("enemyMaxHp");
+        RewardGold = (int)_obj.GetValue("rewardGold");
+        RewardExp = (int)_obj.GetValue("rewardExp");
     }
 
     public static Level DeserializeLevel(JToken _buf)
@@ -80,6 +82,14 @@ public sealed partial class Level : Luban.BeanBase
     /// 敌人最大血量
     /// </summary>
     public readonly int EnemyMaxHp;
+    /// <summary>
+    /// 通关奖励金币
+    /// </summary>
+    public readonly int RewardGold;
+    /// <summary>
+    /// 通关奖励经验
+    /// </summary>
+    public readonly int RewardExp;
 
 
     public const int __ID__ = 1437482330;
@@ -102,6 +112,8 @@ public sealed partial class Level : Luban.BeanBase
         + "enemySpawnRadius:" + EnemySpawnRadius + ","
         + "enemyConfigId:" + EnemyConfigId + ","
         + "enemyMaxHp:" + EnemyMaxHp + ","
+        + "rewardGold:" + RewardGold + ","
+        + "rewardExp:" + RewardExp + ","
         + "}";
     }
 }

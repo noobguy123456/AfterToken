@@ -7,7 +7,7 @@ namespace GameLogic
     /// <summary>
     /// 关卡内临时背包（一局战斗的生命周期）。
     /// 槽位制：一个道具堆叠占 1 槽，堆叠上限来自 cfg.Item.stackLimit。
-    /// 生命周期规则：传送门跨战斗场景保留；死亡清空；经 RETURN_TO_LOBBY 传送门离开时转入仓库。
+    /// 生命周期规则：传送门跨战斗场景保留；死亡清空；经 RETURN_BASE 传送门撤离回基地时转入仓库。
     /// </summary>
     public static class RunInventory
     {
