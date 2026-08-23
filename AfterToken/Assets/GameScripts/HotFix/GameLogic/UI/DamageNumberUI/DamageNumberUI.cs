@@ -145,7 +145,7 @@ namespace GameLogic
         private void ShowInternal(int damage, Vector2 screenPos, bool isCritical)
         {
             if (_textTemplate == null || _rootRect == null) return;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rootRect, screenPos, null, out var localPos)) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rootRect, screenPos, Canvas != null ? Canvas.worldCamera : null, out var localPos)) return;
             SpawnNumber(_rootRect, damage, localPos, isCritical);
         }
 

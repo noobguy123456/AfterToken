@@ -141,7 +141,7 @@ namespace GameLogic
             panelScreenY = Mathf.Clamp(panelScreenY, minY, maxY);
 
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    parentRect, new Vector2(panelScreenX, panelScreenY), null, out var localPos))
+                    parentRect, new Vector2(panelScreenX, panelScreenY), Canvas != null ? Canvas.worldCamera : null, out var localPos))
             {
                 _panel.anchoredPosition = localPos;
             }

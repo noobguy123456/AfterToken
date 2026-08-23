@@ -269,3 +269,27 @@ Luban 配置表数据补充
 - 2026-08-20 修复传送门无法交互根因（2D 遗留）：`Portal_Placeholder.prefab` 的 CircleCollider2D 与 3D 玩家刚体互不检测，OnTriggerEnter 永不触发——prefab 改 SphereCollider(trigger,r=1.5)，PortalEntity.Awake 加运行时兜底自动补 3D 碰撞体；ExecuteTransition 的选关门分支前移到 IsPlayerDead 之前。Play Mode 验证：进触发区→交互开 LobbyUI→Back 关闭，全链路通过
 
 - 2026-08-20 武器轮盘优化：槽位武器名挪到图标下方（原叠在图标中心，prefab 标签锚点/位置调整）；新增悬停属性面板 `m_text_WeaponStats`（名称/伤害/射速/弹匣/换弹/射程，悬停槽位变化时刷新，空槽清空）。Play Mode 验证通过。详见 weapon-system progress
+
+- 2026-08-22 UI 渲染架构翻案（方案 D 落地）：纠正"Overlay 在 Scene 视图不可见"的错误前提——Overlay 画布恒以世界原点 1px=1m 渲染且 transform 不可控，是 Play 调试污染源。全部窗口改 Screen Space - Camera 挂 UIRoot 自带 UICamera（正交/depth=2/只渲 UI 层），相机挪到 (200,200,0) "UI 区"。改动：`UIRoot.prefab`（UICanvas renderMode=1 + worldCamera 关联 + UICamera 移位）、`UIWindow.FixFullScreenCanvas()` 统一 SSC、`UIModule.OnInit()` 兜底路径对齐（含 CanvasScaler 1920×1080）。编译 0 错误，回归测试（窗口显示/点击/层级/狙击镜 RT/伤害数字）由用户自测。详见 docs/Proposal/ui/ui-render-architecture.md 第三版
+
+- 2026-08-22 方案 D 修复：UIRoot.prefab 的 UICamera GameObject 原本是禁用状态（Overlay 设计遗留），导致 SSC 画布拿不到相机退化成 Overlay 行为（画布仍钉在场景原点）；已通过 MCP 启用 UICamera 并确认运行时 MainMenuUI/UICanvas 均为 SSC + 相机在 (200,200,0)
+
+- 2026-08-22 修复 SSC 改造的屏幕坐标副作用：狙击镜"看不到"的根因是 SniperScopeUI 直接把屏幕像素赋给 RectTransform.position（Overlay 下屏幕像素恰好等于世界坐标，SSC 下元素被甩到画布外）；同隐患还有 DamageNumberUI/HitFeedbackUI/ItemTooltipUI 的 ScreenPointToLocalPointInRectangle 传 null 相机（null 仅 Overlay 正确）。统一改走 UI 相机换算（CrosshairUpdater 本来就传了 worldCamera，无需改）。编译 0 错误，Play 验证映射线性正确
+
+- 2026-08-22 命中标记统一：①修复狙击镜"瞄准即出现白色 X"——关镜时窗口只隐藏不销毁，OnUpdate 停走导致上次命中的标记冻结在 enabled 状态，下次开镜残留显示；现 OnRefresh/OnSetVisible(true) 双路径重置标记与后坐力偏移。②X 形命中标记推广到全武器：SniperScopeUI.CreateHitMarkerSprite 改 internal static 供复用；HitFeedbackUI 命中标记从 prefab 红方块换成同款 X 精灵，显示位置从目标屏幕位置改到准星中心（CrosshairUpdater.CurrentScreenPos，与镜内标记"中心=子弹落点"语义一致，准星不可用时退回目标位置）。Play 验证：开镜 enabled=False、命中标记 64×64 X 精灵 + 暴击橙色 + 准星中心落点均正确
+
+- 2026-08-22 修复狙击镜 X 标记"瞄准即出现"的真正根因：`BattleSystem.OnEntityDamaged` 对任何伤害事件都发 `OnHitTarget` + 伤害飘字，敌人打玩家也会点亮命中标记。现按攻击者过滤（`AttackerId == PlayerEntity.GetInstanceID()` 才触发），并把 `OnHitTarget` 写死的 `false` 改为透传 `DamageInfo.IsCritical`（暴击橙色此前永远不触发）。Play 双向验证：敌人攻击玩家标记不亮，玩家命中标记亮白色 X。详见 battle-system progress
+
+- 2026-08-23 设置面板新增 Input 按键改绑页签：①新增 `KeyBindAction` 枚举（Fire/Aim/Reload/Dodge/Interact/WeaponWheel/Bag/CrosshairStyle）与 `KeyBindingSetting`（`Module/SettingModule/KeyBindingSetting.cs`，默认键位+存档 `settings.keyBindings` 变动即存+冲突检测+恢复默认）；②`InputSystem` 全部动作键改运行时读绑定（原硬编码 Mouse0/C 一并收编），ESC 固定且捕获改绑期间不触发关 UI；③`SettingsUI` 加 General/Input 页签，Input 页运行时克隆行模板生成改绑列表，点击按键按钮→按新键生效、ESC 取消、冲突提示；④prefab 通过脚本补丁（.tmp_patch_settings_prefab.py）新增页签按钮/双面板/行模板/重置按钮，原控件移入 m_panel_General。编译与 Play 验证待 MCP 重连后进行。详见 settings-ui / input-system progress
+
+- 2026-08-23 设置面板 Input 页签 + 准星样式/颜色设置落地并 Play 验证通过：①`KeyBindingSetting`（8 动作改绑、冲突检测、变动即存 settings.keyBindings）+ `InputSystem` 全部动作键运行时读绑定（Mouse0/C 硬编码收编，ESC 捕获期不触发关 UI）；②`CrosshairSetting`（样式 Dot/Cross/Circle/TShape + 6 预设色，OnChanged 广播）+ `BattleMainUI` 准星精灵改白色烘焙由 Image.color 染色、订阅即时刷新，C 键循环与设置按钮共用 CycleStyle 并写档；③SettingsUI prefab 双页签 + 改绑行模板 + 色板（两个 YAML 补丁脚本），Close 按钮挪右上角。验证：编译 0 错误、8 行默认键位/页签切换/改绑 T→重置回 R/准星 Circle+红色实时生效/存档字段齐全、测试后已还原默认并清理捕获状态。详见 settings-ui / input-system progress
+
+- 2026-08-23 准星样式可视化预览 + 改绑左键同帧防抖：①准星精灵生成从 BattleMainUI 抽取为静态工厂 `CrosshairSpriteFactory.Create(style,size,thickness)`（5 样式生成器+纹理辅助全部搬迁，BattleMainUI 瘦身约 200 行）；②SettingsUI General 页签新增 `m_img_CrosshairPreview`（64x64 预览图，prefab YAML 补丁3），`UpdateCrosshairViews()` 订阅 OnChanged 统一刷新样式名+预览精灵+染色，旧精灵连贴图销毁防泄漏；③修复改绑鼠标键死循环：按下完成绑定（GetKeyDown）→同帧松开落在按钮上触发 onClick→又进捕获，`StartCapture` 加同帧防抖（`_captureEndFrame==Time.frameCount` 拦截），EndCapture/CancelCapture 记录结束帧。Play 验证：编译 0 错误、预览渲染正确、样式循环 Circle→TShape→Dot、色板换色即时同步、防抖拦截同帧捕获且正常路径不受影响。详见 settings-ui progress
+
+- 2026-08-23 修复"切换准星后系统鼠标显示且与游戏准星位置不一致"：①`CrosshairUpdater.Update` 光标可见分支从"冻结准星"改为"同步真实鼠标位置"（光标未锁定时 Input.mousePosition 有效），关掉 UI 后准星与鼠标无缝衔接；原光标泄漏兜底（ForceHideCursor）保留并纳入 SettingsUI 豁免；②新增 `OnEnable` 对齐——各菜单 UI 约定先 SetVisible(true) 再 HideCursor，恢复瞬间光标仍可见未锁定，位置有效，覆盖准星被隐藏的背包/开箱/纸条路径；③`SettingsUI` 补上 CrosshairUpdater.SetVisible(false/true) 配对（OnCreate/OnDestroy），与背包/开箱/纸条一致，打开设置不再双光标并存。Play 验证：设置开→准星隐藏+光标可见+解锁；关→准星恢复+光标隐藏锁定+位置同步真实鼠标；编译 0 错误。详见 input-system progress
+
+- 2026-08-23 对话系统 + 任务系统设计提案（待评审）：按业界成熟方案（RPGMaker 扁平节点表 / 塔科夫式跨局任务 / 三层分离：内容表→解释器→呈现）输出两份提案——`docs/Proposal/narrative/dialogue-system.md`（TbDialogue/TbDialogueNode 扁平节点表、DialogueSystem 解释器、Flag Blackboard 对话标志位、含统一 IInteractable 交互仲裁器落地计划）与 `docs/Proposal/narrative/quest-system.md`（四态状态机、kill/collect/extract/flag 四类目标、事件驱动进度、QuestSystem 纯 C# 常驻单例、塔科夫式 NPC 接交动线）。两系统共用条件/动作表达式词汇表（flag:/quest:/level:/give: 等）。待用户评审后再实现
+
+- 2026-08-23 准星位置神圣不可侵犯（用户拍板，彻底解决游戏准星/系统鼠标统一性问题，取代同日的"同步"方案）：原则——准星位置是玩家瞄准状态，只有战斗中的鼠标位移能驱动它；任何 UI 操作（背包/轮盘/设置/切准星样式）不得强制移动准星，关 UI 后瞄点原样保留；系统鼠标只在点选类 UI 期间出现、用完可靠收回。改动：①`CrosshairUpdater` 撤销光标可见同步与 OnEnable 对齐，回归纯冻结（泄漏兜底保留）；②`WeaponWheelUI` 不再显示系统鼠标（移除 ShowCursor/HideCursor），选择改为打开以来鼠标位移增量驱动（死区 20px 保持原武器），并隐藏/恢复准星；③死区 -1 槽位由 WeaponSystem 原有保护兼容。Play 验证：背包/设置/轮盘三路径准星全程 (960,540) 零漂移、光标显隐锁定正确。轮盘手感（灵敏度/死区）待用户实测。详见 input-system / weapon-system progress
+
+- 2026-08-23 设置面板"两种鼠标"收尾：①用户截图定位——红框中的"第二个鼠标"实为上一轮加的准星样式预览图（外形=准星、无衬底，被误认为游戏光标跑进面板），已给预览加深灰衬底板（`m_img_CrosshairPreviewBg`，prefab 补丁4），视觉上是色板而非光标；②`IsMenuUIOpen()` 纳入 `SettingsUI`——此前设置面板不在屏蔽名单，点面板按钮的鼠标按下会穿透到开火键；③`CrosshairUpdater` 战斗态每帧无条件断言 `Cursor.visible=false + lockState=Locked`，缓解编辑器/Windows 下关闭 UI 后 OS 鼠标残留（编辑器仍需 Game 视图聚焦才能完全生效，打包后无此问题，属 Unity 编辑器固有限制）。Play 验证：设置开→准星隐藏+IsMenuUIOpen=true；关→准星恢复+光标隐藏锁定+位置零漂移

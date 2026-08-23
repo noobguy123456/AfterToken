@@ -178,6 +178,19 @@ namespace GameLogic
     }
 
     [Serializable]
+    public class KeyBindingEntry
+    {
+        /// <summary>
+        /// KeyBindAction 的枚举名（字符串存档，枚举顺序调整不影响旧档）。
+        /// </summary>
+        public string action;
+        /// <summary>
+        /// KeyCode 的整数值。
+        /// </summary>
+        public int keyCode;
+    }
+
+    [Serializable]
     public class SettingsSaveData
     {
         public bool sensitivityInitialized;
@@ -186,5 +199,22 @@ namespace GameLogic
         public float scopeSensitivity;
         public bool sniperAimModeInitialized;
         public bool sniperAimModeToggle;
+        /// <summary>
+        /// 准星样式（CrosshairStyle 枚举 int 值）。
+        /// </summary>
+        public bool crosshairStyleInitialized;
+        public int crosshairStyle;
+        /// <summary>
+        /// 准星颜色 RGBA。
+        /// </summary>
+        public bool crosshairColorInitialized;
+        public float crosshairColorR;
+        public float crosshairColorG;
+        public float crosshairColorB;
+        public float crosshairColorA;
+        /// <summary>
+        /// 玩家自定义按键绑定；空列表 = 全部使用默认键位。
+        /// </summary>
+        public List<KeyBindingEntry> keyBindings = new List<KeyBindingEntry>();
     }
 }

@@ -151,12 +151,20 @@ namespace GameLogic
             }
         }
 
+        // 命中标记造型：与狙击镜镜内标记同款的 X 形（四根对角短刺），全武器统一
+        private static Sprite _hitMarkerSprite;
+
         private Image CreateHitMarker()
         {
             if (_hitMarkerTemplate == null || _indicatorRoot == null) return null;
             var marker = Object.Instantiate(_hitMarkerTemplate, _indicatorRoot, false);
             marker.gameObject.SetActive(false);
             marker.rectTransform.sizeDelta = new Vector2(_hitMarkerSize, _hitMarkerSize);
+            if (_hitMarkerSprite == null)
+            {
+                _hitMarkerSprite = SniperScopeUI.CreateHitMarkerSprite();
+            }
+            marker.sprite = _hitMarkerSprite;
             return marker;
         }
 
@@ -251,16 +259,22 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 在目标屏幕位置显示命中标记。
+        /// 显示命中标记（X 形，显示在准星中心；准星不可用时退回目标屏幕位置）。
         /// </summary>
         /// <param name="isCritical">是否暴击/弱点。</param>
-        /// <param name="screenPos">目标在屏幕上的位置。</param>
+        /// <param name="screenPos">目标在屏幕上的位置（准星不可用时的兜底）。</param>
         public void ShowHitMarker(bool isCritical, Vector2 screenPos)
         {
             if (_indicatorRoot == null) return;
             // 窗口隐藏时（如被狙击镜遮挡）不生成：生成了也只会冻结在画面上。
             if (!Visible) return;
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_indicatorRoot, screenPos, null, out var localPos)) return;
+
+            // 命中标记显示在准星中心（子弹落点，与狙击镜镜内标记行为一致）；
+            // 准星不可用时（非战斗场景）退回目标屏幕位置
+            Vector2 markerScreenPos = CrosshairUpdater.Instance != null
+                ? CrosshairUpdater.Instance.CurrentScreenPos
+                : screenPos;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_indicatorRoot, markerScreenPos, Canvas != null ? Canvas.worldCamera : null, out var localPos)) return;
 
             Image marker;
             if (_hitMarkerPool.Count > 0)

@@ -13,14 +13,11 @@ namespace GameLogic
     public class InputSystem : MonoBehaviour
     {
         [Header("输入设置")]
-        [SerializeField] private KeyCode _aimKey = KeyCode.Mouse1;
-        [SerializeField] private KeyCode _weaponWheelKey = KeyCode.Tab;
-        [SerializeField] private KeyCode _reloadKey = KeyCode.R;
-        [SerializeField] private KeyCode _dodgeKey = KeyCode.Space;
-        [SerializeField] private KeyCode _interactKey = KeyCode.E;
-        [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
-        [SerializeField] private KeyCode _bagKey = KeyCode.B;
         [SerializeField] private float _wheelTimeScale = 0.2f;
+
+        // 键位统一从 KeyBindingSetting 读取（玩家可在设置面板 Input 页签改绑）。
+        // ESC 是全局 UI 关闭键，固定不可改绑。
+        private const KeyCode SettingsKey = KeyCode.Escape;
 
         private Camera _mainCamera;
         private bool _isAimPressed;
@@ -164,12 +161,13 @@ namespace GameLogic
 
         private void HandleFireInput()
         {
-            if (Input.GetMouseButtonDown(0))
+            var fireKey = KeyBindingSetting.GetKey(KeyBindAction.Fire);
+            if (Input.GetKeyDown(fireKey))
             {
                 BattleInputEvent?.OnFirePressed();
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetKeyUp(fireKey))
             {
                 BattleInputEvent?.OnFireReleased();
             }
@@ -179,13 +177,14 @@ namespace GameLogic
         {
             // 支持 Hold 和 Toggle 两种模式，由 WeaponSystem 处理具体逻辑
             // 这里只发送按下/释放事件
-            if (Input.GetKeyDown(_aimKey))
+            var aimKey = KeyBindingSetting.GetKey(KeyBindAction.Aim);
+            if (Input.GetKeyDown(aimKey))
             {
                 _isAimPressed = true;
                 BattleInputEvent?.OnAimPressed();
             }
 
-            if (Input.GetKeyUp(_aimKey))
+            if (Input.GetKeyUp(aimKey))
             {
                 _isAimPressed = false;
                 BattleInputEvent?.OnAimReleased();
@@ -194,7 +193,7 @@ namespace GameLogic
 
         private void HandleReloadInput()
         {
-            if (Input.GetKeyDown(_reloadKey))
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Reload)))
             {
                 BattleInputEvent?.OnReloadPressed();
             }
@@ -217,7 +216,8 @@ namespace GameLogic
 
         private void HandleWeaponWheelInput()
         {
-            if (Input.GetKeyDown(_weaponWheelKey))
+            var wheelKey = KeyBindingSetting.GetKey(KeyBindAction.WeaponWheel);
+            if (Input.GetKeyDown(wheelKey))
             {
                 _isWheelOpen = true;
                 // 武器轮盘属于输入层触发的全局时间缩放效果，通过 GamePauseManager 统一控制。
@@ -226,7 +226,7 @@ namespace GameLogic
                 BattleInputEvent?.OnWeaponWheelToggled(true);
             }
 
-            if (Input.GetKeyUp(_weaponWheelKey))
+            if (Input.GetKeyUp(wheelKey))
             {
                 _isWheelOpen = false;
                 GamePauseManager.PopTimeScale();
@@ -278,7 +278,7 @@ namespace GameLogic
 
         private void HandleDodgeInput()
         {
-            if (Input.GetKeyDown(_dodgeKey))
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Dodge)))
             {
                 BattleInputEvent?.OnDodgePressed();
             }
@@ -287,10 +287,16 @@ namespace GameLogic
         /// <summary>
         /// ESC 键全局处理：优先关闭当前最上层可关闭 UI；没有任何 UI 打开时打开设置面板。
         /// 与 UI 内部关闭按钮不冲突（关闭按钮直接调用 CloseUI）。
+        /// 设置面板正在捕获改绑按键时 ESC 用于取消捕获，不走这里的关 UI 逻辑。
         /// </summary>
         private void HandleEscapeInput()
         {
-            if (!Input.GetKeyDown(_settingsKey))
+            if (SettingsUI.IsCapturingKey)
+            {
+                return;
+            }
+
+            if (!Input.GetKeyDown(SettingsKey))
             {
                 return;
             }
@@ -317,19 +323,21 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 是否有菜单类 UI 打开（背包/开箱/纸条）。打开期间屏蔽射击与瞄准输入，
+        /// 是否有菜单类 UI 打开（背包/开箱/纸条/设置）。打开期间屏蔽射击与瞄准输入，
         /// 并冻结准星与角色朝向（PlayerEntity/CrosshairUpdater 也读取此状态）。
+        /// 设置面板虽暂停时间，但点击其中按钮的鼠标按下仍会传到开火键，必须屏蔽。
         /// </summary>
         public static bool IsMenuUIOpen()
         {
             return GameModule.UI.HasWindow<BattleBagUI>()
                 || GameModule.UI.HasWindow<LootContainerUI>()
-                || GameModule.UI.HasWindow<NoteUI>();
+                || GameModule.UI.HasWindow<NoteUI>()
+                || GameModule.UI.HasWindow<SettingsUI>();
         }
 
         private void HandleBagInput()
         {
-            if (Input.GetKeyDown(_bagKey))
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Bag)))
             {
                 if (GameModule.UI.HasWindow<BattleBagUI>())
                 {
@@ -367,7 +375,7 @@ namespace GameLogic
 
         private void HandleCrosshairStyleInput()
         {
-            if (Input.GetKeyDown(KeyCode.C))
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.CrosshairStyle)))
             {
                 BattleInputEvent?.OnCycleCrosshairStyle();
             }
@@ -375,7 +383,7 @@ namespace GameLogic
 
         private void HandleInteractInput()
         {
-            if (Input.GetKeyDown(_interactKey))
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Interact)))
             {
                 BattleInputEvent?.OnInteractPressed();
             }

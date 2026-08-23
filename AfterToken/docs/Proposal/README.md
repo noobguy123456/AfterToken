@@ -12,6 +12,7 @@
 docs/Proposal/
 ├── combat/          # 战斗系统相关提案
 ├── infra/           # 基础设施相关提案
+├── narrative/       # 叙事 / 对话 / 任务相关提案
 ├── pipeline/        # 管线与工具相关提案
 ├── shared/          # 共享系统 / 跨玩法相关提案
 ├── simulation/      # 模拟经营相关提案
@@ -34,6 +35,13 @@ docs/Proposal/
 |---|---|---|---|
 | 逻辑子弹与视觉表现分离方案 | [`combat/bullet-logic-visual-separation.md`](./combat/bullet-logic-visual-separation.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system` |
 | 纯 C# 数据导向架构演进路线（ECS 思维，非 DOTS） | [`combat/pure-csharp-data-oriented-roadmap.md`](./combat/pure-csharp-data-oriented-roadmap.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system`、`combat/enemy-system`、`player/player-system` |
+
+### 叙事系统
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 对话系统设计方案 | [`narrative/dialogue-system.md`](./narrative/dialogue-system.md) | 待评审 | `narrative/dialogue-system`（待建） |
+| 任务系统设计方案 | [`narrative/quest-system.md`](./narrative/quest-system.md) | 待评审 | `narrative/quest-system`（待建） |
 
 ---
 

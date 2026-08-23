@@ -34,11 +34,20 @@ namespace GameLogic
         private int _selectedSlot = -1;
         private int _lastStatsSlot = -1;
 
+        // 轮盘选择的增量累积：轮盘期间系统光标保持锁定隐藏（不显示系统鼠标），
+        // 用打开轮盘以来的鼠标位移矢量决定选中方向，准星位置不受任何影响。
+        private Vector2 _wheelAccum;
+        private const float WheelDeadZone = 20f;
+
         protected override void OnCreate()
         {
             base.OnCreate();
             FixFullScreenCanvas();
-            CursorManager.Instance?.ShowCursor();
+            _selectedSlot = -1;
+            _lastStatsSlot = -1;
+            _wheelAccum = Vector2.zero;
+            // 隐藏准星（冻结其位置），轮盘不借用准星也不显示系统鼠标
+            CrosshairUpdater.Instance?.SetVisible(false);
             RefreshAllSlots();
         }
 
@@ -72,9 +81,17 @@ namespace GameLogic
 
         private void UpdateSelection()
         {
-            Vector2 mousePos = Input.mousePosition;
-            Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            Vector2 dir = (mousePos - center).normalized;
+            // 光标锁定下 Input.mousePosition 恒为中心点，不能用；改为累积鼠标位移。
+            _wheelAccum.x += Input.GetAxis("Mouse X") * SensitivitySetting.Value;
+            _wheelAccum.y += Input.GetAxis("Mouse Y") * SensitivitySetting.Value;
+
+            // 死区内保持上次选择（未推满死区 = 不换武器，松开保持原武器）
+            if (_wheelAccum.magnitude < WheelDeadZone)
+            {
+                return;
+            }
+
+            Vector2 dir = _wheelAccum.normalized;
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             angle = (angle + 360f) % 360f;
 
@@ -118,7 +135,7 @@ namespace GameLogic
 
         protected override void OnDestroy()
         {
-            CursorManager.Instance?.HideCursor();
+            CrosshairUpdater.Instance?.SetVisible(true);
             base.OnDestroy();
         }
 

@@ -52,7 +52,7 @@ namespace GameLogic
 
         /// <summary>
         /// 设置准星节点是否可见。
-        /// 打开背包/设置等需要系统光标的 UI 时，应隐藏准星避免与系统鼠标并存。
+        /// 打开背包/设置等 UI 时应隐藏准星（隐藏即冻结，位置不会被任何 UI 操作改动）。
         /// </summary>
         public void SetVisible(bool visible)
         {
@@ -64,28 +64,41 @@ namespace GameLogic
 
         private void Update()
         {
-            // 游戏暂停（Time.timeScale = 0）时，鼠标位移不应再驱动准星，
-            // 避免在设置面板等 UI 上移动鼠标时场景准星跟随。
+            // 核心原则：准星位置是玩家的瞄准状态，只有战斗中的鼠标位移能驱动它。
+            // 任何 UI 打开期间一律冻结（不强制移动、不同步系统鼠标），关掉 UI 后瞄点原样保留。
+            bool cursorVisible = CursorManager.Instance != null && CursorManager.Instance.IsCursorVisible;
+            if (cursorVisible)
+            {
+                // 兜底：没有任何菜单 UI 光标却可见（ShowCursor/HideCursor 未严格配对导致
+                // 引用计数泄漏，表现为关掉 UI 后 Windows 系统鼠标仍显示），强制恢复战斗光标状态。
+                bool menuOpen = InputSystem.IsMenuUIOpen()
+                    || GameModule.UI.HasWindow<WeaponWheelUI>()
+                    || GameModule.UI.HasWindow<SettingsUI>();
+                if (!menuOpen && Time.timeScale > Mathf.Epsilon)
+                {
+                    CursorManager.Instance.ForceHideCursor();
+                }
+                return;
+            }
+
+            // 武器轮盘期间光标保持锁定隐藏（轮盘用自己的增量选择，不经系统鼠标），准星同样冻结。
+            // 正常路径下轮盘会把准星 SetVisible(false)（本组件随之停走），这里是兜底。
+            if (GameModule.UI.HasWindow<WeaponWheelUI>())
+            {
+                return;
+            }
+
+            // 游戏暂停（Time.timeScale = 0）时，鼠标位移不应再驱动准星。
             if (Time.timeScale <= Mathf.Epsilon)
             {
                 return;
             }
 
-            // 兜底：战斗中无菜单类 UI（背包/开箱/纸条/武器轮盘）时，光标必须处于隐藏锁定状态。
-            // 若某个 UI 的 ShowCursor/HideCursor 未严格配对导致引用计数泄漏（表现为关掉 UI 后
-            // Windows 系统鼠标仍显示），这里强制恢复战斗光标状态，避免泄漏扩散到后续 UI 开关。
-            bool menuOpen = InputSystem.IsMenuUIOpen() || GameModule.UI.HasWindow<WeaponWheelUI>();
-            if (!menuOpen && CursorManager.Instance != null && CursorManager.Instance.IsCursorVisible)
-            {
-                CursorManager.Instance.ForceHideCursor();
-            }
-
-            // 系统光标可见（背包/开箱/纸条等 UI 打开）时冻结准星，
-            // 避免隐藏的准星继续累加鼠标位移，导致关掉 UI 后瞄准点被"强制挪动"。
-            if (CursorManager.Instance != null && CursorManager.Instance.IsCursorVisible)
-            {
-                return;
-            }
+            // 战斗状态下每帧断言系统光标隐藏+锁定：Windows/编辑器下 Cursor.visible=false
+            // 偶发不真正生效（CursorManager 注释记录的已知问题），引用计数归零后 OS 鼠标
+            // 可能仍残留在屏幕上。这里无条件重设，彻底杜绝战斗中出现系统鼠标。
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
 
             UpdatePosition();
             UpdateRotation();

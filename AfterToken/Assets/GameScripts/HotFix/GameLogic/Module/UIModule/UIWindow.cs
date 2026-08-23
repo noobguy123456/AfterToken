@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -548,14 +548,15 @@ namespace GameLogic
 
         /// <summary>
         /// 修复嵌套在 UIRoot/UICanvas 下的全屏 UI Canvas 缩放问题。
-        /// 将面板 RectTransform 设置为全屏拉伸，并确保以 Overlay 方式渲染。
+        /// 渲染模式统一为 Screen Space - Camera（挂 UIRoot 下专用 UICamera，锚定在远离场景的
+        /// (200,200,0) "UI 区"，Scene 视图调试不被 UI 画布污染）；面板 RectTransform 全屏拉伸。
         /// </summary>
         protected void FixFullScreenCanvas()
         {
             if (_canvas != null)
             {
-                _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                _canvas.worldCamera = null;
+                _canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                _canvas.worldCamera = UIModule.Instance.UICamera;
                 _canvas.overrideSorting = true;
             }
 

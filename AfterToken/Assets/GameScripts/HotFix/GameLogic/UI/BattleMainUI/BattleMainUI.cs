@@ -46,9 +46,7 @@ namespace GameLogic
         #endregion
 
         [Header("准星")]
-        [SerializeField] private CrosshairStyle _defaultCrosshairStyle = CrosshairStyle.Cross;
         [SerializeField] private int _crosshairSize = 24;
-        [SerializeField] private Color _crosshairColor = new Color(0.2f, 1f, 0.2f, 0.9f);
         [SerializeField] private float _crosshairThickness = 3f;
         [SerializeField] private float _reloadingSpinSpeed = 360f;
 
@@ -71,6 +69,12 @@ namespace GameLogic
             FixFullScreenCanvas();
             InitializeCrosshair();
             RefreshAll();
+        }
+
+        protected override void OnDestroy()
+        {
+            CrosshairSetting.OnChanged -= ApplyCrosshairSetting;
+            base.OnDestroy();
         }
 
         protected override void RegisterEvent()
@@ -121,7 +125,8 @@ namespace GameLogic
             _rectCrosshair.sizeDelta = new Vector2(_crosshairSize, _crosshairSize);
 
             GenerateAllCrosshairSprites();
-            SetCrosshairStyle(_defaultCrosshairStyle);
+            SetCrosshairStyle(CrosshairSetting.Style);
+            CrosshairSetting.OnChanged += ApplyCrosshairSetting;
 
             _crosshairUpdater = _rectCrosshair.gameObject.GetComponent<CrosshairUpdater>();
             if (_crosshairUpdater == null)
@@ -132,20 +137,34 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 循环切换到下一个准星样式。
+        /// 循环切换到下一个准星样式（换弹中不响应）。
+        /// 实际切换由 CrosshairSetting 写档 + OnChanged 广播完成，本窗口在 ApplyCrosshairSetting 中应用。
         /// </summary>
         public void CycleCrosshairStyle()
         {
             if (_isReloading) return;
-
-            var values = (CrosshairStyle[])System.Enum.GetValues(typeof(CrosshairStyle));
-            int idx = System.Array.IndexOf(values, _currentStyle);
-            int next = (idx + 1) % values.Length;
-            SetCrosshairStyle(values[next]);
+            CrosshairSetting.CycleStyle();
         }
 
         /// <summary>
-        /// 设置当前准星样式。
+        /// 设置变动回调：应用存档中的样式与颜色。
+        /// 换弹中的转圈样式不被覆盖，仅更新颜色，样式待换弹结束后由 _preReloadStyle 恢复。
+        /// </summary>
+        private void ApplyCrosshairSetting()
+        {
+            if (_isReloading)
+            {
+                if (_crosshairImage != null)
+                {
+                    _crosshairImage.color = CrosshairSetting.Color;
+                }
+                return;
+            }
+            SetCrosshairStyle(CrosshairSetting.Style);
+        }
+
+        /// <summary>
+        /// 设置当前准星样式（样式精灵为白色，颜色统一由 CrosshairSetting 染色）。
         /// </summary>
         public void SetCrosshairStyle(CrosshairStyle style)
         {
@@ -153,213 +172,20 @@ namespace GameLogic
             if (_crosshairImage != null && _crosshairSprites.TryGetValue(style, out var sprite))
             {
                 _crosshairImage.sprite = sprite;
-                _crosshairImage.color = _crosshairColor;
+                _crosshairImage.color = CrosshairSetting.Color;
             }
         }
 
         /// <summary>
-        /// 预生成所有准星样式的 Sprite。
+        /// 预生成所有准星样式的 Sprite（白色贴图，由 CrosshairSpriteFactory 统一绘制）。
         /// </summary>
         private void GenerateAllCrosshairSprites()
         {
-            _crosshairSprites[CrosshairStyle.Dot] = CreateDotSprite();
-            _crosshairSprites[CrosshairStyle.Cross] = CreateCrossSprite();
-            _crosshairSprites[CrosshairStyle.Circle] = CreateCircleSprite();
-            _crosshairSprites[CrosshairStyle.TShape] = CreateTShapeSprite();
-            _crosshairSprites[CrosshairStyle.Reloading] = CreateReloadingSprite();
-        }
-
-        private Sprite CreateDotSprite()
-        {
-            int size = _crosshairSize;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-
-            ClearTexture(tex);
-            float radius = size * 0.25f;
-            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
-            FillCircle(tex, center, radius, _crosshairColor);
-            tex.Apply();
-
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        }
-
-        private Sprite CreateCrossSprite()
-        {
-            int size = _crosshairSize;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-
-            ClearTexture(tex);
-            float half = size * 0.5f;
-            float halfThick = _crosshairThickness * 0.5f;
-
-            // 水平线
-            FillRect(tex, new Vector2(halfThick, half - halfThick), new Vector2(size - halfThick, half + halfThick), _crosshairColor);
-            // 垂直线
-            FillRect(tex, new Vector2(half - halfThick, halfThick), new Vector2(half + halfThick, size - halfThick), _crosshairColor);
-
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        }
-
-        private Sprite CreateCircleSprite()
-        {
-            int size = _crosshairSize;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-
-            ClearTexture(tex);
-            float radius = size * 0.5f - 2f;
-            float thickness = _crosshairThickness;
-            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
-            DrawRing(tex, center, radius, thickness, _crosshairColor);
-            tex.Apply();
-
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        }
-
-        private Sprite CreateTShapeSprite()
-        {
-            int size = _crosshairSize;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-
-            ClearTexture(tex);
-            float half = size * 0.5f;
-            float halfThick = _crosshairThickness * 0.5f;
-
-            // 顶部横线
-            FillRect(tex, new Vector2(halfThick, size - _crosshairThickness - 1f), new Vector2(size - halfThick, size - 1f), _crosshairColor);
-            // 中间竖线
-            FillRect(tex, new Vector2(half - halfThick, halfThick), new Vector2(half + halfThick, size - _crosshairThickness - 1f), _crosshairColor);
-
-            tex.Apply();
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        }
-
-        /// <summary>
-        /// 创建换弹转圈准星：一个缺口的圆环，旋转时产生等待/加载视觉效果。
-        /// </summary>
-        private Sprite CreateReloadingSprite()
-        {
-            int size = _crosshairSize;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-
-            ClearTexture(tex);
-            float radius = size * 0.5f - 2f;
-            float thickness = _crosshairThickness;
-            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
-
-            // 绘制约 270 度的圆环，留一个缺口
-            DrawArcRing(tex, center, radius, thickness, _crosshairColor, 45f, 315f);
-            tex.Apply();
-
-            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
-        }
-
-        #region 纹理绘制辅助
-
-        private void ClearTexture(Texture2D tex)
-        {
-            int size = tex.width;
-            var clear = new Color[size * size];
-            for (int i = 0; i < clear.Length; i++) clear[i] = Color.clear;
-            tex.SetPixels(clear);
-        }
-
-        private void FillRect(Texture2D tex, Vector2 min, Vector2 max, Color color)
-        {
-            int xMin = Mathf.Max(0, Mathf.FloorToInt(min.x));
-            int yMin = Mathf.Max(0, Mathf.FloorToInt(min.y));
-            int xMax = Mathf.Min(tex.width - 1, Mathf.CeilToInt(max.x));
-            int yMax = Mathf.Min(tex.height - 1, Mathf.CeilToInt(max.y));
-
-            for (int x = xMin; x <= xMax; x++)
-            for (int y = yMin; y <= yMax; y++)
-                tex.SetPixel(x, y, color);
-        }
-
-        private void FillCircle(Texture2D tex, Vector2 center, float radius, Color color)
-        {
-            int r = Mathf.CeilToInt(radius);
-            int cx = Mathf.RoundToInt(center.x);
-            int cy = Mathf.RoundToInt(center.y);
-            float r2 = radius * radius;
-
-            for (int x = -r; x <= r; x++)
-            for (int y = -r; y <= r; y++)
+            foreach (CrosshairStyle style in System.Enum.GetValues(typeof(CrosshairStyle)))
             {
-                if (x * x + y * y <= r2)
-                {
-                    int px = cx + x;
-                    int py = cy + y;
-                    if (px >= 0 && px < tex.width && py >= 0 && py < tex.height)
-                        tex.SetPixel(px, py, color);
-                }
+                _crosshairSprites[style] = CrosshairSpriteFactory.Create(style, _crosshairSize, _crosshairThickness);
             }
         }
-
-        private void DrawRing(Texture2D tex, Vector2 center, float radius, float thickness, Color color)
-        {
-            int size = tex.width;
-            float inner = Mathf.Max(0f, radius - thickness * 0.5f);
-            float outer = radius + thickness * 0.5f;
-            float inner2 = inner * inner;
-            float outer2 = outer * outer;
-
-            for (int x = 0; x < size; x++)
-            for (int y = 0; y < size; y++)
-            {
-                float dx = x + 0.5f - center.x;
-                float dy = y + 0.5f - center.y;
-                float d2 = dx * dx + dy * dy;
-                if (d2 >= inner2 && d2 <= outer2)
-                    tex.SetPixel(x, y, color);
-            }
-        }
-
-        /// <summary>
-        /// 绘制指定角度范围的圆环。
-        /// </summary>
-        private void DrawArcRing(Texture2D tex, Vector2 center, float radius, float thickness, Color color, float startAngle, float endAngle)
-        {
-            int size = tex.width;
-            float inner = Mathf.Max(0f, radius - thickness * 0.5f);
-            float outer = radius + thickness * 0.5f;
-            float inner2 = inner * inner;
-            float outer2 = outer * outer;
-
-            for (int x = 0; x < size; x++)
-            for (int y = 0; y < size; y++)
-            {
-                float dx = x + 0.5f - center.x;
-                float dy = y + 0.5f - center.y;
-                float d2 = dx * dx + dy * dy;
-                if (d2 < inner2 || d2 > outer2) continue;
-
-                float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-                angle = (angle + 360f) % 360f;
-
-                float start = (startAngle + 360f) % 360f;
-                float end = (endAngle + 360f) % 360f;
-
-                bool inArc = start <= end
-                    ? angle >= start && angle <= end
-                    : angle >= start || angle <= end;
-
-                if (inArc)
-                    tex.SetPixel(x, y, color);
-            }
-        }
-
-        #endregion
 
         #endregion
 

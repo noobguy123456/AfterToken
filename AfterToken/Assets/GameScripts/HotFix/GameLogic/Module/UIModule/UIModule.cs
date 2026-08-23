@@ -51,11 +51,30 @@ namespace GameLogic
             var uiRoot = SingletonSystem.GetGameObject("UIRoot");
             if (uiRoot == null)
             {
+                // 兜底路径：正常流程由 UIRoot.prefab 提供（UICanvas=SSC + UICamera）。
+                // 此处对齐同一架构：UI 相机锚定在 (200,200,0) 的 "UI 区"，Scene 视图不被画布污染。
                 uiRoot = new GameObject("UIRoot");
-                var canvas = uiRoot.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                uiRoot.AddComponent<CanvasScaler>();
-                uiRoot.AddComponent<GraphicRaycaster>();
+                var canvasGo = new GameObject("UICanvas");
+                canvasGo.transform.SetParent(uiRoot.transform, false);
+                var canvas = canvasGo.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.planeDistance = 100f;
+                var scaler = canvasGo.AddComponent<CanvasScaler>();
+                // 与 UIRoot.prefab 的 CanvasScaler 配置保持一致
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+                canvasGo.AddComponent<GraphicRaycaster>();
+
+                var cameraGo = new GameObject("UICamera");
+                cameraGo.transform.SetParent(uiRoot.transform, false);
+                cameraGo.transform.position = new Vector3(200f, 200f, 0f);
+                var uiCamera = cameraGo.AddComponent<Camera>();
+                uiCamera.orthographic = true;
+                uiCamera.depth = 2;
+                uiCamera.clearFlags = CameraClearFlags.Nothing;
+                uiCamera.cullingMask = 1 << LayerMask.NameToLayer("UI");
+                canvas.worldCamera = uiCamera;
+
                 SingletonSystem.Retain(uiRoot, null);
             }
 

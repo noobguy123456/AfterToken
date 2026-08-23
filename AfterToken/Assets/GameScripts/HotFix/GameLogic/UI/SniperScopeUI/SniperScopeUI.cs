@@ -148,8 +148,9 @@ namespace GameLogic
 
         /// <summary>
         /// 命中标记精灵：四根对角短刺（中心留空），白色，由 Image.color 染色。
+        /// 静态方法，HitFeedbackUI 的非开镜命中标记复用同款造型。
         /// </summary>
-        private Sprite CreateHitMarkerSprite()
+        internal static Sprite CreateHitMarkerSprite()
         {
             const int size = 64;
             const float halfThick = 2.5f; // 刺半宽
@@ -228,6 +229,14 @@ namespace GameLogic
             // 开镜瞬间清掉 HitFeedbackUI 里未淡出完的命中标记：
             // 狙击镜全屏遮挡该窗口后其 OnUpdate 停走，残留标记会冻结在画面上。
             HitFeedbackUI.Instance?.ClearHitMarkers();
+            // 镜内命中标记同理：关镜时窗口只是被隐藏（OnUpdate 停走），上次命中残留的
+            // 标记会冻结在 enabled 状态，下次开镜会"瞄准即出现"——开镜时必须重置
+            if (_hitMarker != null)
+            {
+                _hitMarker.enabled = false;
+                _hitMarkerTimer = 0f;
+            }
+            _kickOffset = Vector2.zero;
             RefreshScopeTexture();
         }
 
@@ -236,6 +245,12 @@ namespace GameLogic
             base.OnSetVisible(visible);
             if (visible)
             {
+                // 双保险：框架若只走 SetVisible 不走 OnRefresh，也保证残留标记被重置
+                if (_hitMarker != null)
+                {
+                    _hitMarker.enabled = false;
+                    _hitMarkerTimer = 0f;
+                }
                 RefreshScopeTexture();
             }
         }
@@ -250,6 +265,14 @@ namespace GameLogic
             _kickOffset = Vector2.Lerp(_kickOffset, Vector2.zero,
                 1f - Mathf.Exp(-KickRecoverRate * Time.deltaTime));
             Vector3 finalPos = mousePos + (Vector3)_kickOffset;
+            // SSC 画布下 RectTransform.position 是世界坐标：屏幕像素需经 UI 相机换算到画布平面，
+            // 否则镜窗会被扔到画布外（Overlay 时代屏幕像素恰好等于世界坐标）
+            var uiCam = Canvas != null ? Canvas.worldCamera : null;
+            if (uiCam != null &&
+                RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, finalPos, uiCam, out var worldPos))
+            {
+                finalPos = worldPos;
+            }
             if (_scopeRect != null)
             {
                 _scopeRect.position = finalPos;

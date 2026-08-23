@@ -1,3 +1,19 @@
+# UI 渲染架构方案（第三版）：Screen Space - Camera + 远端 UI 相机
+
+> **2026-08-22 第三版修订（方案 D 落地，推翻第二版的 Overlay 主方案）**。
+> 第二版的核心前提是"Overlay 在 Scene 视图完全不可见"——**这是事实性错误**：Overlay 画布在 Scene 视图
+> 以世界原点为中心、1 像素=1 米渲染，1920×1080 的画布对 50m 场景是一块无法移动的巨板
+> （Unity 每帧强控其 transform），正是用户在 Play 调试中遇到的"UI 原点和场景中心一致、画布太大"问题。
+> 现方案：全部窗口走 **Screen Space - Camera**，挂 UIRoot 自带的专用 UICamera（正交、depth=2、
+> 只渲 UI 层），相机锚定在 **(200, 200, 0)** 的"UI 区"——Scene 视图里 UI 聚在 10 公里外的小飞地
+> （画布世界尺寸约 17.8×10m，由相机 orthoSize=5 决定），场景原点干净，框选场景不再带上 UI。
+> 改动点：`UIRoot.prefab`（UICanvas renderMode=SSC、worldCamera=UICamera、启用 UICamera 并移位——原为禁用状态导致 SSC 退化）、
+> `UIWindow.FixFullScreenCanvas()`（统一 SSC + 指定 UICamera，19 个窗口零改动）、
+> `UIModule.OnInit()` 兜底路径对齐。世界空间 UI（建筑牌子）与序列帧特效路线不变。
+> 以下为第二版原文，保留作决策记录。
+
+---
+
 # UI 渲染架构方案（修订版）：Overlay 为主 + UI 相机只做特效
 
 > 2026-08-01 起草并修订。起因：经营场景管理面板（SSC 挂角色相机）倾斜/"陷入地下"；进一步讨论后明确约束：**Scene 视图调试体验不能被 UI 污染**（现状场景 50m、UI 平面巨大，调试很碍事）、不为简单 UI 付出多余性能。
