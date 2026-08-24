@@ -18,6 +18,7 @@ namespace GameLogic
         WeaponWheel = 5,
         Bag = 6,
         CrosshairStyle = 7,
+        Map = 8,
     }
 
     /// <summary>
@@ -48,6 +49,7 @@ namespace GameLogic
                 case KeyBindAction.WeaponWheel: return KeyCode.Tab;
                 case KeyBindAction.Bag: return KeyCode.B;
                 case KeyBindAction.CrosshairStyle: return KeyCode.C;
+                case KeyBindAction.Map: return KeyCode.M;
                 default: return KeyCode.None;
             }
         }
@@ -67,6 +69,7 @@ namespace GameLogic
                 case KeyBindAction.WeaponWheel: return "Weapon Wheel";
                 case KeyBindAction.Bag: return "Bag";
                 case KeyBindAction.CrosshairStyle: return "Crosshair Style";
+                case KeyBindAction.Map: return "Map";
                 default: return action.ToString();
             }
         }

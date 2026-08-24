@@ -23,6 +23,11 @@ namespace GameLogic
         public static bool HasBounds => _hasBounds;
 
         /// <summary>
+        /// 当前边界（未初始化时为 default）。
+        /// </summary>
+        public static Bounds Bounds => _bounds;
+
+        /// <summary>
         /// 初始化战斗边界。
         /// </summary>
         public static void Init(Bounds bounds)

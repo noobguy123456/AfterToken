@@ -9,8 +9,10 @@ namespace GameLogic
     /// 一个跟随鼠标的圆形镜窗：窗内显示 ScopeCamera 的放大画面（RenderTexture），
     /// 窗外用带圆孔的暗角遮罩压暗（半透明，隐约可见）。
     /// 全部图形关闭 raycastTarget，不拦截战斗输入。
+    /// fullScreen 必须为 false：狙击镜是叠加层而非独占窗口，
+    /// 否则 UI 栈会把下方的 BattleMainUI（血条/弹药 HUD）全部隐藏（OnSetWindowVisible 规则）。
     /// </summary>
-    [Window(UILayer.Top, location: "SniperScopeUI", fullScreen: true)]
+    [Window(UILayer.Top, location: "SniperScopeUI", fullScreen: false)]
     public class SniperScopeUI : UIWindow
     {
         #region 脚本工具生成的代码

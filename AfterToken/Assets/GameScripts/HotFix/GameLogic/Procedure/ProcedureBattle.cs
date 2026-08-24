@@ -45,6 +45,7 @@ namespace GameLogic
                 await GameModule.UI.ShowUIAsyncAwait<BattleMainUI>();
                 await GameModule.UI.ShowUIAsyncAwait<DamageNumberUI>();
                 await GameModule.UI.ShowUIAsyncAwait<HitFeedbackUI>();
+                await GameModule.UI.ShowUIAsyncAwait<MinimapUI>();
             });
         }
 
@@ -74,6 +75,7 @@ namespace GameLogic
             _battleRoot.AddComponent<PortalSystem>();
             _battleRoot.AddComponent<LootContainerSystem>();
             _battleRoot.AddComponent<NoteSystem>();
+            _battleRoot.AddComponent<MinimapSystem>();
             _battleRoot.AddComponent<PlayerDeathHandler>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

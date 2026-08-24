@@ -323,11 +323,20 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 是否有菜单类 UI 打开（背包/开箱/纸条/设置）。打开期间屏蔽射击与瞄准输入，
+        /// 是否有菜单类 UI 打开（背包/开箱/纸条/设置/大地图）。打开期间屏蔽射击与瞄准输入，
         /// 并冻结准星与角色朝向（PlayerEntity/CrosshairUpdater 也读取此状态）。
         /// 设置面板虽暂停时间，但点击其中按钮的鼠标按下仍会传到开火键，必须屏蔽。
         /// </summary>
         public static bool IsMenuUIOpen()
+        {
+            return IsWindowMenuOpen() || MinimapUI.IsBigMapOpen;
+        }
+
+        /// <summary>
+        /// 是否有菜单类窗口打开（仅背包/开箱/纸条/设置，不含大地图）。
+        /// 供 MinimapUI 自身判断"被其它菜单压盖时应隐藏/退出大地图"，避免与大地图状态循环依赖。
+        /// </summary>
+        public static bool IsWindowMenuOpen()
         {
             return GameModule.UI.HasWindow<BattleBagUI>()
                 || GameModule.UI.HasWindow<LootContainerUI>()

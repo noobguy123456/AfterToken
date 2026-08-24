@@ -177,6 +177,18 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 开/关狙击镜时隐藏/显示普通准星图案（只关 Image，不动 GameObject——
+        /// CrosshairUpdater 要持续累加鼠标位移来驱动镜窗位置）。
+        /// </summary>
+        public void SetCrosshairImageHidden(bool hidden)
+        {
+            if (_crosshairImage != null)
+            {
+                _crosshairImage.enabled = !hidden;
+            }
+        }
+
+        /// <summary>
         /// 预生成所有准星样式的 Sprite（白色贴图，由 CrosshairSpriteFactory 统一绘制）。
         /// </summary>
         private void GenerateAllCrosshairSprites()

@@ -293,3 +293,15 @@ Luban 配置表数据补充
 - 2026-08-23 准星位置神圣不可侵犯（用户拍板，彻底解决游戏准星/系统鼠标统一性问题，取代同日的"同步"方案）：原则——准星位置是玩家瞄准状态，只有战斗中的鼠标位移能驱动它；任何 UI 操作（背包/轮盘/设置/切准星样式）不得强制移动准星，关 UI 后瞄点原样保留；系统鼠标只在点选类 UI 期间出现、用完可靠收回。改动：①`CrosshairUpdater` 撤销光标可见同步与 OnEnable 对齐，回归纯冻结（泄漏兜底保留）；②`WeaponWheelUI` 不再显示系统鼠标（移除 ShowCursor/HideCursor），选择改为打开以来鼠标位移增量驱动（死区 20px 保持原武器），并隐藏/恢复准星；③死区 -1 槽位由 WeaponSystem 原有保护兼容。Play 验证：背包/设置/轮盘三路径准星全程 (960,540) 零漂移、光标显隐锁定正确。轮盘手感（灵敏度/死区）待用户实测。详见 input-system / weapon-system progress
 
 - 2026-08-23 设置面板"两种鼠标"收尾：①用户截图定位——红框中的"第二个鼠标"实为上一轮加的准星样式预览图（外形=准星、无衬底，被误认为游戏光标跑进面板），已给预览加深灰衬底板（`m_img_CrosshairPreviewBg`，prefab 补丁4），视觉上是色板而非光标；②`IsMenuUIOpen()` 纳入 `SettingsUI`——此前设置面板不在屏蔽名单，点面板按钮的鼠标按下会穿透到开火键；③`CrosshairUpdater` 战斗态每帧无条件断言 `Cursor.visible=false + lockState=Locked`，缓解编辑器/Windows 下关闭 UI 后 OS 鼠标残留（编辑器仍需 Game 视图聚焦才能完全生效，打包后无此问题，属 Unity 编辑器固有限制）。Play 验证：设置开→准星隐藏+IsMenuUIOpen=true；关→准星恢复+光标隐藏锁定+位置零漂移
+
+- 2026-08-24 小地图系统落地：`MinimapSystem`（正交俯视相机 y=50/orthoSize=22/北向上，渲 512×512 RenderTexture，LateUpdate 跟随玩家 XZ 居中，剔除 UI 层）+ `MinimapUI`（220×220 右下角非全屏窗口，RawImage 绑 RT，敌人红点池按 `EnemyRegistry.All` + `TryWorldToMap` 逐帧投影，玩家静态中心标记）；`ProcedureBattle` 挂载系统并入场打开窗口；prefab 按 InteractionPromptUI 根结构手写到 `Assets/AssetRaw/UI/MinimapUI/`。MCP 断连，编译与 Play 验证待重连。详见 combat/minimap-system
+
+- 2026-08-24 修复开狙击镜时 HUD 消失：`UIModule.OnSetWindowVisible()` 在 fullScreen 窗口就绪后隐藏其下所有窗口，SniperScopeUI 的 `fullScreen: true` 把 BattleMainUI（血条/弹药）藏了。改 SniperScopeUI 为 `fullScreen:false`，新增 `BattleMainUI.SetCrosshairImageHidden` 只切准星 Image.enabled，`WeaponSystem` 开关镜时配对调用（防普通准星钉在镜窗中心）。待 Play 验证。详见 weapon-system progress
+
+- 2026-08-24 小地图修复：空白根因是 MinimapUI.ScriptGenerator 的 `FindChildComponent` 路径漏了 `m_rect_Panel/` 前缀（transform.Find 精确路径），地图纹理与红点池全部绑定失败；面板按用户要求从右下角挪到右上角。待 Play 验证
+
+- 2026-08-24 小地图返工为 2D 平面缩略图方案（用户反馈：露场景外/开镜变灰/不该实时渲 3D，参考 Apex/三角洲）：MinimapSystem 改入场一次性烘焙（BattleBoundary.Bounds 定图范围，新增 Bounds 属性，Render 一次后相机停用）；MinimapUI 改 uvRect 窗口平移（45% 视野、钳制不露图外）+ 图标窗口投影 + 层级升 Tips 压过狙击镜蒙版。待 Play 验证。详见 combat/minimap-system
+
+- 2026-08-24 小地图 + 开镜 HUD Play 验证通过（101 关）：烘焙 ready=True、uvRect 窗口随玩家居中（0.28,0.28,0.45×0.45）、右上角面板显示地形/红点/绿标；手动打开 SniperScopeUI 后 BattleMainUI 与 MinimapUI 均保持 visible，小地图不变灰。编译 0 错误。真实开镜流程（右键）的准星隐藏配对待用户实测
+
+- 2026-08-24 小地图菜单遮挡修复 + 平面化烘焙：MinimapUI 监听 IsMenuUIOpen 菜单打开时隐藏面板（保留 Tips 层压狙击镜蒙版），设置 Close 按钮不再被挡；烘焙改 Unlit/Color 替换 shader 平色无光影（打包需加 Always Included Shaders）。Play 三项验证全过。详见 combat/minimap-system

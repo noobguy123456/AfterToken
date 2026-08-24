@@ -353,11 +353,14 @@ namespace GameLogic
                         CameraSystem3D.Instance?.SetScopeActive(true, CurrentWeapon.ScopeFov);
                     }
                     GameModule.UI.ShowUIAsync<SniperScopeUI>();
+                    // 开镜后隐藏普通准星图案（镜窗自带分划线），只关 Image 不动 GameObject
+                    GameModule.UI.GetUI<BattleMainUI>()?.SetCrosshairImageHidden(true);
                 }
                 else
                 {
                     CameraSystem3D.Instance?.SetScopeActive(false);
                     GameModule.UI.CloseUI<SniperScopeUI>();
+                    GameModule.UI.GetUI<BattleMainUI>()?.SetCrosshairImageHidden(false);
                 }
             }
         }
