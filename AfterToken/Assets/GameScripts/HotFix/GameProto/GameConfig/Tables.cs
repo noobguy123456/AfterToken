@@ -105,6 +105,10 @@ public partial class Tables
     /// 内容解锁表
     /// </summary>
     public cfg.TbUnlock TbUnlock {get; }
+    /// <summary>
+    /// NPC表
+    /// </summary>
+    public cfg.TbNpc TbNpc {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -132,6 +136,7 @@ public partial class Tables
         TbNote = new cfg.TbNote(loader("cfg_tbnote"));
         TbPlayerLevel = new cfg.TbPlayerLevel(loader("cfg_tbplayerlevel"));
         TbUnlock = new cfg.TbUnlock(loader("cfg_tbunlock"));
+        TbNpc = new cfg.TbNpc(loader("cfg_tbnpc"));
         ResolveRef();
     }
     
@@ -160,6 +165,7 @@ public partial class Tables
         TbNote.ResolveRef(this);
         TbPlayerLevel.ResolveRef(this);
         TbUnlock.ResolveRef(this);
+        TbNpc.ResolveRef(this);
     }
 }
 

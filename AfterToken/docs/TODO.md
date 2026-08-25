@@ -100,6 +100,7 @@
 | 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长；MVP 后实现 |
 | 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获；MVP 后实现 |
 | 订单系统 | ✅ | - | - | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励已实现 |
+| NPC 系统 | 🟡 | P1 | 对话系统（pending） | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity`（触发区 + 占位胶囊 + Billboard 名字牌）+ `NpcSystem`（E 交谈占位，发 `INpcEvent.OnNpcTalked`）；经营场景已摆 2 个测试 NPC，2026-08-25 实测通过；对话系统落地后消费交谈事件与 `dialogueId` 字段 |
 
 ### 管线与工具
 
@@ -305,3 +306,9 @@ Luban 配置表数据补充
 - 2026-08-24 小地图 + 开镜 HUD Play 验证通过（101 关）：烘焙 ready=True、uvRect 窗口随玩家居中（0.28,0.28,0.45×0.45）、右上角面板显示地形/红点/绿标；手动打开 SniperScopeUI 后 BattleMainUI 与 MinimapUI 均保持 visible，小地图不变灰。编译 0 错误。真实开镜流程（右键）的准星隐藏配对待用户实测
 
 - 2026-08-24 小地图菜单遮挡修复 + 平面化烘焙：MinimapUI 监听 IsMenuUIOpen 菜单打开时隐藏面板（保留 Tips 层压狙击镜蒙版），设置 Close 按钮不再被挡；烘焙改 Unlit/Color 替换 shader 平色无光影（打包需加 Always Included Shaders）。Play 三项验证全过。详见 combat/minimap-system
+
+- 2026-08-25 M 键大地图模式：`KeyBindAction.Map`（默认 M，可改绑）+ MinimapUI.SetBigMapMode——面板右上角 220² ↔ 屏幕居中 636²，视野 45% ↔ 整图；开图计入 IsMenuUIOpen 屏蔽射击瞄准（InputSystem 拆出 IsWindowMenuOpen 防循环依赖）；其它菜单压上自动退出大地图；OnDestroy 复位静态状态。Play 验证：开→居中整图+menuBlocked=True，关→pos/size 恢复右上角小图+menuBlocked=False
+
+- 2026-08-25 修复 `BillboardRenderer` 与 Unity 内置组件同名警告（AddComponent/GetComponent 会失效）：改名 `BillboardFaceCamera`，.meta GUID 不变场景引用不受影响，代码无其它引用点。编译 0 错误警告消除
+
+- 2026-08-25 新增 NPC 系统（经营场景底座）：Luban 新表 `TbNpc`（id/name/role/dialogueId，dialogueId 预留，2 条英文测试数据，白名单同步 `cfg_tbnpc`）；`NpcConfigMgr` / `NpcEntity`（SphereCollider trigger 1.5m + 钢蓝色占位胶囊 + 头顶 TMP 名字牌，`BillboardFaceCamera` 朝向相机）/ `NpcSystem`（E 交谈占位、提示复用 InteractionPromptUI，ProcedureSimulation 挂载）/ `INpcEvent.OnNpcTalked`（对话系统接线点）；SimulationScene 摆 NPC_Quartermaster(-3,0,3)、NPC_Doc(3,0,-4)。Play 实测：靠近出 "Press E to Talk" → E 触发交谈日志，名字牌可读，0 错误。对话系统提案仍 pending（docs/Proposal/narrative/dialogue-system.md）。详见 docs/modules/simulation/npc-system/

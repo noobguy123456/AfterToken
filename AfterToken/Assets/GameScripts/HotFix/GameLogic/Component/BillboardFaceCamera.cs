@@ -5,8 +5,9 @@ namespace GameLogic
     /// <summary>
     /// 2D人物 Billboard 渲染。
     /// 使2D人物始终面向相机。
+    /// （原名 BillboardRenderer，与 Unity 内置组件同名会导致 AddComponent/GetComponent 失效，已改名）
     /// </summary>
-    public class BillboardRenderer : MonoBehaviour
+    public class BillboardFaceCamera : MonoBehaviour
     {
         private Camera _mainCamera;
 

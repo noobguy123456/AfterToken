@@ -61,6 +61,7 @@ namespace GameLogic
             "cfg_tbnote",
             "cfg_tbplayerlevel",
             "cfg_tbunlock",
+            "cfg_tbnpc",
         };
 
         /// <summary>

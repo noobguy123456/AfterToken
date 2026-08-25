@@ -201,6 +201,9 @@ namespace GameLogic
             // 基地内传送门支持（选关门）：扫描场景中 PortalEntity 并处理交互
             _simulationRoot.AddComponent<Portal.PortalSystem>();
 
+            // NPC 系统：场景 NpcEntity 的交互提示与交谈事件（对话系统 pending，先占位）
+            _simulationRoot.AddComponent<NpcSystem>();
+
             GrantTestMaterials();
         }
 
