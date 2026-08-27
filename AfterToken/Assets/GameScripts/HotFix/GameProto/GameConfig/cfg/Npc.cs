@@ -26,6 +26,8 @@ public sealed partial class Npc : Luban.BeanBase
         Id = (int)_obj.GetValue("id");
         Name = (string)_obj.GetValue("name");
         Role = (string)_obj.GetValue("role");
+        MoveSpeed = (float)_obj.GetValue("moveSpeed");
+        PatrolPath = (string)_obj.GetValue("patrolPath");
         DialogueId = (int)_obj.GetValue("dialogueId");
     }
 
@@ -47,6 +49,14 @@ public sealed partial class Npc : Luban.BeanBase
     /// </summary>
     public readonly string Role;
     /// <summary>
+    /// 移动速度(0=站桩)
+    /// </summary>
+    public readonly float MoveSpeed;
+    /// <summary>
+    /// 巡逻路径(x,z|x,z 空=不巡逻)
+    /// </summary>
+    public readonly string PatrolPath;
+    /// <summary>
     /// 对话ID(预留,0=无)
     /// </summary>
     public readonly int DialogueId;
@@ -65,6 +75,8 @@ public sealed partial class Npc : Luban.BeanBase
         + "id:" + Id + ","
         + "name:" + Name + ","
         + "role:" + Role + ","
+        + "moveSpeed:" + MoveSpeed + ","
+        + "patrolPath:" + PatrolPath + ","
         + "dialogueId:" + DialogueId + ","
         + "}";
     }

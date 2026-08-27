@@ -1,6 +1,6 @@
 # 提案：对话系统设计方案
 
-> 提案状态：待评审  
+> 提案状态：MVP 已落地（2026-08-26，P1~P4 完成并实测通过；P0 交互仲裁器未做，见 docs/TODO.md）  
 > 提出时间：2026-08-23  
 > 提案路径：`docs/Proposal/narrative/dialogue-system.md`  
 > 关联模块（待建）：  

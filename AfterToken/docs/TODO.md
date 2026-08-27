@@ -100,7 +100,15 @@
 | 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长；MVP 后实现 |
 | 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获；MVP 后实现 |
 | 订单系统 | ✅ | - | - | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励已实现 |
-| NPC 系统 | 🟡 | P1 | 对话系统（pending） | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity`（触发区 + 占位胶囊 + Billboard 名字牌）+ `NpcSystem`（E 交谈占位，发 `INpcEvent.OnNpcTalked`）；经营场景已摆 2 个测试 NPC，2026-08-25 实测通过；对话系统落地后消费交谈事件与 `dialogueId` 字段 |
+| NPC 系统 | 🟡 | P1 | - | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity`（触发区 + 占位胶囊 + Billboard 名字牌）+ `NpcSystem`（E 交谈驱动对话系统）；经营场景已摆 2 个测试 NPC，2026-08-25/26 实测通过 |
+
+### 叙事系统
+
+| 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
+|------|------|--------|-----------|----------|------|
+| 对话系统 | 🟡 | P1 | - | `docs/modules/narrative/dialogue-system/` | Luban 扁平节点表 + `DialogueSystem` 解释器 + `DialogueUI`（打字机/选项分支/条件/标志位存档）MVP 已落地，2026-08-26 实测通过；表已改 CSV 数据源并配可视化编辑器（Tools/Dialogue/Dialogue Editor）；quest:* 词汇待任务系统 |
+| 任务系统 | ⏳ | P1 | 对话系统 | `docs/Proposal/narrative/quest-system.md` | 提案已写，待立项 |
+| 小纸条系统 | 🟡 | - | - | `docs/modules/combat/note-system/` | 已验收（见战斗系统区）；已读标记/收集计数待做 |
 
 ### 管线与工具
 
@@ -312,3 +320,15 @@ Luban 配置表数据补充
 - 2026-08-25 修复 `BillboardRenderer` 与 Unity 内置组件同名警告（AddComponent/GetComponent 会失效）：改名 `BillboardFaceCamera`，.meta GUID 不变场景引用不受影响，代码无其它引用点。编译 0 错误警告消除
 
 - 2026-08-25 新增 NPC 系统（经营场景底座）：Luban 新表 `TbNpc`（id/name/role/dialogueId，dialogueId 预留，2 条英文测试数据，白名单同步 `cfg_tbnpc`）；`NpcConfigMgr` / `NpcEntity`（SphereCollider trigger 1.5m + 钢蓝色占位胶囊 + 头顶 TMP 名字牌，`BillboardFaceCamera` 朝向相机）/ `NpcSystem`（E 交谈占位、提示复用 InteractionPromptUI，ProcedureSimulation 挂载）/ `INpcEvent.OnNpcTalked`（对话系统接线点）；SimulationScene 摆 NPC_Quartermaster(-3,0,3)、NPC_Doc(3,0,-4)。Play 实测：靠近出 "Press E to Talk" → E 触发交谈日志，名字牌可读，0 错误。对话系统提案仍 pending（docs/Proposal/narrative/dialogue-system.md）。详见 docs/modules/simulation/npc-system/
+
+- 2026-08-26 对话系统 MVP 落地（按 docs/Proposal/narrative/dialogue-system.md 的 P1~P4，P0 仲裁器未做）：Luban 新表 `TbDialogue`（对话头：startNode/onceOnly/priority）+ `TbDialogueNode`（扁平节点：line/choice/setflag/end + speaker/text/choices/condition/action/next），白名单同步 `cfg_tbdialogue`/`cfg_tbdialoguenode`；`DialogueConfigMgr`（条件开场选择）+ `NarrativeCondition`/`NarrativeAction`（flag/level/give:gold 生效，quest:* 占位）+ `DialogueFlagSystem`（`SaveData.dialogue.flags` 变动即存，旧档自动取默认值）+ `DialogueSystem`（状态机 + E 两拍推进 + 数字键选项 + 出区打断 + 同帧防连跳）+ `DialogueUI`/prefab（底部 280px 对话框打字机 + 中部选项按钮，不暂停不动光标）；NpcSystem/SimulationInputSystem/ProcedureSimulation 完成接线（对话中 E 不广播交互、Esc 链最先关对话）。测试数据：对话 900（Quartermaster 含 setflag+2 选项分支）、901（Doc）。Play 实测全链路通过：开对话→推进→选项→结束关窗→提示恢复，flag 已写档，0 错误。详见 docs/modules/narrative/dialogue-system/
+
+- 2026-08-26 对话编辑器：TbDialogue/TbDialogueNode 从 xlsx 改为 CSV 数据源（编辑器纯 C# 直读直写，无 openpyxl 依赖；引号字段/逗号文本无损；Excel 仍可打开）；新增 `Assets/Editor/Dialogue/DialogueEditorWindow.cs`（菜单 Tools/Dialogue/Dialogue Editor）：左栏对话列表 + 节点列表 + 节点详情，增删改、引用校验（next/选项/起始节点存在性、ID 重复亮黄）、"保存并导表"一键跑 gen bat + Refresh；原 dialogue.xlsx/dialoguenode.xlsx 已删除。无头实测：加载 2 对话 8 节点、保存无损、导表链路成功（cfg_tbdialoguenode.json 重新生成）。同日可视化优化：节点列表改为**节点图视图**（卡片 + 贝塞尔连线，next 蓝线/选项黄线带选项文本，从起始节点 BFS 自动分列布局，未连通节点排最右；卡片左侧类型色条、选中蓝框/起始绿框）、对话列表 onceOnly ① 标记、删除按钮红色化；修域重载后数据清空导致的潜在 NRE（OnEnable 自动重新加载）
+
+- 2026-08-26 修复 `UnityException: Tag: UIRoot is not defined`：main.unity 的 UIRoot 实例带 UIRoot 标签但 `ProjectSettings/TagManager.asset` 未注册，补上该标签后报错消除（Play 验证通过）。对话编辑器节点图新增**纵向（从上到下）布局**切换：图标题栏 "→ 横向 / ↓ 纵向" 开关（EditorPrefs 记忆），纵向模式深度=行、同行分支横排、连线从卡片底缘出/顶缘入；布局算法与两种模式的连线/坐标均无头验证通过。同日界面再优化：窗口改为 Rect 布局 + **可拖拽分隔条**（竖条调左栏宽度、横条调节点图/详情高度，悬停显示调整光标、拖拽时高亮，尺寸 EditorPrefs 记忆），三面板随区域自适应填充
+
+- 2026-08-27 NPC 最小档移动落地（用户拍板最小档：巡逻 + 对话站住转身，不做寻路/FSM/存档记忆位置）：`TbNpc` 加 `moveSpeed`/`patrolPath`（`__beans__.xlsx` bean 同步，npc.xlsx 表头修正为 7 列后导表成功）；`NpcEntity` 新增 `InitPatrol`（解析 `x,z|x,z`，不足 2 点或 speed<=0 站桩）+ `Patrol`（ping-pong 往返、到点停留 1s、移动前转身）+ 对话分支（`DialogueSystem.IsPlaying && CurrentNpcId==本NPC` 时站住并 `FaceTowards(玩家)`，仅 Y 轴 Slerp 8/s）。坑位：玩家生成晚于场景加载，`Start` 里 `FindGameObjectWithTag("Player")` 拿到 null 导致转身静默失效，改 Update 懒获取。Play 实测：巡逻位移 1.2m/s 正常、Doc 站桩、对话中位置冻结 + dot=1.00 完全面向玩家，编译 0 错误。详见 docs/modules/simulation/npc-system/
+
+- 2026-08-27 主角/敌人 3D 化占位 + 武器模型切枪联动：①`Player.prefab`/`Enemy.prefab` 的 Visual 子节点由平躺 SpriteRenderer 改为 3D 胶囊（CreatePrimitive 去 Collider，玩家青 0.6x1m / 敌人红 0.55x0.9m，底面贴地），新材质资产 `Assets/AssetArt/Materials/M_Player_Placeholder.mat`、`M_Enemy_Placeholder.mat`；敌人 `SetFacing` 的 flipX 对胶囊自动空操作，血条结构不变；②新增 `WeaponMountView`（玩家右侧 WeaponMount 挂点，按武器类型生成不同尺寸/颜色长方体，订阅装备/切换事件只显示当前槽位，Start 读 WeaponSystem 现状补模型；坑位：ownerId 必须用 `IWeaponOwner.OwnerId`，组件自身 InstanceID 会被事件过滤）。Play 验证：编译 0 错误，基地与 101 关胶囊显示正常、三槽切换显隐正确、截图确认武器随角色朝向挂右侧
+
+- 2026-08-27 玩家胶囊尺寸对齐 NPC（0.6x1.8m）：修复经营场景玩家巨大的根因——`ProcedureSimulation` 里有 2D 占位圆点时代的 `visual.localScale = Vector3.one * 5f` 兜底（注释自述"换正式角色模型后移除"），胶囊化后把 1.8m 玩家放大到 10m 高；该放大块整体删除，prefab 的 Visual 调整为 NPC 同款尺寸。Play 截图确认玩家与 NPC 胶囊等大

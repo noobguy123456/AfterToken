@@ -173,16 +173,6 @@ namespace GameLogic
                 _player.AddComponent<SimulationPlayerController>();
             }
 
-            // 经营相机比战斗远，放大占位视觉（0.2m → 1m），否则角色只是一个小点；
-            // 只改本实例，不影响战斗使用的 prefab。后续换正式角色模型后移除。
-            var visual = _player.transform.Find("Visual");
-            if (visual != null)
-            {
-                visual.localScale = Vector3.one * 5f;
-                // 占位圆点贴地平放，与地面共面会 z-fighting 导致角色闪烁/消失，抬高 5cm
-                visual.localPosition += Vector3.up * 0.05f;
-            }
-
             // 相机跟随玩家（WASD 驱动玩家，相机不再手动平移）
             _cameraController?.SetFollowTarget(_player.transform);
             Log.Info($"[ProcedureSimulation] 玩家已生成，位置: {_player.transform.position}");
@@ -201,8 +191,11 @@ namespace GameLogic
             // 基地内传送门支持（选关门）：扫描场景中 PortalEntity 并处理交互
             _simulationRoot.AddComponent<Portal.PortalSystem>();
 
-            // NPC 系统：场景 NpcEntity 的交互提示与交谈事件（对话系统 pending，先占位）
+            // NPC 系统：场景 NpcEntity 的交互提示与交谈入口
             _simulationRoot.AddComponent<NpcSystem>();
+
+            // 对话系统：消费 NPC 交谈，解释执行 TbDialogue/TbDialogueNode 并驱动 DialogueUI
+            _simulationRoot.AddComponent<DialogueSystem>();
 
             GrantTestMaterials();
         }

@@ -3,12 +3,16 @@
     "id": 1,
     "name": "Quartermaster",
     "role": "Supply Officer",
-    "dialogueId": 0
+    "moveSpeed": 1.2,
+    "patrolPath": "-3,3|4,3",
+    "dialogueId": 900
   },
   {
     "id": 2,
     "name": "Doc",
     "role": "Field Medic",
-    "dialogueId": 0
+    "moveSpeed": 0,
+    "patrolPath": "",
+    "dialogueId": 901
   }
 ]

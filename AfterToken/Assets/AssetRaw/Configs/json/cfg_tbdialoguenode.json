@@ -1,0 +1,90 @@
+[
+  {
+    "id": 9001,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "Back in one piece. Good.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 9006
+  },
+  {
+    "id": 9002,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "Supplies are tight, friend. Keep bringing back whatever you find.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 9003
+  },
+  {
+    "id": 9003,
+    "dialogueId": 900,
+    "type": "choice",
+    "speaker": "Quartermaster",
+    "text": "Need anything?",
+    "choices": "Just looking->9004|Leave->9005",
+    "condition": "",
+    "action": "",
+    "next": 0
+  },
+  {
+    "id": 9004,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "The workshop's yours. Build it up, and we all eat.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 0
+  },
+  {
+    "id": 9005,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "Stay sharp out there.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 0
+  },
+  {
+    "id": 9006,
+    "dialogueId": 900,
+    "type": "setflag",
+    "speaker": "",
+    "text": "",
+    "choices": "",
+    "condition": "",
+    "action": "flag:+met_quartermaster",
+    "next": 9002
+  },
+  {
+    "id": 9011,
+    "dialogueId": 901,
+    "type": "line",
+    "speaker": "Doc",
+    "text": "Patching up raiders and fools. Guess which one you are.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 9012
+  },
+  {
+    "id": 9012,
+    "dialogueId": 901,
+    "type": "line",
+    "speaker": "Doc",
+    "text": "Come back if you're bleeding. Not before.",
+    "choices": "",
+    "condition": "",
+    "action": "",
+    "next": 0
+  }
+]

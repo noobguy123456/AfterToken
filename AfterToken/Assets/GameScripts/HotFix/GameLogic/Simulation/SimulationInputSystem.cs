@@ -19,10 +19,16 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// E 键交互：复用战斗输入事件，PortalSystem 订阅它处理基地内传送门（选关门）。
+        /// E 键交互：复用战斗输入事件，PortalSystem/NpcSystem 订阅它处理基地内交互。
+        /// 对话进行中 E 是对话推进键（DialogueSystem 自己读输入），这里不广播交互。
         /// </summary>
         private void HandleInteractInput()
         {
+            if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsPlaying)
+            {
+                return;
+            }
+
             if (Input.GetKeyDown(_interactKey))
             {
                 GameEvent.Get<IBattleInputEvent>()?.OnInteractPressed();
@@ -33,6 +39,13 @@ namespace GameLogic
         {
             if (!Input.GetKeyDown(_settingsKey))
             {
+                return;
+            }
+
+            // 对话进行中 ESC 先关闭对话
+            if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsPlaying)
+            {
+                DialogueSystem.Instance.EndDialogue();
                 return;
             }
 

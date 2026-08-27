@@ -22,6 +22,16 @@ namespace GameLogic
         public int NpcId => _npcId;
         public bool PlayerInside { get; private set; }
 
+        /// <summary>巡逻路径点（空 = 站桩）。</summary>
+        private Vector3[] _waypoints;
+        private int _wpIndex;
+        private int _wpDir = 1;
+        private float _moveSpeed;
+        /// <summary>到点停留时间（秒）。</summary>
+        private const float WaypointDwell = 1f;
+        private float _dwellTimer;
+        private Transform _player;
+
         private TextMeshPro _nameLabel;
 
         private void Awake()
@@ -44,11 +54,118 @@ namespace GameLogic
             if (cfg != null)
             {
                 SetNameLabel(cfg.Name, cfg.Role);
+                InitPatrol(cfg.MoveSpeed, cfg.PatrolPath);
             }
             else
             {
                 Log.Warning($"[NpcEntity] 找不到 NPC 配置 id={_npcId}");
             }
+
+            var playerGo = GameObject.FindGameObjectWithTag("Player");
+            if (playerGo != null)
+            {
+                _player = playerGo.transform;
+            }
+        }
+
+        /// <summary>
+        /// 初始化巡逻：patrolPath 格式 "x,z|x,z"，moveSpeed<=0 或路径不足两点时站桩。
+        /// </summary>
+        private void InitPatrol(float moveSpeed, string patrolPath)
+        {
+            _moveSpeed = moveSpeed;
+            if (_moveSpeed <= 0f || string.IsNullOrWhiteSpace(patrolPath)) return;
+
+            var list = new System.Collections.Generic.List<Vector3>();
+            foreach (var item in patrolPath.Split('|'))
+            {
+                var pair = item.Split(',');
+                if (pair.Length == 2 &&
+                    float.TryParse(pair[0].Trim(), out float x) &&
+                    float.TryParse(pair[1].Trim(), out float z))
+                {
+                    list.Add(new Vector3(x, 0f, z));
+                }
+                else
+                {
+                    Log.Warning($"[NpcEntity] 巡逻路径点格式错误: {item}（应为 x,z）");
+                }
+            }
+            if (list.Count >= 2)
+            {
+                _waypoints = list.ToArray();
+            }
+        }
+
+        private void Update()
+        {
+            // 正在与本 NPC 对话：站住并转身面向玩家
+            if (DialogueSystem.Instance != null &&
+                DialogueSystem.Instance.IsPlaying &&
+                DialogueSystem.Instance.CurrentNpcId == _npcId)
+            {
+                // 玩家生成晚于场景加载，Start 里可能拿不到，这里懒获取
+                if (_player == null)
+                {
+                    var playerGo = GameObject.FindGameObjectWithTag("Player");
+                    if (playerGo != null)
+                    {
+                        _player = playerGo.transform;
+                    }
+                }
+                if (_player != null)
+                {
+                    FaceTowards(_player.position);
+                }
+                return;
+            }
+
+            Patrol();
+        }
+
+        /// <summary>
+        /// 巡逻：路径点间往返（ping-pong），到点停留 1 秒。
+        /// </summary>
+        private void Patrol()
+        {
+            if (_waypoints == null || _waypoints.Length < 2) return;
+
+            if (_dwellTimer > 0f)
+            {
+                _dwellTimer -= Time.deltaTime;
+                return;
+            }
+
+            var pos = transform.position;
+            var target = _waypoints[_wpIndex];
+            var flat = new Vector3(target.x - pos.x, 0f, target.z - pos.z);
+
+            if (flat.magnitude < 0.05f)
+            {
+                // 到点：停留后走向下一点
+                _dwellTimer = WaypointDwell;
+                int next = _wpIndex + _wpDir;
+                if (next < 0 || next >= _waypoints.Length)
+                {
+                    _wpDir = -_wpDir;
+                    next = _wpIndex + _wpDir;
+                }
+                _wpIndex = next;
+                return;
+            }
+
+            FaceTowards(target);
+            transform.position = pos + flat.normalized * (_moveSpeed * Time.deltaTime);
+        }
+
+        /// <summary>平滑转身面向目标点（仅 Y 轴）。</summary>
+        private void FaceTowards(Vector3 target)
+        {
+            var dir = target - transform.position;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.001f) return;
+            var look = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, look, 8f * Time.deltaTime);
         }
 
         /// <summary>

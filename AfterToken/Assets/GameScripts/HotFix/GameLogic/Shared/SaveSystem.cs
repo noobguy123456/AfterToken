@@ -130,6 +130,18 @@ namespace GameLogic
         public WarehouseSaveData warehouse = new WarehouseSaveData();
         public SettingsSaveData settings = new SettingsSaveData();
         public UnlockSaveData unlock = new UnlockSaveData();
+        public DialogueSaveData dialogue = new DialogueSaveData();
+    }
+
+    [Serializable]
+    public class DialogueSaveData
+    {
+        public bool initialized;
+        /// <summary>
+        /// 已设置的对话/剧情标志位集合（含 onceOnly 对话的 dlg_seen_{id}）。
+        /// 读写走 <see cref="DialogueFlagSystem"/>。
+        /// </summary>
+        public List<string> flags = new List<string>();
     }
 
     [Serializable]

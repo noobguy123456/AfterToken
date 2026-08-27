@@ -28,6 +28,7 @@
 - [x] `EnemyEntity` 血量等属性默认值已移除，统一由 `Initialize` 从 `TbEnemy` 注入
 - [x] **敌人对象池**：`EnemySpawnSystem` 使用 `PoolSystem` 预加载并复用敌人；`EnemyEntity` 死亡后回池；`EnemyEntity` 复用时自动恢复物理状态
 - [x] **血条进入 Prefab**：`Assets/AssetRaw/Prefabs/Enemy.prefab` 已包含 `HealthBarRoot/Background/Fill` 节点，运行时优先使用 Prefab 节点，无 sprite 时自动补白色占位 Sprite
+- [x] 敌人 3D 化占位（2026-08-27）：`Enemy.prefab` 的 Visual 由平躺 Sprite 改为 3D 胶囊（材质 `M_Enemy_Placeholder`，红色，0.55x0.9m）；`SetFacing` 的 flipX 对胶囊无意义，`Visual` 上无 SpriteRenderer 后自动空操作
 - [x] **`TbEnemy` 新增 `pathRefreshInterval` 字段**：`EnemyChaseState` 路径刷新间隔可配置，并按玩家距离动态缩放（近快远慢）
 - [x] **A* 寻路减少分配**：`PathResult` 池化、`ReconstructPath` 复用 List、`SmoothPath` 改为原地平滑
 - [x] **`TbEnemy` 新增 `chaseRange` 字段**：仇恨（追击触发）范围可配置（当前 5m），替换 `EnemyStateMachineDriver` / `EnemyChaseState` 中硬编码的 8f——此前仇恨范围大于相机视野（约 5m），敌人总是从屏幕外冲进来，体感像"从玩家身上挤出来"

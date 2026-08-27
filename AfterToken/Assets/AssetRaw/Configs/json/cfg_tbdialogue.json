@@ -1,0 +1,16 @@
+[
+  {
+    "id": 900,
+    "name": "quartermaster_intro",
+    "startNode": 9001,
+    "onceOnly": false,
+    "priority": 0
+  },
+  {
+    "id": 901,
+    "name": "doc_intro",
+    "startNode": 9011,
+    "onceOnly": false,
+    "priority": 0
+  }
+]

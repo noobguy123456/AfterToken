@@ -109,6 +109,14 @@ public partial class Tables
     /// NPC表
     /// </summary>
     public cfg.TbNpc TbNpc {get; }
+    /// <summary>
+    /// 对话头表
+    /// </summary>
+    public cfg.TbDialogue TbDialogue {get; }
+    /// <summary>
+    /// 对话节点表
+    /// </summary>
+    public cfg.TbDialogueNode TbDialogueNode {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -137,6 +145,8 @@ public partial class Tables
         TbPlayerLevel = new cfg.TbPlayerLevel(loader("cfg_tbplayerlevel"));
         TbUnlock = new cfg.TbUnlock(loader("cfg_tbunlock"));
         TbNpc = new cfg.TbNpc(loader("cfg_tbnpc"));
+        TbDialogue = new cfg.TbDialogue(loader("cfg_tbdialogue"));
+        TbDialogueNode = new cfg.TbDialogueNode(loader("cfg_tbdialoguenode"));
         ResolveRef();
     }
     
@@ -166,6 +176,8 @@ public partial class Tables
         TbPlayerLevel.ResolveRef(this);
         TbUnlock.ResolveRef(this);
         TbNpc.ResolveRef(this);
+        TbDialogue.ResolveRef(this);
+        TbDialogueNode.ResolveRef(this);
     }
 }
 

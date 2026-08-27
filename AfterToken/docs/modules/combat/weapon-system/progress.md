@@ -40,6 +40,7 @@
 
 | 日期 | 变更内容 |
 |------|----------|
+| 2026-08-27 | 武器占位 3D 模型 + 切枪联动：新增 `WeaponMountView`（`Entity/Player/`，`PlayerSystem.CreatePlayerAsync` 注入玩家）——玩家右侧生成 WeaponMount 挂点（本地 (0.38,0.7,0.1)），按槽位武器类型建不同尺寸/颜色长方体（Pistol 短灰 / SMG 蓝 / Rifle 绿长 / Sniper 黑细长 1m / Rocket 橙粗），长轴朝玩家面向；订阅 `OnWeaponEquipped`/`OnWeaponSwitched` 只显示当前槽位，Start 时读 WeaponSystem 槽位现状补齐（装备广播早于玩家创建，事件必错过）。坑位：ownerId 必须取 `IWeaponOwner.OwnerId`（PlayerEntity 的 InstanceID），用本组件 `GetInstanceID()` 会被事件过滤静默失效。占位模型生成即移除 Collider，不参与弹道。Play 验证：三槽 Pistol/Rifle/Sniper 切换显隐正确，截图确认挂点随角色朝向在右侧 |
 | 2026-08-24 | 修复开狙击镜时 HUD（血条/弹药）消失：根因是 `UIModule.OnSetWindowVisible()`——fullScreen 窗口就绪后隐藏栈内其下所有窗口，SniperScopeUI 挂了 `fullScreen: true` 导致 BattleMainUI 被整体隐藏。改动：SniperScopeUI 改 `fullScreen: false`；`BattleMainUI.SetCrosshairImageHidden(bool)` 新增（只切准星 Image.enabled，GameObject 保持激活让 CrosshairUpdater 继续驱动镜窗位置）；`WeaponSystem` 开/关镜时调用隐藏/恢复普通准星（否则普通准星钉在镜窗中心与分划线重叠）。附带收益：开镜时伤害飘字/命中反馈（DamageNumberUI/HitFeedbackUI）也保持可见。待 Play 验证 |
 | 2026-08-23 | 武器轮盘改锁定光标+增量选择（"准星位置神圣不可侵犯"方案的一部分）：不再 ShowCursor/HideCursor（系统鼠标全程不出现，光标保持锁定），选择由打开轮盘以来的鼠标位移增量累积决定方向（死区 20px 内保持原武器，灵敏度复用 `SensitivitySetting.Value`）；开轮盘隐藏准星（`SetVisible(false)`，位置冻结）、关轮盘恢复；死区未推满松开时 `GetSelectedSlot()` 返回 -1，`WeaponSystem.OnWeaponSelected` 原有 slot<0 保护天然兼容（保持当前武器）。Play 验证：轮盘开→关准星位置零漂移、光标全程隐藏锁定 |
 | 2026-08-22 | 命中标记统一：修复狙击镜"瞄准即出现 X"（关镜窗口只隐藏，标记冻结残留；OnRefresh/OnSetVisible 双路径重置）；X 形命中标记推广到全武器（HitFeedbackUI 换用 SniperScopeUI 同款 X 精灵、位置挪到准星中心） |

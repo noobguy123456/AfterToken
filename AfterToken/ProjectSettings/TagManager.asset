@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Player
   - Enemy
+  - UIRoot
   layers:
   - Default
   - TransparentFX

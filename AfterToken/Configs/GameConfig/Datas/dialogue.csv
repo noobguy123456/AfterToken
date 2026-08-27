@@ -1,0 +1,5 @@
+##var,id,name,startNode,onceOnly,priority
+##type,int,string,int,bool,int
+##,对话ID,注释名(不显示),起始节点ID,只触发一次,优先级
+,900,quartermaster_intro,9001,false,0
+,901,doc_intro,9011,false,0

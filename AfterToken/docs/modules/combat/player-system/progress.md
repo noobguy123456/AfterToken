@@ -14,6 +14,7 @@
 - [x] `PlayerEntity` 移速/闪速/闪避时长不再在代码中写死，统一由 `PlayerSystem` 从 `TbPlayer` 应用
 - [x] Play Mode 基础状态验证（Idle / Move / Dodge / Reload / Dead 已初步确认）
 - [x] 玩家状态收敛（2026-08-08）：IsDead/IsDodging/MoveInput/AimInput/IsAiming 唯一 owner 归 `PlayerStateContext`，`PlayerEntity`/`WeaponSystem` 重复字段改转发属性，零行为变化，详见 README「状态归属」
+- [x] 玩家 3D 化占位（2026-08-27）：`Player.prefab` 的 Visual 由平躺 Sprite 改为 3D 胶囊（材质 `M_Player_Placeholder`，青色，0.6x1.8m 与 NPC 一致）；移除 `ProcedureSimulation` 遗留的 Visual ×5 放大（0.2m 占位圆点时代的兜底，胶囊化后导致经营场景角色 10m 高）；新增 `WeaponMountView` 武器挂载（详见 weapon-system progress）
 
 ## 进行中
 - [ ] 后续新状态（瞄准、交互、受击硬直等）的扩展与调试

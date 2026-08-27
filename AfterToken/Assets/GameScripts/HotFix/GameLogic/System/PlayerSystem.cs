@@ -125,6 +125,12 @@ namespace GameLogic
                 _playerEntity = go.AddComponent<PlayerEntity>();
             }
 
+            // 武器占位模型挂点（右侧长方体，随切枪联动）
+            if (go.GetComponent<WeaponMountView>() == null)
+            {
+                go.AddComponent<WeaponMountView>();
+            }
+
             LoadPlayerConfig();
             ApplyPlayerConfig(_playerEntity);
 
