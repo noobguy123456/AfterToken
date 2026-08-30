@@ -16,6 +16,8 @@ namespace GameLogic
         [Header("跟随")]
         [SerializeField] private Transform _followTarget;
         [SerializeField] private Vector3 _followOffset = new Vector3(0f, 5f, -3.5f);
+        [Tooltip("玩家在屏幕中的纵向锚点（视口坐标，0=底部，0.5=居中）。0.25 即人物位于画面底部 1/4 处。")]
+        [SerializeField] private float _screenAnchorY = 0.25f;
 
         [Header("旋转")]
         [SerializeField] private float _yawAngle = 0f;
@@ -116,6 +118,32 @@ namespace GameLogic
 
             // 应用俯视角度
             transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
+
+            ApplyScreenAnchor(targetPos);
+        }
+
+        /// <summary>
+        /// 把玩家锚定到 <see cref="_screenAnchorY"/> 指定的视口高度（默认 0.25 = 画面底部 1/4）。
+        /// 绝对定位：直接反解"锚点视口射线恰好穿过玩家脚下地面点"的相机位置，保持相机高度与朝向不变。
+        /// （不能用中心-锚点相对平移：跟随偏移量与俯仰角的几何中心不重合时会有残留偏差。）
+        /// </summary>
+        private void ApplyScreenAnchor(Vector3 basePos)
+        {
+            if (_mainCamera == null) return;
+            if (Mathf.Approximately(_screenAnchorY, 0.5f)) return;
+
+            // 射线方向与相机位置无关，先用 basePos 取得该视口点的世界方向
+            transform.position = basePos;
+            Ray anchorRay = _mainCamera.ViewportPointToRay(new Vector3(0.5f, _screenAnchorY));
+            Vector3 dir = anchorRay.direction;
+            if (dir.y > -1e-3f) return; // 视线不朝下，无法锚定到地面
+
+            float height = basePos.y - _followTarget.position.y;
+            float t = height / -dir.y;
+            transform.position = new Vector3(
+                _followTarget.position.x - dir.x * t,
+                basePos.y,
+                _followTarget.position.z - dir.z * t);
         }
 
         /// <summary>

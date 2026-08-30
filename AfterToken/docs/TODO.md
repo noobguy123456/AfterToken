@@ -39,23 +39,25 @@
 | LoadingUI 与场景过渡 | ✅ | - | - | `docs/modules/ui/loading-system/` | `GameplayProcedureBase` 统一加载 |
 | 命中反馈 | ✅ | - | - | `docs/modules/ui/hit-feedback-system/` | 伤害飘字、受击指示、命中标记 |
 | 光标系统 | ✅ | - | - | `docs/modules/ui/cursor-system/` | 显示/隐藏、锁定模式、自定义光标纹理 |
-| 设置 UI | 🟡 | P2 | 存档系统 | `docs/modules/ui/settings-ui/` | 灵敏度滑块已可用；音量、画质、操作设置持久化待补充 |
-| 经营 UI | 🟡 | P1 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | SimulationMainUI、建筑/资源/订单 Widget；渲染架构已统一（Overlay，2026-08-01 实测通过）；待办：正式 Prefab 化、UI 特效（序列帧）、CanvasScaler 横屏修正 |
+| 设置 UI | 🟡 | P2 | - | `docs/modules/ui/settings-ui/` | 灵敏度/开镜灵敏度/开镜模式/按键改绑/准星样式颜色（含可视化预览）已完成并全部入档；待音量、画质页签 |
+| 经营 UI | 🟡 | P1 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | 渲染架构已统一 Overlay；三个经营窗口已正式 Prefab 化并集中到 `AssetRaw/UI/Simulation/`；待办：UI 特效（序列帧） |
 
 ### 战斗系统
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
 | 输入系统 | ✅ | - | - | `docs/modules/combat/input-system/` | 移动、瞄准、开火、换弹、切枪、闪避、武器轮盘 |
-| 玩家系统 | ✅ | - | - | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM + 体力系统 + HP/体力条 HUD；`TbPlayer` 已接入并应用属性 |
-| 武器系统 | ✅ | - | - | `docs/modules/combat/weapon-system/` | 武器槽、开火、换弹、辅助瞄准；`TbWeapon` 已通过 `WeaponConfigMgr` 接入 |
-| 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线 |
-| 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成，待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
-| 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 辅助瞄准 + 火箭锁定 |
-| 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、抖动、Duckov 式狙击镜（跟鼠标圆窗+压暗，`TbWeapon.scopeFov` 驱动）已完成 |
-| 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；待 Play Mode 验证绕过障碍物、攻击伤害判定接入 |
+| 玩家系统 | ✅ | - | - | `docs/modules/combat/player-system/` | `PlayerEntity` + FSM + 体力系统 + HP/体力条 HUD；`TbPlayer` 已接入并应用属性；3D 胶囊占位已替换 2D Sprite（2026-08-27） |
+| 武器系统 | ✅ | - | - | `docs/modules/combat/weapon-system/` | 4 槽位（含火箭筒=直线爆炸物）、开火/换弹/辅助瞄准、3D 占位模型挂载（`WeaponMountView`）、武器轮盘四格；`TbWeapon` 已通过 `WeaponConfigMgr` 接入 |
+| 弹道系统 | ✅ | - | - | `docs/modules/combat/ballistic-system/` | Raycast / Projectile 分发、Debug 射线；火箭激光常开且从枪口射出（2026-08-30） |
+| 飞行物系统 | 🟡 | P1 | - | `docs/modules/combat/projectile-system/` | 基础已完成；快照遍历修复、寿命终点引爆、爆炸特效 shader 化（火球+冲击波，2026-08-30）已落地；待逻辑/视觉分离以支持弹幕（见 `docs/Proposal/combat/bullet-logic-visual-separation.md`） |
+| 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 仅辅助磁吸（火箭锁定已随火箭筒直射化移除，2026-08-30） |
+| 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、抖动、Duckov 式狙击镜、玩家屏幕锚点（底部 1/4）、经营/战斗参数统一（`TbCamera3D` 单源）已完成；待关卡边界限制 |
+| 小地图系统 | ✅ | - | - | `docs/modules/combat/minimap-system/` | 2D 烘焙缩略图（无光影）+ 敌我图标投影 + M 键大地图；打包需加 Unlit/Color 到 Always Included Shaders |
+| 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；3D 胶囊占位已替换 Sprite；待寻路绕障 Play 验证、`TbWave` 波次接入、攻击伤害判定 |
 | 掉落与拾取系统 | ✅ | - | - | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入临时背包已完成 |
-| 战利品容器系统 | 🚧 | P1 | - | `docs/modules/combat/loot-container-system/` | 搜打撤开箱：`TbLootContainer` 权重表 + E 键开箱面板；待 Play 实测；交互仲裁器（Portal/Container 统一 IInteractable）待做 |
+| 战利品容器系统 | ✅ | - | - | `docs/modules/combat/loot-container-system/` | 搜打撤开箱全链路已实测（`TbLootContainer` 权重表 + E 键开箱面板 + 单格拿取/Take All）；待统一 IInteractable 仲裁器（Portal/Container 触发区重叠）、美术替换、正式摆放规则 |
+| 撤离点系统 | ✅ | - | - | `docs/modules/combat/extraction-system/` | 撤离圈+倒计时（`TbLevel.extractionTime`）+敌人进圈暂停+顶部 UI+撤离结算复用 `PortalSystem.ExtractToBase`，端到端 Play 实测通过；101 已摆 (18,0,18)；待美术替换占位圆盘、正式点位规则、Portal/撤离圈重叠仲裁 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P1 | 事件系统 | `docs/modules/combat/level-system/` | `TbLevel` 已接入；硬编码表已替换；待波次/胜负/配置化 |
 | 奖励系统 | ⏳ | P1 | 共享层 | `docs/modules/combat/reward-system/` | 战斗奖励分发 |
@@ -74,7 +76,7 @@
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
 | 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
 | 音频系统 | ⏳ | P1 | - | `docs/modules/infra/audio-system/` | BGM / SFX / 音量管理 |
-| 特效系统 | ⏳ | P1 | - | `docs/modules/infra/effect-system/` | 特效生成、播放、回收 |
+| 特效系统 | ⏳ | P1 | - | `docs/modules/infra/effect-system/` | 统一特效管理模块未立项；爆炸火球/冲击波 shader + 自驱动 Driver 已在 projectile-system 内落地（2026-08-30），可作为后续 EffectSystem 的参考实现 |
 
 ### 共享系统
 
@@ -87,7 +89,7 @@
 | 解锁系统 | 🟡 | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | TbUnlock（等级/通关链/金币条件）+ UnlockSystem + LobbyUI 关卡锁已落地；武器解锁消费侧待接入 |
 | 跨玩法联动 | 🟡 | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 撤离→金币/经验/通关记录已落地（CrossPlayLink）；经营产出→战斗强化待强化系统立项 |
 | 存档系统 | ✅ | P1 | - | `docs/modules/shared/save-system/` | 单 JSON 文件 + 变动即存 + 版本迁移；货币/档案/仓库/设置四件套已接入并实测跨重启保留；GM `save` 命令可用 |
-| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度、狙击开镜模式已可用并已迁入 SaveSystem；音量、画质、操作设置待补充 |
+| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度/开镜灵敏度/开镜模式/按键改绑/准星样式颜色均已迁入 SaveSystem；音量、画质待做 |
 
 ### 模拟经营系统
 
@@ -100,14 +102,14 @@
 | 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长；MVP 后实现 |
 | 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获；MVP 后实现 |
 | 订单系统 | ✅ | - | - | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励已实现 |
-| NPC 系统 | 🟡 | P1 | - | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity`（触发区 + 占位胶囊 + Billboard 名字牌）+ `NpcSystem`（E 交谈驱动对话系统）；经营场景已摆 2 个测试 NPC，2026-08-25/26 实测通过 |
+| NPC 系统 | 🟡 | P1 | - | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity` + `NpcSystem`（E 交谈驱动对话系统）+ 最小档移动（巡逻往返/对话站住转身）已落地；经营场景 2 个测试 NPC 实测通过 |
 
 ### 叙事系统
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 对话系统 | 🟡 | P1 | - | `docs/modules/narrative/dialogue-system/` | Luban 扁平节点表 + `DialogueSystem` 解释器 + `DialogueUI`（打字机/选项分支/条件/标志位存档）MVP 已落地，2026-08-26 实测通过；表已改 CSV 数据源并配可视化编辑器（Tools/Dialogue/Dialogue Editor）；quest:* 词汇待任务系统 |
-| 任务系统 | ⏳ | P1 | 对话系统 | `docs/Proposal/narrative/quest-system.md` | 提案已写，待立项 |
+| 对话系统 | 🟡 | P1 | - | `docs/modules/narrative/dialogue-system/` | Luban 扁平节点表（已切 CSV 数据源）+ 解释器 + `DialogueUI` MVP 已落地实测；可视化编辑器已就绪（Tools/Dialogue/Dialogue Editor，节点树状图/纵向布局/可拖分栏）；quest:* 词汇已落地（任务系统已上线） |
+| 任务系统 | ✅ | - | 对话系统 | `docs/modules/narrative/quest-system/` | MVP 已落地实测：TbQuest/TbQuestObjective + QuestSystem 四态状态机 + kill/collect/extract/flag 四类目标 + QuestLogUI（J 键）+ 示例任务链 1001-1003 对话接交；待战斗内 HUD 追踪、任务板实体、GM 命令 |
 | 小纸条系统 | 🟡 | - | - | `docs/modules/combat/note-system/` | 已验收（见战斗系统区）；已读标记/收集计数待做 |
 
 ### 管线与工具
@@ -332,3 +334,30 @@ Luban 配置表数据补充
 - 2026-08-27 主角/敌人 3D 化占位 + 武器模型切枪联动：①`Player.prefab`/`Enemy.prefab` 的 Visual 子节点由平躺 SpriteRenderer 改为 3D 胶囊（CreatePrimitive 去 Collider，玩家青 0.6x1m / 敌人红 0.55x0.9m，底面贴地），新材质资产 `Assets/AssetArt/Materials/M_Player_Placeholder.mat`、`M_Enemy_Placeholder.mat`；敌人 `SetFacing` 的 flipX 对胶囊自动空操作，血条结构不变；②新增 `WeaponMountView`（玩家右侧 WeaponMount 挂点，按武器类型生成不同尺寸/颜色长方体，订阅装备/切换事件只显示当前槽位，Start 读 WeaponSystem 现状补模型；坑位：ownerId 必须用 `IWeaponOwner.OwnerId`，组件自身 InstanceID 会被事件过滤）。Play 验证：编译 0 错误，基地与 101 关胶囊显示正常、三槽切换显隐正确、截图确认武器随角色朝向挂右侧
 
 - 2026-08-27 玩家胶囊尺寸对齐 NPC（0.6x1.8m）：修复经营场景玩家巨大的根因——`ProcedureSimulation` 里有 2D 占位圆点时代的 `visual.localScale = Vector3.one * 5f` 兜底（注释自述"换正式角色模型后移除"），胶囊化后把 1.8m 玩家放大到 10m 高；该放大块整体删除，prefab 的 Visual 调整为 NPC 同款尺寸。Play 截图确认玩家与 NPC 胶囊等大
+
+- 2026-08-30 统一经营/战斗相机参数：`SimulationCameraController` 弃用硬编码（旧值偏移 (0,7,-5)、FOV 沿用场景相机残留、平滑阻尼跟随、滚轮只改高度导致俯仰角随缩放漂移），改为与战斗 `CameraSystem3D` 同读 Luban `TbCamera3D`——俯仰 60°、偏移 (0,5,-3.5)、FOV 45、缩放范围 5~30、移动/缩放速度全部同源；跟随统一为硬跟随（像素级锁定，弃用平滑阻尼）；滚轮缩放改为按基准偏移等比缩放（高度/距离同比，俯仰角恒定）；Awake 显式钉住旋转（旧版不设旋转，沿用场景相机残留角度）。Play 验证：编译 0 错误，经营场景 rot=(60,0,0)/fov=45/offset=(0,5,-3.5) 与战斗一致，缩放到高度 10 后 offset=(0,10,-7) 角度不变。后续调相机只改 `camera3d.xlsx` 一处两场景同时生效
+
+- 2026-08-30 火箭筒定型直线爆炸物 + 4 槽武器轮盘 + 相机底部锚定：①`WeaponSystem.MAX_WEAPON_SLOTS` 3→4，101 关默认武器 `1001,1003,1004,1005`（Pistol/Rifle/Sniper/Rocket），WeaponWheelUI 扇区按槽数泛化、prefab 补第 4 槽；②火箭去索敌/去右键瞄准，`AimAssistSystem` 只留磁吸，`IHitFeedbackEvent.OnTargetLocked` 移除；③激光常开且起点改从 `WeaponMountView.GetMuzzleWorldPos()` 枪口射出；④`ProjectileSystem` 修复遍历中销毁弹体导致 `Collection was modified` 每帧抛异常卡死游戏（快照遍历），火箭寿命终点引爆；⑤`CameraSystem3D` 新增 `_screenAnchorY=0.25`（人物锚画面底部 1/4，ViewportPointToRay 绝对反解）。Play 实测：轮盘 4 槽、枪口激光、开火链路（`LastFireTime` 证实击发，此前"开火无效"系 clipSize=1 打空即自动换弹 + MCP 探测慢的观测假象）。爆炸击杀效果待用户实测。爆炸 shader 方案见 docs/Proposal/combat/explosion-shader-proposal.md（已评审待实施）
+
+- 2026-08-30 爆炸特效 shader 化（RPG 爆炸正式视觉，替换橙色球占位）：新增 `ExplosionFireball.shader`（噪声位移半球 + FBM 侵蚀 + 黑体色带）与 `ExplosionShockwave.shader`（地面圆环亮环 + 加色淡出），`ExplosionEffectDriver` 0.5s 自驱动自毁，`ProjectileSystem` 删除占位 Tick 列表。重要修正：项目实际是 **Built-in 渲染管线**（非方案假设的 URP），shader 按 Built-in ShaderLab 编写；冲击波外扩改 1.5 倍半径避免被不透明火球遮挡。编辑模式静态帧截图验证：p=0.15 火球亮黄+圆环领先、p=0.45 转橙侵蚀出孔洞，时间轴符合提案 §3.3。待用户 Play 实测（火箭弹命中/寿命终点两处引爆均走新特效）。打包提醒：两个 shader 需加 Always Included Shaders。另注意：发现 main 场景运行时存在两个 UIRoot GameObject（id 56288/-19166），疑似 UIModule 兜底创建与 prefab 实例并存，待排查
+
+- 2026-08-30 排查"开火后移动速度变低"：结论为非 bug，是 `weapon.xlsx` 的移速系数设计——`MoveSpeed = BaseMoveSpeed(5) × MoveSpeedMultiplier ×（开火中 ×FireMoveSpeedMultiplier，仅全自动按住扳机时）`。实测：步枪 4.75→开火 3.80→松手恢复 4.75；火箭筒常驻 3.00（0.6 系数，与开火无关）；狙击常驻 3.50（0.7）。`WeaponInstance.IsFiring` 属性无人读写（冗余可清理）。各武器系数：Pistol 1/0.9、SMG 1/0.85、Rifle 0.95/0.8、Sniper 0.7/0.5、Rocket 0.6/0.4。若手感不佳改 `Configs/GameConfig/Datas/weapon.xlsx` 这两列即可
+
+- 2026-08-30 总览表状态刷新：战利品容器系统 🚧→✅（开箱链路早已实测通过，遗留 IInteractable 仲裁器/美术/摆放）；新增小地图系统条目（✅）；武器系统/弹道/飞行物/相机/辅助瞄准备注同步火箭筒直射化、4 槽轮盘、爆炸特效 shader 化、相机锚点与经营战斗参数统一；设置 UI/设置系统备注同步按键改绑与准星自定义已完成；经营 UI 备注同步三窗口 Prefab 化已完成；敌人/玩家备注补 3D 胶囊化；NPC 补最小档移动；特效系统备注注明爆炸 Driver 可作未来 EffectSystem 参考实现。未启动系统不变：奖励/音频/特效管理/任务/工人/农场
+
+- 2026-08-30 撤离点系统全链路落地并 Play 实测通过：`TbLevel` 新增 `extractionTime` 列（可配，101=10s）；`ExtractionPointEntity`（撤离圈触发器+占位圆盘）+`ExtractionSystem`（圈内玩家倒计时、敌人同圈暂停、归零且存活则撤离）；撤离结算抽取为 `PortalSystem.ExtractToBase` 公共方法（传送门 RETURN_BASE 分支复用）；`BattleMainUI` 顶部倒计时文本；`ProcedureBattle` 挂载系统；101 场景摆撤离点 (18,0,18)。专项验证：圈内假敌人→IsPaused=True 且剩余时间冻结，敌人清除后恢复并正常撤离至经营场景。遗留：占位圆盘待美术、正式点位规则、撤离圈与 Portal/Container 触发区重叠仲裁。详见 docs/modules/combat/extraction-system/progress.md
+
+- 2026-08-30 修复 ConfigSystem 启动时序 bug（疑似此前偶发"进游戏配置全空/卡死"根因）：`ConfigSystem.Tables` getter 在 `_init=false` 时同步懒加载 `Load()`，启动早期（资源系统未就绪）被抢跑后同步加载全空，却把 `_init=true` 永久堵死 `LoadAsync`（入口 `if (_init) return`）。修复：LoadAsync 全空时延迟重试最多 3 次；Load() 以 TbLevel 为哨兵（全空不标 _init）；单表失败降级 Warning 并打真实异常；Tables getter 加抢跑堆栈 Warning 便于定位。`Configs/GameConfig/CustomTemplate/ConfigSystem.cs` 模板已同步。另排查发现：Unity 编辑器 Error Pause 开启时，一条错误日志即暂停整个 Play（frameCount 冻结），已用反射关闭；MCP 点击按钮须用 `b.onClick.Invoke()`，ExecuteEvents 会抛异常触发 Error Pause
+
+- 2026-08-30 清理废弃场景：删除 `LobbyScene.unity`（大厅概念废弃后仅存磁盘标记）与 `BattleScene.unity`（2D 原型兜底场景，所有关卡均已配置 sceneName 不会命中），同步移除 EditorBuildSettings 两条记录与 `BattleSceneSetup` 中的 CreateLobbyScene/CreateBattleScene 重建代码；`ProcedureBattle` 兜底场景名改为 `BattleScene_3D_L01`。保留 `BattleScene_L01/L02/L03`——`level.xlsx` 的关卡 1/2/3 仍引用它们，若确认废弃 2D 老关卡，需连配置行一起删
+
+- 2026-08-30 删除全部 2D 场景与关联配置：`BattleScene_L01/L02/L03` 三个场景文件删除；`level.xlsx` 删除关卡 1/2/3 行（剩 101/102/103，Deploy 菜单随之不再显示 Stage 1-3）；`unlock.xlsx` 删除指向 2D 关卡的解锁行 1/2；`portal.xlsx` 删除 1002/1003/1004（指向 2D 关卡/场景）；`BattleSceneSetup` 移除 CreateBattleSceneL01；EditorBuildSettings 同步清理；Luban 已重新导表（level/portal/unlock 三表），编译 0 错误
+- 2026-08-30 设置界面新增"返回主界面"按钮：SettingsUI prefab 克隆 Close 按钮生成 `m_btn_ReturnMainMenu`（文本 "Main Menu"），点击切 `ProcedureMainMenu`（复用 ChangeProcedure 的 CloseAll+暂停复位）；已在主菜单时仅关窗口（新增 `GameApp.IsCurrentProcedure<T>()`）。YooAsset SimulateBuild 已刷新
+
+- 2026-08-30 任务系统 MVP 落地（提案 docs/Proposal/narrative/quest-system.md 转正）：①P0 `IEnemyEvent.OnEnemyDied` 补 configId 参数（EnemyDeadState 发布处 + DropSystem/PortalSystem/ProjectileSystem 订阅处签名同步）；②新表 `TbQuest`/`TbQuestObjective`（quest.csv/questobjective.csv，CSV 数据源同 dialogue 惯例，_tableFiles 白名单两处同步）；③`QuestSystem` 纯 C# 静态类（四态状态机，订阅全局 GameEvent 击杀/仓库变化 + DialogueFlagSystem.OnFlagSet + CrossPlayLink.OnBattleExtracted 钩子；collect 按仓库持有数重算；奖励走 CurrencySystem/PlayerProfileSystem/InventorySystem 窄口）；④SaveData 加 quest 段（进度按 objectiveId 存）；⑤叙事词汇 quest:id:active/ready/done/accept 与 quest:accept/turnin:id 从 pending 桩转正；⑥QuestLogUI（prefab 化，左列表右详情，J 键开关+ESC 关窗链）；⑦示例任务链 1001 杀 5 假人 → 1002 带 3 木料 → 1003 撤离 101，Quartermaster/Doc 对话接交节点已插链。Play 实测全链路通过（含 collect 持有即完成、对话起始节点选择回归）。坑位：新建 UI prefab 根必须挂 Canvas+GraphicRaycaster，AssetRaw 变更后需 SimulateBuild
+
+- 2026-08-30 NPC 头顶任务标记（MMO 惯例三态）：`QuestConfigMgr` 新增 `GetQuestsByGiver(npcId)` 反向索引（giverNpc>0 才入索引）；`NpcEntity` 头顶 y=2.7 挂 TextMeshPro 文本标记（fontSize 3.5、localScale 0.7、BillboardFaceCamera 面向相机，与名字牌同范式）。`RefreshQuestMarker()` 优先级：任意 ReadyToTurnIn → 黄"?"（1,0.85,0.2）> 任意 CanAccept → 黄"!" > 任意 Active → 灰"!"（0.6 灰）> 隐藏；Start 订阅 GameEventMgr 的 IQuestEvent 四事件实时刷新，OnDestroy 清订阅。Play 代码断言验证全过：初始 npc1 黄"!"/npc2 隐藏 → accept(1001) 后灰"!" → 5 次击杀后黄"?" → 交付后 npc1 回落黄"!"（1002 可接）+npc2 黄"!"（1003 可接）。视觉大小/可读性待用户俯视角实测，可能需微调 fontSize/高度
+
+- 2026-08-30 任务接取确认窗 + 任务追踪 HUD：①`quest:accept:id` 叙事动作改为弹 `QuestAcceptConfirmUI`（新 prefab，居中面板：任务名+描述+Confirm/Cancel，Enter 确认 Esc 取消），玩家确认才走 `QuestSystem.Accept`；弹窗期间 `DialogueSystem.Update` 加守卫不响应推进键，对话结束时弹窗自动按取消关闭（订阅 OnDialogueEnded）；不可接取保持跳过+告警。②新增 `QuestTrackerUI`（新 prefab，屏幕左侧中部，UILayer.UI）：常驻列出进行中任务名称+目标 x/y 进度，Ready 任务名转绿加 "(Ready)" 后缀，纯展示（根 CanvasGroup blocksRaycasts=false、文本 raycastTarget 全关），ProcedureSimulation/ProcedureBattle 均常驻打开，订阅 IQuestEvent 四事件全量重建。Play 验证全过：弹窗 Confirm→接取成功+追踪器出现条目；3 杀→3/5 实时刷新；5/5→(Ready)；交付→追踪器清空；Cancel→任务保持 Inactive 不上追踪器。坑位：execute_code 里 GameModule 要写 GameLogic.GameModule（非 TEngine 命名空间）；C# 字符串里的换行经 python heredoc/JSON 多层转义易炸，用 (char)10 替代
+
+- 2026-08-30 NPC 对话改为任务枢纽式（常见 RPG 选项交互）：NPC 有可交付/可接取任务时，对话不再自动从任务节点链开始，改为先播默认问候语并出选项菜单——"Turn in: X"（可交付优先）/"Accept: Y"/"Just chatting."（走默认闲聊后续节点）。实现：`DialogueSystem.CollectQuestChoices` 扫描 TbDialogueNode 中 condition 为 `quest:id:ready/accept` 的节点，按任务实时状态动态生成选项（无需改表），`ShowQuestHub` 用无条件起始节点作问候语+选项出口；任务选项跳到原任务节点（offer 台词+接取确认窗 / 交付台词+发奖励）。Play 实测：可接时选项 "1. Accept: Pest Control / 2. Just chatting."，闲聊走 9006 正常链；Accept 项弹确认窗 Confirm 后才接取；Ready 时变 "Turn in" 选项，选中即交付发奖励。选项上限 4（3 任务+1 闲聊，DialogueUI.MaxChoices 限制）

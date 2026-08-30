@@ -86,5 +86,71 @@
     "condition": "",
     "action": "",
     "next": 0
+  },
+  {
+    "id": 9100,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "Dummies down? Fine work. Here is your pay.",
+    "choices": "",
+    "condition": "quest:1001:ready",
+    "action": "quest:turnin:1001",
+    "next": 9101
+  },
+  {
+    "id": 9101,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "That is the timber. The workshop thanks you.",
+    "choices": "",
+    "condition": "quest:1002:ready",
+    "action": "quest:turnin:1002",
+    "next": 9102
+  },
+  {
+    "id": 9102,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "The training ground is crawling with dummies. Scrap 5 of them for me.",
+    "choices": "",
+    "condition": "quest:1001:accept",
+    "action": "quest:accept:1001",
+    "next": 9103
+  },
+  {
+    "id": 9103,
+    "dialogueId": 900,
+    "type": "line",
+    "speaker": "Quartermaster",
+    "text": "We need wood for the workshop. Bring back 3 pieces.",
+    "choices": "",
+    "condition": "quest:1002:accept",
+    "action": "quest:accept:1002",
+    "next": 9001
+  },
+  {
+    "id": 9111,
+    "dialogueId": 901,
+    "type": "line",
+    "speaker": "Doc",
+    "text": "Back from the stage in one piece. Color me impressed.",
+    "choices": "",
+    "condition": "quest:1003:ready",
+    "action": "quest:turnin:1003",
+    "next": 9112
+  },
+  {
+    "id": 9112,
+    "dialogueId": 901,
+    "type": "line",
+    "speaker": "Doc",
+    "text": "Prove yourself: get into Stage 101 and extract alive.",
+    "choices": "",
+    "condition": "quest:1003:accept",
+    "action": "quest:accept:1003",
+    "next": 9011
   }
 ]

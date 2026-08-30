@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1001,
+    "name": "Pest Control",
+    "desc": "Clear out the Training Dummies in Stage 101.",
+    "giverNpc": 1,
+    "prereq": "",
+    "rewards": "gold:200|exp:50",
+    "nextQuest": 1002
+  },
+  {
+    "id": 1002,
+    "name": "Bring Back Timber",
+    "desc": "Bring back 3 Wood. It only counts once it's in the warehouse.",
+    "giverNpc": 1,
+    "prereq": "quest:1001:done",
+    "rewards": "gold:150|item:10005:2",
+    "nextQuest": 1003
+  },
+  {
+    "id": 1003,
+    "name": "Into the Factory",
+    "desc": "Deploy to Stage 101 and extract alive.",
+    "giverNpc": 2,
+    "prereq": "quest:1001:done",
+    "rewards": "gold:300|exp:100",
+    "nextQuest": 0
+  }
+]

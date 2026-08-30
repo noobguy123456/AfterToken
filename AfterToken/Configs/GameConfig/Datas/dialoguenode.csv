@@ -9,3 +9,9 @@
 ,9006,900,setflag,,,,,flag:+met_quartermaster,9002
 ,9011,901,line,Doc,Patching up raiders and fools. Guess which one you are.,,,,9012
 ,9012,901,line,Doc,Come back if you're bleeding. Not before.,,,,0
+,9100,900,line,Quartermaster,Dummies down? Fine work. Here is your pay.,,quest:1001:ready,quest:turnin:1001,9101
+,9101,900,line,Quartermaster,That is the timber. The workshop thanks you.,,quest:1002:ready,quest:turnin:1002,9102
+,9102,900,line,Quartermaster,The training ground is crawling with dummies. Scrap 5 of them for me.,,quest:1001:accept,quest:accept:1001,9103
+,9103,900,line,Quartermaster,We need wood for the workshop. Bring back 3 pieces.,,quest:1002:accept,quest:accept:1002,9001
+,9111,901,line,Doc,Back from the stage in one piece. Color me impressed.,,quest:1003:ready,quest:turnin:1003,9112
+,9112,901,line,Doc,Prove yourself: get into Stage 101 and extract alive.,,quest:1003:accept,quest:accept:1003,9011

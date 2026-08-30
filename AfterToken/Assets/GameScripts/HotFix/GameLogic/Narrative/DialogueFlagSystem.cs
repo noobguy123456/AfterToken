@@ -13,6 +13,11 @@ namespace GameLogic
         /// <summary>onceOnly 对话读过后写入的标志位前缀。</summary>
         public const string SeenPrefix = "dlg_seen_";
 
+        /// <summary>
+        /// 标志位写入通知（任务系统的 flag 目标订阅此事件）。
+        /// </summary>
+        public static event Action<string> OnFlagSet;
+
         public static bool Has(string key)
         {
             if (string.IsNullOrEmpty(key)) return false;
@@ -27,6 +32,7 @@ namespace GameLogic
             {
                 flags.Add(key);
                 SaveSystem.Flush();
+                OnFlagSet?.Invoke(key);
             }
         }
 

@@ -2,14 +2,14 @@
   {
     "id": 900,
     "name": "quartermaster_intro",
-    "startNode": 9001,
+    "startNode": 9100,
     "onceOnly": false,
     "priority": 0
   },
   {
     "id": 901,
     "name": "doc_intro",
-    "startNode": 9011,
+    "startNode": 9111,
     "onceOnly": false,
     "priority": 0
   }

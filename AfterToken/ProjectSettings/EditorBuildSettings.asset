@@ -11,19 +11,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/AssetRaw/Scenes/MainMenuScene.unity
     guid: ade22a8fa902b2e44b794a6259dde54e
-  - enabled: 1
-    path: Assets/AssetRaw/Scenes/LobbyScene.unity
-    guid: 767d2d2cf4694de4b937a3a018e99c94
-  - enabled: 1
-    path: Assets/AssetRaw/Scenes/BattleScene.unity
-    guid: 8e3aaf3dca1bdc7428fc2170f022e1e2
-  - enabled: 1
-    path: Assets/AssetRaw/Scenes/BattleScene_L01.unity
-    guid: 6a8a5ebeac7482242abba4f5bb1302a3
-  - enabled: 1
-    path: Assets/AssetRaw/Scenes/BattleScene_L02.unity
-    guid: dac890ba58726cc41b27de21e1794f7f
-  - enabled: 1
-    path: Assets/AssetRaw/Scenes/BattleScene_L03.unity
-    guid: b010052536be3974cb40cdf90364fe1d
   m_configObjects: {}

@@ -13,7 +13,7 @@ namespace GameLogic
     {
         public static WeaponSystem Instance { get; private set; }
 
-        public const int MAX_WEAPON_SLOTS = 3;
+        public const int MAX_WEAPON_SLOTS = 4;
 
         [Header("瞄准设置")]
         [SerializeField] private AimMode _aimMode = AimMode.Hold;
@@ -268,6 +268,9 @@ namespace GameLogic
 
         private void OnAimPressed()
         {
+            // 火箭筒无右键瞄准：锁定与激光为常态机制，瞄准键直接忽略
+            if (CurrentWeapon?.Config.weaponType == WeaponType.Rocket) return;
+
             if (GetEffectiveAimMode() == AimMode.Hold)
             {
                 SetAimState(true);

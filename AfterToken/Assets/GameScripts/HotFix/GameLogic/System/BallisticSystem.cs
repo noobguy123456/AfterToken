@@ -16,9 +16,6 @@ namespace GameLogic
         [SerializeField] private LayerMask _hitLayers;
         private float _tracerRadius;
 
-        [Header("瞄准辅助可视化")]
-        [SerializeField] private LineRenderer _lockOnLaserPrefab;
-
         [Header("Tracer 表现")]
         private float _tracerStartWidth;
         private float _tracerEndWidth;
@@ -32,6 +29,8 @@ namespace GameLogic
         private readonly Queue<TracerVisual> _tracerPool = new Queue<TracerVisual>();
         private Transform _tracerRoot;
         private LineRenderer _rocketLaser;
+        // 常态瞄准激光颜色（暗红半透明）
+        private static readonly Color LaserIdleColor = new Color(1f, 0.25f, 0.25f, 0.35f);
         private Material _tracerMaterial;
 
         // 弹道检测与弹迹表现的高度（地面 y=0 之上的视觉/检测层）。
@@ -115,11 +114,22 @@ namespace GameLogic
             return new Color(c.R, c.G, c.B, c.A);
         }
 
+        /// <summary>
+        /// 运行时代码创建锁定激光线。本组件由 ProcedureBattle 以 AddComponent 挂载，
+        /// 序列化 prefab 字段永远为 null，不能依赖 Inspector 配置。
+        /// </summary>
         private void InitializeRocketLaser()
         {
-            if (_lockOnLaserPrefab == null) return;
+            var go = new GameObject("RocketLockOnLaser");
+            go.transform.SetParent(transform, false);
 
-            _rocketLaser = Instantiate(_lockOnLaserPrefab, transform);
+            _rocketLaser = go.AddComponent<LineRenderer>();
+            _rocketLaser.positionCount = 2;
+            _rocketLaser.startWidth = 0.05f;
+            _rocketLaser.endWidth = 0.05f;
+            _rocketLaser.material = _tracerMaterial;
+            _rocketLaser.startColor = LaserIdleColor;
+            _rocketLaser.endColor = LaserIdleColor;
             _rocketLaser.enabled = false;
         }
 
@@ -269,26 +279,8 @@ namespace GameLogic
 
         private void FireProjectile(Vector2 origin, Vector2 direction, WeaponConfig config, int ownerId)
         {
-            int targetId = 0;
-            bool tracking = false;
-
-            if (config.weaponType == WeaponType.Rocket)
-            {
-                var lockTarget = AimAssistSystem.Instance?.GetLockedTarget();
-                if (lockTarget != null)
-                {
-                    // 追踪目标 ID 需与 ProjectileSystem._enemyMap 的键一致，
-                    // 即 EnemyEntity 组件的 InstanceID（不能用 Transform 的 InstanceID）
-                    var enemy = lockTarget.GetComponent<EnemyEntity>();
-                    if (enemy != null)
-                    {
-                        targetId = enemy.GetInstanceID();
-                        tracking = true;
-                    }
-                }
-            }
-
-            ProjectileSystem.Instance?.CreateProjectile(config.id, ownerId, origin, direction, targetId, tracking);
+            // RPG 为直线爆炸物：不做自动索敌，沿瞄准方向直射
+            ProjectileSystem.Instance?.CreateProjectile(config.id, ownerId, origin, direction);
         }
 
         private void SpawnTracer(Vector2 origin, Vector2 hitPoint, Vector2 direction, WeaponConfig config)
@@ -366,24 +358,31 @@ namespace GameLogic
 
         private void UpdateRocketLaser()
         {
-            var target = AimAssistSystem.Instance?.GetLockedTarget();
-            if (target == null)
+            if (_rocketLaser == null) return;
+
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            var weaponConfig = WeaponSystem.Instance?.CurrentWeapon?.Config;
+            bool rocketEquipped = weaponConfig != null && weaponConfig.weaponType == WeaponType.Rocket;
+            if (!rocketEquipped || player == null)
             {
-                if (_rocketLaser != null) _rocketLaser.enabled = false;
+                _rocketLaser.enabled = false;
                 return;
             }
 
-            var player = PlayerSystem.Instance?.GetPlayerEntity();
-            if (player == null) return;
+            // 激光常态展示（RPG 无锁定）：从武器枪口沿瞄准方向延伸的直线瞄准指示。
+            _rocketLaser.enabled = true;
+            var mountView = player.GetComponent<WeaponMountView>();
+            Vector3 origin = mountView != null
+                ? mountView.GetMuzzleWorldPos()
+                : player.transform.position + Vector3.up * BALLISTIC_HEIGHT;
 
-            if (_rocketLaser != null)
-            {
-                _rocketLaser.enabled = true;
-                _rocketLaser.SetPosition(0, player.transform.position);
-                _rocketLaser.SetPosition(1, target.transform.position);
-                _rocketLaser.startColor = Color.red;
-                _rocketLaser.endColor = Color.red;
-            }
+            Vector2 aimOffset = player.AimPosition - player.transform.position.ToXZ();
+            Vector2 dir = aimOffset.sqrMagnitude > 1e-6f ? aimOffset.normalized : Vector2.up;
+            // 激光长度复用 maxRange（弹体最大射程），与火箭实际飞行距离一致
+            float range = weaponConfig.maxRange > 0 ? weaponConfig.maxRange : 20f;
+            _rocketLaser.SetPosition(0, origin);
+            // 末端保持与枪口同高，激光呈水平直线
+            _rocketLaser.SetPosition(1, origin + new Vector3(dir.x, 0f, dir.y) * range);
         }
 
         private class TracerVisual

@@ -8,7 +8,7 @@ namespace GameLogic
     public interface IEnemyEvent
     {
         void OnEnemySpawned(int enemyId, int configId);
-        void OnEnemyDied(int enemyId);
+        void OnEnemyDied(int enemyId, int configId);
         void OnEnemyStateChanged(int enemyId, string stateName, string previousStateName);
     }
 }

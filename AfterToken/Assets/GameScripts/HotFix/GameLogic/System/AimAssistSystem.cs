@@ -5,7 +5,8 @@ namespace GameLogic
 {
     /// <summary>
     /// 辅助瞄准系统。
-    /// 处理轻微磁吸与火箭锁定。
+    /// 处理轻微磁吸。
+    /// （火箭筒自动索敌/锁定已移除：RPG 定位是直线爆炸物，激光仅为常态瞄准指示。）
     /// </summary>
     public class AimAssistSystem : MonoBehaviour
     {
@@ -16,59 +17,18 @@ namespace GameLogic
         [SerializeField] private float _aimAssistMaxAngle;
         [SerializeField] private LayerMask _enemyLayer;
 
-        [Header("火箭锁定")]
-        [SerializeField] private float _lockOnRange;
-        [SerializeField] private float _lockOnAngle;
-        [SerializeField] private float _lockOnHoldTime;
-
         // 当武器配置未提供辅助瞄准参数时的兜底值。
         private const float DEFAULT_AIM_ASSIST_RADIUS = 2f;
         private const float DEFAULT_AIM_ASSIST_MAX_ANGLE = 15f;
-        private const float DEFAULT_LOCK_ON_RANGE = 20f;
-        private const float DEFAULT_LOCK_ON_ANGLE = 10f;
-        private const float DEFAULT_LOCK_ON_HOLD_TIME = 1.5f;
-
-        private readonly GameEventMgr _eventMgr = new GameEventMgr();
-
-        private Transform _lockedTarget;
-        private float _lockTimer;
-        private bool _isLocked;
-        // 瞄准状态不再本地缓存，直接读 WeaponSystem.IsAiming（其唯一数据源为玩家黑板 PlayerStateContext.IsAiming）。
 
         private void Awake()
         {
             Instance = this;
-
-            _eventMgr.AddEvent<int, bool>(IWeaponEvent_Event.OnAimStateChanged, OnAimStateChanged);
         }
 
         private void OnDestroy()
         {
-            _eventMgr.Clear();
             Instance = null;
-        }
-
-        private void Update()
-        {
-            if ((WeaponSystem.Instance?.IsAiming ?? false) && WeaponSystem.Instance.CurrentWeapon?.Config.weaponType == WeaponType.Rocket)
-            {
-                UpdateRocketLockOn();
-            }
-            else
-            {
-                ClearLockOn();
-            }
-        }
-
-        /// <summary>
-        /// 瞄准状态变化时只需处理锁定副作用；瞄准状态本身直读 WeaponSystem.IsAiming，不做本地缓存。
-        /// </summary>
-        private void OnAimStateChanged(int ownerId, bool isAiming)
-        {
-            if (!isAiming)
-            {
-                ClearLockOn();
-            }
         }
 
         /// <summary>
@@ -118,89 +78,6 @@ namespace GameLogic
             }
 
             return best;
-        }
-
-        private void UpdateRocketLockOn()
-        {
-            var player = PlayerSystem.Instance?.GetPlayerEntity();
-            if (player == null) return;
-
-            var weaponConfig = WeaponSystem.Instance?.CurrentWeapon?.Config;
-            if (weaponConfig == null)
-            {
-                ClearLockOn();
-                return;
-            }
-
-            Vector2 origin = player.transform.position.ToXZ();
-            // AimPosition 本身已是玩法平面坐标 (x, z)，直接相减
-            Vector2 aimDir = (player.AimPosition - origin).normalized;
-
-            var target = FindLockOnTarget(origin, aimDir, weaponConfig);
-            if (target == null)
-            {
-                ClearLockOn();
-                return;
-            }
-
-            float holdTime = weaponConfig.lockOnHoldTime > 0 ? weaponConfig.lockOnHoldTime : DEFAULT_LOCK_ON_HOLD_TIME;
-
-            if (_lockedTarget == target)
-            {
-                _lockTimer += Time.deltaTime;
-                if (!_isLocked && _lockTimer >= holdTime)
-                {
-                    _isLocked = true;
-                    GameEvent.Get<IHitFeedbackEvent>()?.OnTargetLocked(target.GetInstanceID());
-                }
-            }
-            else
-            {
-                _lockedTarget = target;
-                _lockTimer = 0;
-                _isLocked = false;
-            }
-        }
-
-        private Transform FindLockOnTarget(Vector2 origin, Vector2 direction, WeaponConfig config)
-        {
-            var enemies = EnemyRegistry.All;
-            Transform best = null;
-            float bestAngle = float.MaxValue;
-            float range = config?.lockOnRange > 0 ? config.lockOnRange : DEFAULT_LOCK_ON_RANGE;
-            float angleLimit = config?.lockOnAngle > 0 ? config.lockOnAngle : DEFAULT_LOCK_ON_ANGLE;
-
-            foreach (var enemy in enemies)
-            {
-                if (enemy == null) continue;
-
-                Vector2 toEnemy = enemy.transform.position.ToXZ() - origin;
-                float distance = toEnemy.magnitude;
-                if (distance > range) continue;
-
-                float angle = Vector2.Angle(direction, toEnemy.normalized);
-                if (angle > angleLimit) continue;
-
-                if (angle < bestAngle)
-                {
-                    bestAngle = angle;
-                    best = enemy.transform;
-                }
-            }
-
-            return best;
-        }
-
-        private void ClearLockOn()
-        {
-            _lockedTarget = null;
-            _lockTimer = 0;
-            _isLocked = false;
-        }
-
-        public Transform GetLockedTarget()
-        {
-            return _isLocked ? _lockedTarget : null;
         }
     }
 }

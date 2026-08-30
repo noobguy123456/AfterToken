@@ -8,7 +8,10 @@ namespace GameLogic
     ///   flag:key        拥有标志位
     ///   flag:!key       没有标志位
     ///   level:&gt;=N      玩家等级 &gt;= N
-    ///   quest:id:active / quest:id:done   任务状态（任务系统未落地，暂求值 false 并告警）
+    ///   quest:id:active   任务进行中（Active 或 ReadyToTurnIn）
+    ///   quest:id:ready    任务可交付（ReadyToTurnIn）
+    ///   quest:id:done     任务已完成（Completed）
+    ///   quest:id:accept   任务可接取（未接取/未完成且 prereq 满足）
     /// </summary>
     public static class NarrativeCondition
     {
@@ -47,9 +50,26 @@ namespace GameLogic
                     Log.Warning($"[NarrativeCondition] 无法解析等级条件: {term}");
                     return false;
 
+                case "quest" when parts.Length == 3 && int.TryParse(parts[1], out int questId):
+                    switch (parts[2])
+                    {
+                        case "active":
+                            var s = QuestSystem.GetState(questId);
+                            return s == QuestState.Active || s == QuestState.ReadyToTurnIn;
+                        case "ready":
+                            return QuestSystem.GetState(questId) == QuestState.ReadyToTurnIn;
+                        case "done":
+                            return QuestSystem.GetState(questId) == QuestState.Completed;
+                        case "accept":
+                            // 可接取（未接取/未完成且 prereq 满足）
+                            return QuestSystem.CanAccept(questId);
+                        default:
+                            Log.Warning($"[NarrativeCondition] 未知任务状态词: {term}");
+                            return false;
+                    }
+
                 case "quest":
-                    // 任务系统未落地（见 docs/Proposal/narrative/quest-system.md），暂恒 false
-                    Log.Warning($"[NarrativeCondition] quest 条件暂不支持（任务系统 pending）: {term}");
+                    Log.Warning($"[NarrativeCondition] 无法解析任务条件（应为 quest:id:active/ready/done）: {term}");
                     return false;
 
                 default:

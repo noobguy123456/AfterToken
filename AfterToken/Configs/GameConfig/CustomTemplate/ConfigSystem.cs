@@ -27,6 +27,8 @@ namespace GameLogic
             {
                 if (!_init)
                 {
+                    // 诊断：谁在 LoadAsync 完成前提前访问 Tables（会触发同步懒加载并可能加载失败）。
+                    Log.Warning($"[ConfigSystem] Tables 被提前访问，触发同步懒加载。调用堆栈:\n{System.Environment.StackTrace}");
                     Load();
                 }
 
@@ -64,6 +66,8 @@ namespace GameLogic
             "cfg_tbnpc",
             "cfg_tbdialogue",
             "cfg_tbdialoguenode",
+            "cfg_tbquest",
+            "cfg_tbquestobjective",
         };
 
         /// <summary>
@@ -72,11 +76,15 @@ namespace GameLogic
         public void Load()
         {
             _tables = new Tables(LoadJson);
-            _init = true;
+            // 以核心表 TbLevel 为哨兵：资源系统未就绪时同步加载会拿到全空表，
+            // 此时不标记初始化完成，留给 LoadAsync 的重试兜底重建配置。
+            _init = _tables.TbLevel.DataList.Count > 0;
         }
 
         /// <summary>
         /// 异步预加载所有 Luban JSON 配置。
+        /// 启动早期资源系统（YooAsset 编辑器文件系统 / AssetDatabase）可能尚未就绪，
+        /// 导致全部表加载返回空；此处对"全部失败"做延迟重试兜底。
         /// </summary>
         public async UniTask LoadAsync(CancellationToken cancellationToken = default)
         {
@@ -84,15 +92,41 @@ namespace GameLogic
 
             _resourceModule ??= ModuleSystem.GetModule<IResourceModule>();
 
-            var jsonCache = new Dictionary<string, JArray>();
-            foreach (var file in _tableFiles)
+            const int maxAttempts = 3;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                jsonCache[file] = await LoadJsonAsync(file, cancellationToken);
-            }
+                var jsonCache = new Dictionary<string, JArray>();
+                foreach (var file in _tableFiles)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    jsonCache[file] = await LoadJsonAsync(file, cancellationToken);
+                }
 
-            _tables = new Tables(file => jsonCache.TryGetValue(file, out var json) ? json : new JArray());
-            _init = true;
+                // 只要有一张表加载出数据就认为资源系统正常（允许个别表合法为空）。
+                bool allEmpty = true;
+                foreach (var json in jsonCache.Values)
+                {
+                    if (json != null && json.Count > 0)
+                    {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+
+                if (!allEmpty || attempt == maxAttempts)
+                {
+                    _tables = new Tables(file => jsonCache.TryGetValue(file, out var json) ? json : new JArray());
+                    _init = true;
+                    if (allEmpty)
+                    {
+                        Log.Error("[ConfigSystem] 多次重试后配置仍全部为空，请检查资源系统！");
+                    }
+                    return;
+                }
+
+                Log.Warning($"[ConfigSystem] 第 {attempt} 次加载全部为空，{0.5f * attempt}s 后重试…");
+                await UniTask.Delay(System.TimeSpan.FromSeconds(0.5 * attempt), cancellationToken: cancellationToken);
+            }
         }
 
         /// <summary>
@@ -151,7 +185,8 @@ namespace GameLogic
 
             if (textAsset == null)
             {
-                Log.Error($"[ConfigSystem] 加载配置失败: {file}");
+                // 单表失败降级为 Warning：LoadAsync 有整体重试兜底，最终仍全空会统一报 Error。
+                Log.Warning($"[ConfigSystem] 加载配置失败: {file}");
                 return new JArray();
             }
 
@@ -176,8 +211,10 @@ namespace GameLogic
             {
                 return await _resourceModule.LoadAssetAsync<TextAsset>(file, cancellationToken);
             }
-            catch
+            catch (System.Exception e)
             {
+                // 诊断：输出真实失败原因（此前 catch 吞掉异常导致只能看到"加载配置失败"）。
+                Log.Error($"[ConfigSystem] 加载配置异常: {file}, {e.GetType().Name}: {e.Message}");
                 return null;
             }
         }

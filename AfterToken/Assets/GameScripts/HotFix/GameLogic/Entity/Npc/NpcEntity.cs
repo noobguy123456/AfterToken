@@ -6,8 +6,9 @@ namespace GameLogic
 {
     /// <summary>
     /// NPC 实体（场景挂载，目前在经营场景使用）。
-    /// 负责触发区检测与占位视觉（胶囊体 + 头顶名字牌）。
+    /// 负责触发区检测与占位视觉（胶囊体 + 头顶名字牌 + MMO 式任务标记 !/?）。
     /// 玩家进入触发区后按 E 交谈（NpcSystem 处理）。
+    /// 任务标记规则：黄 ? 可交付 > 黄 ! 可接取 > 灰 ! 进行中 > 无任务时隐藏。
     /// </summary>
     [RequireComponent(typeof(SphereCollider))]
     public class NpcEntity : MonoBehaviour
@@ -33,6 +34,13 @@ namespace GameLogic
         private Transform _player;
 
         private TextMeshPro _nameLabel;
+        private TextMeshPro _questMarker;
+        private readonly GameEventMgr _eventMgr = new GameEventMgr();
+
+        // ---- 头顶任务标记（MMO 惯例）：黄 ? 可交付 > 黄 ! 可接取 > 灰 ! 进行中 > 无 ----
+        private static readonly Color QuestReadyColor = new Color(1f, 0.85f, 0.2f, 1f);
+        private static readonly Color QuestAvailableColor = new Color(1f, 0.85f, 0.2f, 1f);
+        private static readonly Color QuestInProgressColor = new Color(0.6f, 0.6f, 0.6f, 1f);
 
         private void Awake()
         {
@@ -66,6 +74,89 @@ namespace GameLogic
             {
                 _player = playerGo.transform;
             }
+
+            // 任务标记：跟随任务事件即时刷新
+            RefreshQuestMarker();
+            _eventMgr.AddEvent<int>(IQuestEvent_Event.OnQuestAccepted, _ => RefreshQuestMarker());
+            _eventMgr.AddEvent<int>(IQuestEvent_Event.OnQuestReadyToTurnIn, _ => RefreshQuestMarker());
+            _eventMgr.AddEvent<int>(IQuestEvent_Event.OnQuestCompleted, _ => RefreshQuestMarker());
+            _eventMgr.AddEvent<int, int, int, int>(IQuestEvent_Event.OnObjectiveProgress, (_, _, _, _) => RefreshQuestMarker());
+        }
+
+        private void OnDestroy()
+        {
+            _eventMgr.Clear();
+        }
+
+        /// <summary>
+        /// 刷新头顶任务标记：可交付 黄? > 可接取 黄! > 进行中 灰! > 隐藏。
+        /// </summary>
+        private void RefreshQuestMarker()
+        {
+            EnsureQuestMarker();
+
+            var quests = QuestConfigMgr.Instance.GetQuestsByGiver(_npcId);
+            bool anyReady = false;
+            bool anyAcceptable = false;
+            bool anyInProgress = false;
+            foreach (var quest in quests)
+            {
+                switch (QuestSystem.GetState(quest.Id))
+                {
+                    case QuestState.ReadyToTurnIn:
+                        anyReady = true;
+                        break;
+                    case QuestState.Active:
+                        anyInProgress = true;
+                        break;
+                    case QuestState.Inactive:
+                        if (QuestSystem.CanAccept(quest.Id))
+                        {
+                            anyAcceptable = true;
+                        }
+                        break;
+                }
+            }
+
+            if (anyReady)
+            {
+                _questMarker.text = "?";
+                _questMarker.color = QuestReadyColor;
+                _questMarker.gameObject.SetActive(true);
+            }
+            else if (anyAcceptable)
+            {
+                _questMarker.text = "!";
+                _questMarker.color = QuestAvailableColor;
+                _questMarker.gameObject.SetActive(true);
+            }
+            else if (anyInProgress)
+            {
+                _questMarker.text = "!";
+                _questMarker.color = QuestInProgressColor;
+                _questMarker.gameObject.SetActive(true);
+            }
+            else
+            {
+                _questMarker.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// 头顶任务标记占位：TextMeshPro 文本符号 + Billboard（同名字牌范式，后续美术替换为图标贴片）。
+        /// </summary>
+        private void EnsureQuestMarker()
+        {
+            if (_questMarker != null) return;
+            var markerGo = new GameObject("QuestMarker");
+            markerGo.transform.SetParent(transform, false);
+            markerGo.transform.localPosition = new Vector3(0f, 2.7f, 0f);
+            _questMarker = markerGo.AddComponent<TextMeshPro>();
+            _questMarker.fontSize = 3.5f;
+            markerGo.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f);
+            _questMarker.alignment = TextAlignmentOptions.Center;
+            markerGo.AddComponent<BillboardFaceCamera>();
+            markerGo.SetActive(false);
         }
 
         /// <summary>

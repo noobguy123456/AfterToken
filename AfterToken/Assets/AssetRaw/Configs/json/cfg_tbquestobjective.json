@@ -1,0 +1,26 @@
+[
+  {
+    "id": 10011,
+    "questId": 1001,
+    "type": "kill",
+    "targetId": "9001",
+    "count": 5,
+    "desc": "Eliminate 5 Training Dummies"
+  },
+  {
+    "id": 10021,
+    "questId": 1002,
+    "type": "collect",
+    "targetId": "10004",
+    "count": 3,
+    "desc": "Have 3 Wood in the warehouse"
+  },
+  {
+    "id": 10031,
+    "questId": 1003,
+    "type": "extract",
+    "targetId": "101",
+    "count": 1,
+    "desc": "Extract from Stage 101"
+  }
+]

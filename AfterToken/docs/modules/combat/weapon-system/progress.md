@@ -30,7 +30,7 @@
 ## 待办
 - [ ] 武器切换动画
 - [ ] 武器开火/换弹/切换音效（依赖 `audio-system`）
-- [ ] 武器特殊效果（如激光指示、追踪导弹）
+- [ ] 武器特殊效果（追踪导弹；激光指示已随火箭筒落地，见变更记录 2026-08-30）
 - [ ] 换弹过程可被冲刺/受击等动作打断/加速（视玩法需求）
 
 ## 阻塞
@@ -40,6 +40,7 @@
 
 | 日期 | 变更内容 |
 |------|----------|
+| 2026-08-30 | 火箭筒定型为直线爆炸物 + 4 槽轮盘：①`MAX_WEAPON_SLOTS` 3→4，101 关 `defaultWeaponIds=1001,1003,1004,1005`（Pistol/Rifle/Sniper/Rocket），WeaponWheelUI 扇区选择按槽数泛化（360/N），prefab 补 `m_img_Slot_3`；②`AimAssistSystem` 整删火箭锁定代码（`_lockedTarget`/`UpdateRocketLockOn`/`OnTargetLocked` 事件一并移除），只留磁吸；③火箭无右键瞄准（`OnAimPressed` 对 `WeaponType.Rocket` 直接 return）；④`WeaponMountView` 新增 `GetMuzzleWorldPos()`（记录槽模型尺寸，取模型中心+forward×半长），`BallisticSystem.UpdateRocketLaser` 改为激光常开、起点取枪口、方向指向准星、长度=maxRange；⑤`FireProjectile` 删追踪分支直接直射。Play 实测：4 槽轮盘显隐/选择正确，激光从枪口射出，事件开火链路通畅（此前"开火无效"系 MCP 探测慢 + clipSize=1 打空即自动换弹造成的观测假象，`LastFireTime` 证实击发成功）。爆炸击杀待用户实测 |
 | 2026-08-27 | 武器占位 3D 模型 + 切枪联动：新增 `WeaponMountView`（`Entity/Player/`，`PlayerSystem.CreatePlayerAsync` 注入玩家）——玩家右侧生成 WeaponMount 挂点（本地 (0.38,0.7,0.1)），按槽位武器类型建不同尺寸/颜色长方体（Pistol 短灰 / SMG 蓝 / Rifle 绿长 / Sniper 黑细长 1m / Rocket 橙粗），长轴朝玩家面向；订阅 `OnWeaponEquipped`/`OnWeaponSwitched` 只显示当前槽位，Start 时读 WeaponSystem 槽位现状补齐（装备广播早于玩家创建，事件必错过）。坑位：ownerId 必须取 `IWeaponOwner.OwnerId`（PlayerEntity 的 InstanceID），用本组件 `GetInstanceID()` 会被事件过滤静默失效。占位模型生成即移除 Collider，不参与弹道。Play 验证：三槽 Pistol/Rifle/Sniper 切换显隐正确，截图确认挂点随角色朝向在右侧 |
 | 2026-08-24 | 修复开狙击镜时 HUD（血条/弹药）消失：根因是 `UIModule.OnSetWindowVisible()`——fullScreen 窗口就绪后隐藏栈内其下所有窗口，SniperScopeUI 挂了 `fullScreen: true` 导致 BattleMainUI 被整体隐藏。改动：SniperScopeUI 改 `fullScreen: false`；`BattleMainUI.SetCrosshairImageHidden(bool)` 新增（只切准星 Image.enabled，GameObject 保持激活让 CrosshairUpdater 继续驱动镜窗位置）；`WeaponSystem` 开/关镜时调用隐藏/恢复普通准星（否则普通准星钉在镜窗中心与分划线重叠）。附带收益：开镜时伤害飘字/命中反馈（DamageNumberUI/HitFeedbackUI）也保持可见。待 Play 验证 |
 | 2026-08-23 | 武器轮盘改锁定光标+增量选择（"准星位置神圣不可侵犯"方案的一部分）：不再 ShowCursor/HideCursor（系统鼠标全程不出现，光标保持锁定），选择由打开轮盘以来的鼠标位移增量累积决定方向（死区 20px 内保持原武器，灵敏度复用 `SensitivitySetting.Value`）；开轮盘隐藏准星（`SetVisible(false)`，位置冻结）、关轮盘恢复；死区未推满松开时 `GetSelectedSlot()` 返回 -1，`WeaponSystem.OnWeaponSelected` 原有 slot<0 保护天然兼容（保持当前武器）。Play 验证：轮盘开→关准星位置零漂移、光标全程隐藏锁定 |

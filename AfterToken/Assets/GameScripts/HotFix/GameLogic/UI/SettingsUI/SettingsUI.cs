@@ -7,7 +7,7 @@ namespace GameLogic
 {
     /// <summary>
     /// 设置面板。
-    /// General 页签：灵敏度/开镜灵敏度/狙击开镜模式。
+    /// General 页签：灵敏度/开镜灵敏度/狙击开镜模式/准星样式颜色/返回主界面。
     /// Input 页签：战斗按键改绑（KeyBindingSetting，点击按键按钮后按新键生效，ESC 取消）。
     /// </summary>
     [Window(UILayer.Top, location: "SettingsUI", fullScreen: false)]
@@ -31,6 +31,7 @@ namespace GameLogic
         private TextMeshProUGUI _scopeSensitivityValueText;
         private Toggle _sniperAimModeToggle;
         private Button _closeButton;
+        private Button _returnMainMenuButton;
 
         // ---- 页签 ----
         private Button _tabGeneralButton;
@@ -75,6 +76,7 @@ namespace GameLogic
             _scopeSensitivityValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_ScopeSensitivityValue");
             _sniperAimModeToggle = FindChildComponent<Toggle>("m_rect_ContentRoot/m_panel_General/m_toggle_SniperAimMode");
             _closeButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_Close");
+            _returnMainMenuButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_ReturnMainMenu");
 
             _crosshairStyleButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_CrosshairStyle");
             _crosshairStyleText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_CrosshairStyle/m_text_Label");
@@ -141,6 +143,11 @@ namespace GameLogic
             {
                 _closeButton.onClick.RemoveAllListeners();
                 _closeButton.onClick.AddListener(() => GameModule.UI.CloseUI<SettingsUI>());
+            }
+            if (_returnMainMenuButton != null)
+            {
+                _returnMainMenuButton.onClick.RemoveAllListeners();
+                _returnMainMenuButton.onClick.AddListener(OnReturnMainMenuClicked);
             }
             if (_tabGeneralButton != null)
             {
@@ -440,6 +447,20 @@ namespace GameLogic
             {
                 _bindingHintText.text = text;
             }
+        }
+
+        /// <summary>
+        /// 返回主界面：ChangeProcedure 内部会 CloseAll 并复位暂停状态，
+        /// 无需手动先关设置；已在主菜单（从主菜单打开设置）时仅关闭本窗口，避免流程重进。
+        /// </summary>
+        private void OnReturnMainMenuClicked()
+        {
+            if (GameApp.IsCurrentProcedure<ProcedureMainMenu>())
+            {
+                GameModule.UI.CloseUI<SettingsUI>();
+                return;
+            }
+            GameApp.ChangeProcedure<ProcedureMainMenu>();
         }
     }
 }

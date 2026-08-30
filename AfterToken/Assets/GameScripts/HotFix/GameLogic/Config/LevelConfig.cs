@@ -65,6 +65,11 @@ namespace GameLogic
         /// </summary>
         public int rewardExp;
 
+        /// <summary>
+        /// 撤离点倒计时秒数（玩家在撤离圈内且无敌人时需持续停留的时长）。
+        /// </summary>
+        public float extractionTime;
+
         public LevelConfig() { }
 
         public LevelConfig(GameConfig.cfg.Level level)
@@ -81,6 +86,7 @@ namespace GameLogic
             enemyMaxHp = level.EnemyMaxHp;
             rewardGold = level.RewardGold;
             rewardExp = level.RewardExp;
+            extractionTime = level.ExtractionTime > 0f ? level.ExtractionTime : 10f;
         }
     }
 }

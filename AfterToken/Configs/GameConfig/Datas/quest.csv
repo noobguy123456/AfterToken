@@ -1,0 +1,6 @@
+##var,id,name,desc,giverNpc,prereq,rewards,nextQuest
+##type,int,string,string,int,string,string,int
+##,任务ID,显示名,描述,发布NPC(0=任务板),接取条件表达式,奖励(gold:200|exp:50|item:3001:2),后继任务(0=无)
+,1001,Pest Control,Clear out the Training Dummies in Stage 101.,1,,gold:200|exp:50,1002
+,1002,Bring Back Timber,"Bring back 3 Wood. It only counts once it's in the warehouse.",1,quest:1001:done,gold:150|item:10005:2,1003
+,1003,Into the Factory,Deploy to Stage 101 and extract alive.,2,quest:1001:done,gold:300|exp:100,0

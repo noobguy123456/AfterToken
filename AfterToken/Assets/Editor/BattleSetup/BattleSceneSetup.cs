@@ -36,9 +36,6 @@ namespace GameLogic.Editor
             CreateLobbyUIPrefab();
             CreateLoadingUIPrefab();
             CreateMainMenuScene();
-            CreateLobbyScene();
-            CreateBattleScene();
-            CreateBattleSceneL01();
             CreateRenderTextureAsset();
             AssetDatabase.Refresh();
 
@@ -686,21 +683,6 @@ namespace GameLogic.Editor
             }
         }
 
-        private static void CreateLobbyScene()
-        {
-            string path = "Assets/AssetRaw/Scenes/LobbyScene.unity";
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null)
-            {
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                CreateBasicSceneContent("LobbyScene");
-                EditorSceneManager.SaveScene(scene, path);
-            }
-            else
-            {
-                EnsureSceneHasMainCamera(path);
-            }
-        }
-
         private static void EnsureSceneHasMainCamera(string path)
         {
             var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
@@ -719,65 +701,6 @@ namespace GameLogic.Editor
                 cam.transform.position = new Vector3(0, 0, -10);
             }
             EditorSceneManager.SaveScene(scene);
-        }
-
-        private static void CreateBattleScene()
-        {
-            string path = "Assets/AssetRaw/Scenes/BattleScene.unity";
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null) return;
-
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
-            // Main Camera
-            var cameraGo = new GameObject("Main Camera");
-            cameraGo.tag = "MainCamera";
-            var camera = cameraGo.AddComponent<Camera>();
-            camera.orthographic = true;
-            camera.orthographicSize = 8;
-            camera.nearClipPlane = 0.1f;
-            camera.farClipPlane = 100f;
-            camera.transform.position = new Vector3(0, 0, -10);
-
-            // Light
-            var lightGo = new GameObject("Global Light");
-            lightGo.AddComponent<Light>().type = LightType.Directional;
-
-            // Ground
-            var groundGo = new GameObject("Ground");
-            groundGo.layer = LayerMask.NameToLayer("Obstacle");
-            var groundSr = groundGo.AddComponent<SpriteRenderer>();
-            groundSr.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
-            groundSr.color = new Color(0.2f, 0.25f, 0.2f);
-            groundSr.drawMode = SpriteDrawMode.Tiled;
-            groundSr.size = new Vector2(40, 40);
-            groundGo.transform.localScale = Vector3.one;
-            var groundCol = groundGo.AddComponent<BoxCollider2D>();
-            groundCol.size = new Vector2(40, 40);
-
-            // Spawn point
-            var spawnGo = new GameObject("PlayerSpawnPoint");
-            spawnGo.transform.position = Vector3.zero;
-
-            EditorSceneManager.SaveScene(scene, path);
-        }
-
-        private static void CreateBattleSceneL01()
-        {
-            string sourcePath = "Assets/AssetRaw/Scenes/BattleScene.unity";
-            string targetPath = "Assets/AssetRaw/Scenes/BattleScene_L01.unity";
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(targetPath) != null) return;
-
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(sourcePath) != null)
-            {
-                AssetDatabase.CopyAsset(sourcePath, targetPath);
-            }
-            else
-            {
-                // 如果 BattleScene 也不存在，先创建一个最小化的关卡 2 场景
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                CreateBasicSceneContent("BattleScene_L01");
-                EditorSceneManager.SaveScene(scene, targetPath);
-            }
         }
 
         private static void CreateBasicSceneContent(string sceneName)

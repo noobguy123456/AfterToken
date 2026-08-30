@@ -3,11 +3,11 @@
   <Project Path="YooAsset.csproj" />
   <Project Path="HybridCLR.Editor.csproj" />
   <Project Path="GameLogic.csproj" />
+  <Project Path="GameProto.csproj" />
   <Project Path="TEngine.Editor.csproj" />
   <Project Path="YooAsset.RuntimeExtension.csproj" />
   <Project Path="UniTask.csproj" />
   <Project Path="YooAsset.MiniGame.csproj" />
-  <Project Path="GameProto.csproj" />
   <Project Path="YooAsset.EditorExtension.csproj" />
   <Project Path="YooAsset.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />

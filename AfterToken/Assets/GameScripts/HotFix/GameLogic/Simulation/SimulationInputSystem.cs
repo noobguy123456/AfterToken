@@ -4,18 +4,43 @@ using UnityEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 经营场景输入系统：处理 Esc 键（打开/关闭设置菜单）与 E 键（传送门交互）。
+    /// 经营场景输入系统：处理 Esc 键（关闭菜单 UI/打开设置）、E 键（传送门/NPC 交互）与 J 键（任务日志）。
     /// </summary>
     public class SimulationInputSystem : MonoBehaviour
     {
         [Header("输入设置")]
         [SerializeField] private KeyCode _settingsKey = KeyCode.Escape;
         [SerializeField] private KeyCode _interactKey = KeyCode.E;
+        [SerializeField] private KeyCode _questLogKey = KeyCode.J;
 
         private void Update()
         {
             HandleEscapeInput();
             HandleInteractInput();
+            HandleQuestLogInput();
+        }
+
+        /// <summary>
+        /// J 键开关任务日志。对话进行中不响应（避免与对话操作冲突）。
+        /// </summary>
+        private void HandleQuestLogInput()
+        {
+            if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsPlaying)
+            {
+                return;
+            }
+
+            if (Input.GetKeyDown(_questLogKey))
+            {
+                if (GameModule.UI.HasWindow<QuestLogUI>())
+                {
+                    GameModule.UI.CloseUI<QuestLogUI>();
+                }
+                else
+                {
+                    GameModule.UI.ShowUIAsync<QuestLogUI>();
+                }
+            }
         }
 
         /// <summary>
@@ -64,6 +89,7 @@ namespace GameLogic
             if (TryCloseUI<LobbyUI>()) return;
             if (TryCloseUI<BuildingSelectionUI>()) return;
             if (TryCloseUI<WarehouseUI>()) return;
+            if (TryCloseUI<QuestLogUI>()) return;
             if (TryCloseManagementPanel()) return;
 
             // 没有可关闭 UI 时打开设置面板

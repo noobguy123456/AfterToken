@@ -95,14 +95,15 @@ namespace GameLogic
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             angle = (angle + 360f) % 360f;
 
+            // 槽位 i 绘制在 i*sector 角度的圆周上，选择区按扇区均分。
+            float sector = 360f / WeaponSystem.MAX_WEAPON_SLOTS;
+
             if (_highlight != null)
             {
-                _highlight.rectTransform.rotation = Quaternion.Euler(0, 0, angle - 60f);
+                _highlight.rectTransform.rotation = Quaternion.Euler(0, 0, angle - sector * 0.5f);
             }
 
-            if (angle < 120f) _selectedSlot = 0;
-            else if (angle < 240f) _selectedSlot = 1;
-            else _selectedSlot = 2;
+            _selectedSlot = Mathf.FloorToInt(angle / sector);
 
             // 悬停槽位变化时刷新武器属性面板
             if (_selectedSlot != _lastStatsSlot)

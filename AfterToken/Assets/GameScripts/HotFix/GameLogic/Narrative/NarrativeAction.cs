@@ -7,7 +7,8 @@ namespace GameLogic
     /// 词汇表（多个动作用 &amp; 连接；空串 = 无动作）：
     ///   flag:+key / flag:-key   写/清标志位
     ///   give:gold:N             发金币
-    ///   quest:accept:id / quest:turnin:id   任务接取/交付（任务系统未落地，暂告警跳过）
+    ///   quest:accept:id         弹接取确认窗（QuestAcceptConfirmUI），玩家确认后才真正接取；条件不满足时跳过并告警
+    ///   quest:turnin:id         交付任务（未达可交付状态时跳过并告警）
     /// </summary>
     public static class NarrativeAction
     {
@@ -54,9 +55,34 @@ namespace GameLogic
                     }
                     break;
 
+                case "quest" when parts.Length == 3 && int.TryParse(parts[2], out int questId):
+                    switch (parts[1])
+                    {
+                        case "accept":
+                            // 不直接接取：弹确认窗，玩家点 Confirm 才走 QuestSystem.Accept
+                            if (!QuestSystem.CanAccept(questId))
+                            {
+                                Log.Warning($"[NarrativeAction] 任务不可接取（条件不满足或已接取）: {term}");
+                            }
+                            else if (!GameModule.UI.HasWindow<QuestAcceptConfirmUI>())
+                            {
+                                GameModule.UI.ShowUIAsync<QuestAcceptConfirmUI>(questId);
+                            }
+                            break;
+                        case "turnin":
+                            if (!QuestSystem.TryTurnIn(questId))
+                            {
+                                Log.Warning($"[NarrativeAction] 任务交付失败（未达可交付状态）: {term}");
+                            }
+                            break;
+                        default:
+                            Log.Warning($"[NarrativeAction] 未知任务动作（应为 quest:accept/turnin:id）: {term}");
+                            break;
+                    }
+                    break;
+
                 case "quest":
-                    // 任务系统未落地（见 docs/Proposal/narrative/quest-system.md），暂跳过
-                    Log.Warning($"[NarrativeAction] quest 动作暂不支持（任务系统 pending）: {term}");
+                    Log.Warning($"[NarrativeAction] 无法解析任务动作（应为 quest:accept/turnin:id）: {term}");
                     break;
 
                 default:

@@ -1,0 +1,6 @@
+##var,id,questId,type,targetId,count,desc
+##type,int,int,string,string,int,string
+##,目标ID,所属任务,类型(kill/collect/extract/flag),目标ID/标志键,需求数(extract恒1),目标描述
+,10011,1001,kill,9001,5,Eliminate 5 Training Dummies
+,10021,1002,collect,10004,3,Have 3 Wood in the warehouse
+,10031,1003,extract,101,1,Extract from Stage 101

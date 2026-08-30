@@ -22,11 +22,5 @@ namespace GameLogic
         /// <param name="isCritical">是否暴击/弱点。</param>
         /// <param name="screenPos">目标在屏幕上的位置。</param>
         void OnHitTarget(bool isCritical, Vector2 screenPos);
-
-        /// <summary>
-        /// 火箭锁定完成。
-        /// </summary>
-        /// <param name="targetId">锁定目标 ID。</param>
-        void OnTargetLocked(int targetId);
     }
 }

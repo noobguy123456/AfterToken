@@ -31,6 +31,7 @@ namespace GameLogic
         private Slider _sliderHp;
         private Slider _sliderStamina;
         private RectTransform _rectCrosshair;
+        private TextMeshProUGUI _textExtraction;
 
 
 
@@ -42,6 +43,7 @@ namespace GameLogic
             _sliderHp = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Hp");
             _sliderStamina = FindChildComponent<Slider>("m_rect_HudRoot/m_slider_Stamina");
             _rectCrosshair = FindChildComponent<RectTransform>("m_rect_Crosshair");
+            _textExtraction = FindChildComponent<TextMeshProUGUI>("m_rect_HudRoot/m_text_Extraction");
         }
         #endregion
 
@@ -105,7 +107,48 @@ namespace GameLogic
                 _readyPollFrames--;
                 RefreshAll();
             }
+
+            UpdateExtractionCountdown();
         }
+
+        #region 撤离倒计时
+
+        private static readonly Color ExtractionNormalColor = new Color(0.55f, 1f, 0.6f);
+        private static readonly Color ExtractionPausedColor = new Color(1f, 0.45f, 0.35f);
+
+        /// <summary>
+        /// 撤离倒计时显示（屏幕顶部居中）：拉取 <see cref="ExtractionSystem"/> 状态，
+        /// 圈内显示剩余秒数；圈内有敌人时暂停并红字提示。
+        /// </summary>
+        private void UpdateExtractionCountdown()
+        {
+            if (_textExtraction == null) return;
+
+            var extraction = ExtractionSystem.Instance;
+            if (extraction != null && extraction.IsCountingDown)
+            {
+                if (!_textExtraction.gameObject.activeSelf)
+                {
+                    _textExtraction.gameObject.SetActive(true);
+                }
+                if (extraction.IsPaused)
+                {
+                    _textExtraction.text = "EXTRACTION PAUSED - ENEMY IN ZONE";
+                    _textExtraction.color = ExtractionPausedColor;
+                }
+                else
+                {
+                    _textExtraction.text = $"EXTRACTING  {extraction.RemainingSeconds:F1}s";
+                    _textExtraction.color = ExtractionNormalColor;
+                }
+            }
+            else if (_textExtraction.gameObject.activeSelf)
+            {
+                _textExtraction.gameObject.SetActive(false);
+            }
+        }
+
+        #endregion
 
         #region 准星
 

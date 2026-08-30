@@ -16,6 +16,8 @@
 
 - [x] 2026-08-05 `CameraSystem3D` Duckov 式狙击镜：`SetScopeActive(bool, scopeFov)` + 懒创建 ScopeCamera（CopyFrom 主相机，1024² RT）。**定位坑**：不能用 `瞄准点 + 主相机 offset`（主相机 offset(0,5,-3.5)+俯角 60° 的视轴落点偏 -0.61m，小 FOV 下瞄准点会出画），需沿当前俯仰/偏航的视线方向从瞄准点回推到主相机等高处（`t = _followOffset.y / -forward.y`）。RT 在 `OnDestroy` 释放
 
+- [x] 2026-08-30 玩家屏幕锚点 `_screenAnchorY`（默认 0.25，人物锚在画面底部 1/4）：`UpdateCameraPosition` 末尾 `ApplyScreenAnchor` 用 `ViewportPointToRay((0.5, anchorY))` 取方向（位置无关），`t = height / -dir.y` 沿视线反推相机 xz，高度不动。坑位：不能用"中心-锚点相对平移"——配置偏移 (0,5,-3.5) 与 pitch60 的几何中心不重合会残留 0.62m 偏差，必须绝对反解。实测玩家视口精确 (0.500, 0.250)
+
 ## 进行中
 - [ ] 无
 

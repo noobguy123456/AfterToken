@@ -41,7 +41,7 @@ namespace GameLogic
             await UniTask.Delay(1000, cancellationToken: Owner.GetCancellationTokenOnDestroy());
             if (Owner != null && Owner.IsDead)
             {
-                GameEvent.Get<IEnemyEvent>().OnEnemyDied(Owner.GetInstanceID());
+                GameEvent.Get<IEnemyEvent>().OnEnemyDied(Owner.GetInstanceID(), Owner.ConfigId);
                 Owner.Recycle();
             }
         }

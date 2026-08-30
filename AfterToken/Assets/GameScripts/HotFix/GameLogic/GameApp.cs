@@ -175,6 +175,14 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 当前流程是否为指定类型（FSM 未初始化时返回 false）。
+        /// </summary>
+        public static bool IsCurrentProcedure<T>() where T : ProcedureBase
+        {
+            return _procedureFsm?.CurrentState is T;
+        }
+
         private static IFsm<IProcedureModule> GetProcedureFsm(IProcedureModule procedureModule)
         {
             var field = procedureModule.GetType().GetField("_procedureFsm", BindingFlags.NonPublic | BindingFlags.Instance);

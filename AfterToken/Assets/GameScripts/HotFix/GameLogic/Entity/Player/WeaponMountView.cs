@@ -17,10 +17,28 @@ namespace GameLogic
         private static readonly Vector3 MountLocalPos = new Vector3(0.38f, 0.7f, 0.1f);
 
         private readonly Dictionary<int, GameObject> _slotModels = new Dictionary<int, GameObject>();
+        // 各槽位模型的外形尺寸（EnsureModel 时记录），用于推算枪口位置
+        private readonly Dictionary<int, Vector3> _slotSizes = new Dictionary<int, Vector3>();
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
 
         private Transform _mount;
         private int _ownerId;
+
+        /// <summary>
+        /// 当前槽位武器的枪口世界坐标（模型前端）。无模型时退化为挂点位置。
+        /// </summary>
+        public Vector3 GetMuzzleWorldPos()
+        {
+            int slot = WeaponSystem.Instance != null ? WeaponSystem.Instance.CurrentSlotIndex : -1;
+            if (slot >= 0
+                && _slotModels.TryGetValue(slot, out var model) && model != null && model.activeSelf
+                && _slotSizes.TryGetValue(slot, out var size))
+            {
+                // 模型长轴沿 Z，枪口 = 模型中心再向前半长
+                return model.transform.position + model.transform.forward * (size.z * 0.5f);
+            }
+            return _mount != null ? _mount.position : transform.position;
+        }
 
         private void Awake()
         {
@@ -81,6 +99,7 @@ namespace GameLogic
             {
                 Destroy(old);
                 _slotModels.Remove(slot);
+                _slotSizes.Remove(slot);
             }
             EnsureModel(slot, cfg.weaponType);
 
@@ -132,6 +151,7 @@ namespace GameLogic
             go.GetComponent<MeshRenderer>().material.color = color;
 
             _slotModels[slot] = go;
+            _slotSizes[slot] = size;
             go.SetActive(false);
         }
 

@@ -16,7 +16,7 @@ namespace GameLogic
         private void Awake()
         {
             Instance = this;
-            _eventMgr.AddEvent<int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
+            _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
         }
 
         private void OnDestroy()
@@ -25,15 +25,14 @@ namespace GameLogic
             Instance = null;
         }
 
-        private void OnEnemyDied(int enemyId)
+        private void OnEnemyDied(int enemyId, int configId)
         {
-            // 事件触发时敌人实体尚未销毁，可从注册表取到配置 ID 与死亡位置
+            // 事件触发时敌人实体尚未销毁，可从注册表取到死亡位置
             if (!EnemyRegistry.TryGet(enemyId, out var enemy) || enemy == null)
             {
                 return;
             }
 
-            int configId = enemy.ConfigId;
             Vector2 position = enemy.transform.position.ToXZ();
             var drops = DropConfigMgr.Instance.GetDropsForEnemy(configId);
             if (drops.Count == 0)

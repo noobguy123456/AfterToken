@@ -33,6 +33,9 @@ namespace GameLogic
             PlayerProfileSystem.MarkLevelCompleted(levelId);
 
             Log.Info($"[CrossPlayLink] 关卡 {levelId} 撤离结算：+{cfg.rewardGold}G +{cfg.rewardExp}EXP");
+
+            // 任务系统 extract 目标推进（与奖励发放同一时机）
+            QuestSystem.OnBattleExtracted(levelId);
         }
     }
 }

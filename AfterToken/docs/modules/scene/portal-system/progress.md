@@ -48,6 +48,7 @@
 | 2026-08-20 | 修复传送门完全无法交互的根因：`Portal_Placeholder.prefab` 挂的是 **CircleCollider2D**（2D 物理），2D 转 3D 后玩家是 3D Rigidbody+CapsuleCollider，`OnTriggerEnter(Collider)` 永不触发——prefab 改挂 SphereCollider（trigger，r=1.5），`PortalEntity.Awake` 增加运行时兜底（缺 SphereCollider 自动补，热更类型 RequireComponent 不可靠）。另修复 `ExecuteTransition` 的 SELECT_LEVEL 分支误放在 IsPlayerDead 之后（基地无玩家实体恒拦截），已前移到死亡判定之前。Play Mode 全链路验证通过：进入触发区 inside=True → 交互开 LobbyUI → Back 关闭 |
 | 2026-08-20 | 新增选关传送门类型 `portal_select_level`（portal.xlsx 2001，prompt "Press E to deploy"）：交互时不切场景、无转场，直接打开 LobbyUI 选关窗口（`PortalSystem.ExecuteTransition` 前置分支，绕过死亡判定与 PortalPlayerState 记录；`OnInteractPressed` 对选关门放行——基地无战斗玩家实体，原死亡判定恒拦截）；`PortalEntity.GetDestinationText()` 显示 "Deploy"；经营场景接入：`ProcedureSimulation` 在 SimulationRoot 挂 `PortalSystem`，`SimulationInputSystem` 新增 E 键发布 `IBattleInputEvent.OnInteractPressed`；SimulationScene 摆放 Portal_Deploy（2001，(5,0,5)）。同批修复：ESC 关闭链补 LobbyUI（之前 ESC 只弹设置面板把它压在下层，表现为"关不掉"） |
 | 2026-08-20 | 101 场景补放传送门 + 3D 关卡链配置：portal.xlsx 新增 1101（next level→102，全灭激活，保留玩家状态）/ 1102（→103）；`BattleScene_3D_L01` 摆放 Portal_Next_102（1101，(0,0,-5)）与 Portal_ReturnLobby（1001，(-6,0,-3)，沿用 prefab 默认 configId）。注意 3D_L02/L03 场景仍未放传送门，链到 102 后需用 GM 或补放 |
+| 2026-08-30 | 撤离结算抽取为公共方法 `PortalSystem.ExtractToBase`（原 RETURN_BASE 分支逻辑：仓库转入+CrossPlayLink 奖励+回基地），RETURN_BASE 分支与撤离点系统（ExtractionSystem）共用同一结算入口，保证两条撤离路径奖励一致 |
 
 ---
 

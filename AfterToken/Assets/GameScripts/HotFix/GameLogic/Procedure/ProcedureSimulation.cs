@@ -36,6 +36,8 @@ namespace GameLogic
                 await SpawnPlayerAsync(ct);
                 Log.Info("[ProcedureSimulation] step5 ShowUIAsyncAwait begin");
                 await GameModule.UI.ShowUIAsyncAwait<SimulationMainUI>();
+                // 任务追踪 HUD（左侧常驻，纯展示）
+                await GameModule.UI.ShowUIAsyncAwait<QuestTrackerUI>();
                 Log.Info("[ProcedureSimulation] step6 ShowUI done");
                 _simulationSystem?.Enter();
                 Log.Info("[ProcedureSimulation] step7 all done");

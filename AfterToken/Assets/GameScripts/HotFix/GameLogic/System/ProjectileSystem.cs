@@ -17,6 +17,8 @@ namespace GameLogic
         [SerializeField] private Transform _projectileRoot;
 
         private readonly Dictionary<int, ProjectileData> _activeProjectiles = new Dictionary<int, ProjectileData>();
+        // Update 快照缓冲：Tick 内可重入销毁/新建弹体，不能直接枚举 _activeProjectiles。
+        private readonly List<ProjectileData> _tickSnapshot = new List<ProjectileData>();
         private readonly Dictionary<int, ProjectileEntity> _entityMap = new Dictionary<int, ProjectileEntity>();
         private readonly Queue<(ProjectileData data, RaycastHit hit)> _pendingHits = new Queue<(ProjectileData data, RaycastHit hit)>();
         private int _nextProjectileId = 1;
@@ -52,7 +54,7 @@ namespace GameLogic
 
             _eventMgr.AddEvent<int, GameObject>(IProjectileEvent_Event.OnProjectileHit, OnProjectileHit);
             _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemySpawned, OnEnemySpawned);
-            _eventMgr.AddEvent<int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
+            _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
         }
 
         private void OnDestroy()
@@ -146,7 +148,7 @@ namespace GameLogic
             }
         }
 
-        private void OnEnemyDied(int enemyId)
+        private void OnEnemyDied(int enemyId, int configId)
         {
             _enemyMap.Remove(enemyId);
         }
@@ -181,6 +183,7 @@ namespace GameLogic
             }
 
             entity.Init(data);
+            ApplyProjectileVisual(entity, weaponConfig);
 
             _activeProjectiles[data.Id] = data;
             _entityMap[data.Id] = entity;
@@ -219,17 +222,49 @@ namespace GameLogic
         {
             float deltaTime = Time.deltaTime;
 
-            // 使用字典直接遍历，避免每帧分配 List<int>
-            var enumerator = _activeProjectiles.GetEnumerator();
-            while (enumerator.MoveNext())
+            // Tick 内可能销毁/新建弹体（寿命到期、命中、事件回调重入），
+            // 直接枚举字典会触发 Collection was modified，改为快照遍历。
+            _tickSnapshot.Clear();
+            foreach (var kv in _activeProjectiles)
             {
-                var data = enumerator.Current.Value;
-                if (!data.IsActive) continue;
+                _tickSnapshot.Add(kv.Value);
+            }
+            for (int i = 0; i < _tickSnapshot.Count; i++)
+            {
+                var data = _tickSnapshot[i];
+                // 快照期间已被销毁的弹体跳过
+                if (!data.IsActive || !_activeProjectiles.ContainsKey(data.Id)) continue;
                 Tick(data, deltaTime);
             }
-            enumerator.Dispose();
 
             ProcessPendingHits();
+        }
+
+        /// <summary>
+        /// 弹体占位视觉区分：火箭弹放大染橙，其余复位默认（对象池复用必须复位）。
+        /// 正式弹体模型接入后，改为按 <see cref="WeaponConfig.projectilePrefab"/> 加载。
+        /// </summary>
+        private static void ApplyProjectileVisual(ProjectileEntity entity, WeaponConfig config)
+        {
+            var sr = entity.GetComponent<SpriteRenderer>();
+            if (config.weaponType == WeaponType.Rocket)
+            {
+                entity.transform.localScale = Vector3.one * 2f;
+                if (sr != null) sr.color = new Color(1f, 0.55f, 0.1f);
+            }
+            else
+            {
+                entity.transform.localScale = Vector3.one;
+                if (sr != null) sr.color = Color.yellow;
+            }
+        }
+
+        /// <summary>
+        /// 爆炸特效：火球（噪声侵蚀半球）+ 冲击波（地面圆环），由 <see cref="ExplosionEffectDriver"/> 自驱动自毁。
+        /// </summary>
+        private void SpawnExplosionVisual(Vector2 center, float radius)
+        {
+            ExplosionEffectDriver.Create(center.ToWorld(), radius, _projectileRoot);
         }
 
         private void Tick(ProjectileData data, float deltaTime)
@@ -237,6 +272,12 @@ namespace GameLogic
             data.LifeTime -= deltaTime;
             if (data.LifeTime <= 0)
             {
+                // 爆炸物（火箭弹）寿命耗尽时在终点引爆，不能悄无声息消失
+                var config = WeaponConfigMgr.Instance?.Get(data.ConfigId);
+                if (config != null && config.explosionRadius > 0)
+                {
+                    ApplyExplosionDamage(data, data.Position, config);
+                }
                 DestroyProjectile(data);
                 return;
             }
@@ -339,6 +380,7 @@ namespace GameLogic
         private void ApplyExplosionDamage(ProjectileData data, Vector2 center, WeaponConfig weaponConfig)
         {
             float radius = weaponConfig.explosionRadius;
+            SpawnExplosionVisual(center, radius);
             int hitCount = Physics.OverlapSphereNonAlloc(center.ToWorld(PROJECTILE_HEIGHT), radius, _explosionResults, _enemyLayerMask);
 
             for (int i = 0; i < hitCount; i++)

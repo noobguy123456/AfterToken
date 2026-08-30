@@ -26,9 +26,11 @@
 
 经营场景采用 **3D 俯视角**，场景内容（地面、相机、灯光、EventSystem）在 Unity 编辑器中设计，通过场景文件加载。
 
-进入流程后加载玩家角色：复用战斗 `Player` prefab（`GameModule.Resource.LoadGameObjectAsync("Player", ...)`），移除战斗逻辑的 `PlayerEntity`，挂载轻量 `SimulationPlayerController`（WASD 移动 / 面向移动方向 / 地面边界钳制，移速读 `TbPlayer`）。经营相机较远，实例的 `Visual` 占位视觉放大 5 倍（0.2m→1m），不影响战斗 prefab。
+进入流程后加载玩家角色：复用战斗 `Player` prefab（`GameModule.Resource.LoadGameObjectAsync("Player", ...)`），移除战斗逻辑的 `PlayerEntity`，挂载轻量 `SimulationPlayerController`（WASD 移动 / 面向移动方向 / 地面边界钳制，移速读 `TbPlayer`）。玩家 Visual 为 3D 胶囊（0.6x1.8m，与 NPC 等大；2026-08-30 前的 ×5 放大兜底已随胶囊化移除）。
 
 相机控制使用 `SimulationCameraController`（跟随玩家 / 滚轮缩放），由 `ProcedureSimulation` 挂载到主相机并 `SetFollowTarget(player)`；跟随模式下禁用 WASD 平移与右键拖动（避免抢控制权，WASD 归玩家移动）；战斗用 `CameraSystem3D` 若存在会被移除。地面渲染器染灰绿色，与天空盒区分。
+
+**相机参数与战斗场景统一**（2026-08-30）：两场景同读 Luban `TbCamera3D`（`Camera3DConfigMgr`）——俯仰 60°、偏移 (0,5,-3.5)、FOV 45、缩放范围 5~30、移动/缩放速度；跟随方式统一为硬跟随（像素级锁定，弃用平滑阻尼，避免"跟不上"的滞后感）；经营滚轮缩放按基准偏移等比缩放（高度/距离同比），俯仰角不随缩放变化。
 
 ### 1.2 涉及文件
 
@@ -53,12 +55,12 @@
 // ProcedureSimulation.SpawnPlayerAsync()
 // 1. 读取场景 PlayerSpawnPoint，加载 "Player" prefab
 // 2. 移除 PlayerEntity，挂载 SimulationPlayerController
-// 3. Visual 占位视觉放大 5 倍；相机 SetFollowTarget(player)
+// 3. 相机 SetFollowTarget(player)
 ```
 
 #### 相机跟随
 
-`SimulationCameraController.Update` 每帧处理滚轮缩放（改变跟随高度），有跟随目标时平滑跟随；无跟随目标时支持 WASD 平移与右键拖动。
+`SimulationCameraController` 参数同读 `TbCamera3D`（与战斗 `CameraSystem3D` 同源）；有跟随目标时硬跟随（位置=目标+偏移）；滚轮缩放按基准偏移等比缩放（高度语义，范围取配置 MinZoom/MaxZoom）；无跟随目标时支持 WASD 平移与右键拖动。
 
 ### 1.4 数据流
 
@@ -71,7 +73,7 @@ SpawnPlayerAsync：加载 Player prefab → 移除 PlayerEntity → 挂 Simulati
     ↓
 SimulationCameraController.SetFollowTarget(player)
     ↓
-WASD 驱动玩家移动，相机每帧平滑跟随
+WASD 驱动玩家移动，相机硬跟随（像素级锁定）
 ```
 
 ---

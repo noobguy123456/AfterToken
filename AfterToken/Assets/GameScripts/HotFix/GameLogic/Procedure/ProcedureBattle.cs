@@ -28,7 +28,7 @@ namespace GameLogic
                     Log.Error($"[ProcedureBattle] 找不到关卡配置 {levelId}，使用默认关卡 1");
                     _levelConfig = LevelConfigMgr.Instance.Get(1);
                 }
-                sceneName = _levelConfig?.sceneName ?? "BattleScene";
+                sceneName = _levelConfig?.sceneName ?? "BattleScene_3D_L01";
             }
             else
             {
@@ -43,6 +43,7 @@ namespace GameLogic
                 CursorManager.Instance?.ForceHideCursor();
 
                 await GameModule.UI.ShowUIAsyncAwait<BattleMainUI>();
+                await GameModule.UI.ShowUIAsyncAwait<QuestTrackerUI>();
                 await GameModule.UI.ShowUIAsyncAwait<DamageNumberUI>();
                 await GameModule.UI.ShowUIAsyncAwait<HitFeedbackUI>();
                 await GameModule.UI.ShowUIAsyncAwait<MinimapUI>();
@@ -76,6 +77,7 @@ namespace GameLogic
             _battleRoot.AddComponent<LootContainerSystem>();
             _battleRoot.AddComponent<NoteSystem>();
             _battleRoot.AddComponent<MinimapSystem>();
+            _battleRoot.AddComponent<ExtractionSystem>();
             _battleRoot.AddComponent<PlayerDeathHandler>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

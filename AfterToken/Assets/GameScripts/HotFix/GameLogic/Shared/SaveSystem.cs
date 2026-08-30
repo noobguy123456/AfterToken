@@ -131,6 +131,34 @@ namespace GameLogic
         public SettingsSaveData settings = new SettingsSaveData();
         public UnlockSaveData unlock = new UnlockSaveData();
         public DialogueSaveData dialogue = new DialogueSaveData();
+        public QuestSaveData quest = new QuestSaveData();
+    }
+
+    /// <summary>
+    /// 任务存档段：状态字符串存枚举（与 KeyBindingEntry 同惯例），
+    /// 进度按 objectiveId 存（策划改表增删目标时不串位）。
+    /// </summary>
+    [Serializable]
+    public class QuestSaveData
+    {
+        public bool initialized;
+        public List<QuestEntry> quests = new List<QuestEntry>();
+    }
+
+    [Serializable]
+    public class QuestEntry
+    {
+        public int questId;
+        /// <summary>QuestState 枚举名。</summary>
+        public string state;
+        public List<QuestObjectiveProgress> objectiveProgress = new List<QuestObjectiveProgress>();
+    }
+
+    [Serializable]
+    public class QuestObjectiveProgress
+    {
+        public int objectiveId;
+        public int count;
     }
 
     [Serializable]

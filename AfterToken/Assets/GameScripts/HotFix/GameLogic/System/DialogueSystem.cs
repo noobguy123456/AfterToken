@@ -13,6 +13,8 @@ namespace GameLogic
     /// 状态机：Idle → Playing(line) → WaitingChoice → Idle。
     /// 操作：E/回车 推进（打字中先补全），数字键 1~4 选选项，Esc 由 SimulationInputSystem 关窗链调用 <see cref="EndDialogue"/>。
     /// 挂载：ProcedureSimulation 的 SimulationRoot（基地对话；战斗场景不对话）。
+    /// 任务枢纽：NPC 有可交付/可接取任务时，对话不从任务节点链自动开始，
+    /// 而是先播默认问候语并出选项（Turn in/Accept 任务项 + Just chatting），常见 RPG 的 NPC 选项式交互。
     /// 设计文档：docs/Proposal/narrative/dialogue-system.md。
     /// </summary>
     public class DialogueSystem : MonoBehaviour
@@ -85,7 +87,99 @@ namespace GameLogic
             if (!IsPlaying) return; // 开窗期间被外部打断
 
             GameEvent.Get<IDialogueEvent>()?.OnDialogueStarted(dialogueId, npcId);
-            PlayNode(start);
+
+            // 任务枢纽：有可交付/可接取任务时出选项菜单，否则直接走节点链
+            var questChoices = CollectQuestChoices(dialogueId);
+            if (questChoices.Count > 0)
+            {
+                ShowQuestHub(dialogueId, questChoices);
+            }
+            else
+            {
+                PlayNode(start);
+            }
+        }
+
+        /// <summary>
+        /// 收集该对话的任务选项：扫描节点表，把 condition 为 quest:id:ready / quest:id:accept 的节点
+        /// 按当前任务状态映射为"Turn in:/Accept:"选项（可交付在前）。无任务交互时返回空表。
+        /// </summary>
+        private static List<KeyValuePair<string, int>> CollectQuestChoices(int dialogueId)
+        {
+            var readyChoices = new List<KeyValuePair<string, int>>();
+            var acceptChoices = new List<KeyValuePair<string, int>>();
+
+            foreach (var node in ConfigSystem.Instance.Tables.TbDialogueNode.DataList)
+            {
+                if (node.DialogueId != dialogueId || string.IsNullOrEmpty(node.Condition)) continue;
+
+                var parts = node.Condition.Split(':');
+                if (parts.Length != 3 || parts[0] != "quest") continue;
+                if (!int.TryParse(parts[1], out int questId)) continue;
+
+                var questCfg = QuestConfigMgr.Instance.Get(questId);
+                if (questCfg == null) continue;
+
+                switch (parts[2])
+                {
+                    case "ready" when QuestSystem.GetState(questId) == QuestState.ReadyToTurnIn:
+                        readyChoices.Add(new KeyValuePair<string, int>($"Turn in: {questCfg.Name}", node.Id));
+                        break;
+                    case "accept" when QuestSystem.CanAccept(questId):
+                        acceptChoices.Add(new KeyValuePair<string, int>($"Accept: {questCfg.Name}", node.Id));
+                        break;
+                }
+            }
+
+            readyChoices.AddRange(acceptChoices);
+            return readyChoices;
+        }
+
+        /// <summary>
+        /// 任务枢纽：播默认问候语（无条件起始节点），选项为任务项 + Just chatting（走默认问候的后续节点）。
+        /// </summary>
+        private void ShowQuestHub(int dialogueId, List<KeyValuePair<string, int>> questChoices)
+        {
+            var defaultNode = FindDefaultNode(dialogueId);
+
+            // 选项上限 4（DialogueUI.MaxChoices）：任务项最多 3 条 + 正常对话
+            _choices = new List<KeyValuePair<string, int>>(questChoices);
+            if (_choices.Count > 3)
+            {
+                _choices.RemoveRange(3, _choices.Count - 3);
+            }
+            _choices.Add(new KeyValuePair<string, int>("Just chatting.", defaultNode != null ? defaultNode.Next : 0));
+
+            _currentNode = defaultNode;
+            _waitingChoice = true;
+            if (defaultNode != null)
+            {
+                GameEvent.Get<IDialogueEvent>()?.OnDialogueLine(defaultNode.Id, defaultNode.Speaker, defaultNode.Text);
+            }
+            var options = new string[_choices.Count];
+            for (int i = 0; i < _choices.Count; i++)
+            {
+                options[i] = _choices[i].Key;
+            }
+            GameEvent.Get<IDialogueEvent>()?.OnDialogueChoices(0, options);
+        }
+
+        /// <summary>
+        /// 默认（无条件）起始节点：从 startNode 起第一个无条件的节点，作为任务枢纽的问候语与"正常对话"入口。
+        /// </summary>
+        private static DialogueNode FindDefaultNode(int dialogueId)
+        {
+            var cfg = DialogueConfigMgr.Instance.Get(dialogueId);
+            if (cfg == null) return null;
+
+            var node = DialogueConfigMgr.Instance.GetNode(cfg.StartNode);
+            int guard = 0;
+            while (node != null && guard++ < 1000)
+            {
+                if (string.IsNullOrEmpty(node.Condition)) return node;
+                node = node.Next != 0 ? DialogueConfigMgr.Instance.GetNode(node.Next) : null;
+            }
+            return null;
         }
 
         /// <summary>
@@ -218,6 +312,8 @@ namespace GameLogic
         {
             if (!IsPlaying) return;
             if (Time.frameCount == _startFrame) return; // 防启动对话的同帧 E 连跳
+            // 任务接取确认窗开着时，Enter/Esc 归它处理，对话不推进
+            if (GameModule.UI.HasWindow<QuestAcceptConfirmUI>()) return;
 
             if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return))
             {

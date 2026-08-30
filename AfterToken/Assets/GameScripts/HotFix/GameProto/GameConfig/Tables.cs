@@ -117,6 +117,14 @@ public partial class Tables
     /// 对话节点表
     /// </summary>
     public cfg.TbDialogueNode TbDialogueNode {get; }
+    /// <summary>
+    /// 任务表
+    /// </summary>
+    public cfg.TbQuest TbQuest {get; }
+    /// <summary>
+    /// 任务目标表
+    /// </summary>
+    public cfg.TbQuestObjective TbQuestObjective {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -147,6 +155,8 @@ public partial class Tables
         TbNpc = new cfg.TbNpc(loader("cfg_tbnpc"));
         TbDialogue = new cfg.TbDialogue(loader("cfg_tbdialogue"));
         TbDialogueNode = new cfg.TbDialogueNode(loader("cfg_tbdialoguenode"));
+        TbQuest = new cfg.TbQuest(loader("cfg_tbquest"));
+        TbQuestObjective = new cfg.TbQuestObjective(loader("cfg_tbquestobjective"));
         ResolveRef();
     }
     
@@ -178,6 +188,8 @@ public partial class Tables
         TbNpc.ResolveRef(this);
         TbDialogue.ResolveRef(this);
         TbDialogueNode.ResolveRef(this);
+        TbQuest.ResolveRef(this);
+        TbQuestObjective.ResolveRef(this);
     }
 }
 

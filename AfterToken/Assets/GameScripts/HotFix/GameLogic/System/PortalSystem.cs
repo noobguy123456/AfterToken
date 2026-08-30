@@ -58,7 +58,7 @@ namespace GameLogic.Portal
         private void RegisterEvents()
         {
             _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemySpawned, OnEnemySpawned);
-            _eventMgr.AddEvent<int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
+            _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
             _eventMgr.AddEvent(IBattleInputEvent_Event.OnInteractPressed, OnInteractPressed);
         }
 
@@ -159,11 +159,7 @@ namespace GameLogic.Portal
                     switch (config.portalType)
                     {
                         case PortalType.RETURN_BASE:
-                            // 撤离结算：临时背包整体转入仓库，回基地（经营场景即据点）后统一清空
-                            Warehouse.AddAll(RunInventory.Items);
-                            // 跨玩法联动：撤离奖励（金币/经验）+ 通关记录（驱动关卡链解锁）
-                            CrossPlayLink.OnBattleExtracted(BattleContext.CurrentLevelId);
-                            GameApp.ChangeProcedure<ProcedureSimulation>();
+                            ExtractToBase();
                             break;
                         case PortalType.NEXT_LEVEL:
                             SwitchToNextLevel(config.targetLevelId);
@@ -187,13 +183,25 @@ namespace GameLogic.Portal
             return player == null || player.IsDead;
         }
 
+        /// <summary>
+        /// 撤离结算并返回据点（经营场景）：临时背包整体转入仓库（回基地后统一清空），
+        /// 跨玩法联动结算撤离奖励（金币/经验）与通关记录（驱动关卡链解锁）。
+        /// 供 RETURN_BASE 传送门与撤离点（ExtractionSystem）共用。
+        /// </summary>
+        public static void ExtractToBase()
+        {
+            Warehouse.AddAll(RunInventory.Items);
+            CrossPlayLink.OnBattleExtracted(BattleContext.CurrentLevelId);
+            GameApp.ChangeProcedure<ProcedureSimulation>();
+        }
+
         private void OnEnemySpawned(int enemyId, int configId)
         {
             AliveEnemyCount++;
             TotalSpawnedEnemyCount++;
         }
 
-        private void OnEnemyDied(int enemyId)
+        private void OnEnemyDied(int enemyId, int configId)
         {
             AliveEnemyCount = Mathf.Max(0, AliveEnemyCount - 1);
             EvaluateConditions();

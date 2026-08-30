@@ -35,6 +35,7 @@ public sealed partial class Level : Luban.BeanBase
         EnemyMaxHp = (int)_obj.GetValue("enemyMaxHp");
         RewardGold = (int)_obj.GetValue("rewardGold");
         RewardExp = (int)_obj.GetValue("rewardExp");
+        ExtractionTime = (float)_obj.GetValue("extractionTime");
     }
 
     public static Level DeserializeLevel(JToken _buf)
@@ -90,6 +91,10 @@ public sealed partial class Level : Luban.BeanBase
     /// 通关奖励经验
     /// </summary>
     public readonly int RewardExp;
+    /// <summary>
+    /// 撤离倒计时秒数
+    /// </summary>
+    public readonly float ExtractionTime;
 
 
     public const int __ID__ = 1437482330;
@@ -114,6 +119,7 @@ public sealed partial class Level : Luban.BeanBase
         + "enemyMaxHp:" + EnemyMaxHp + ","
         + "rewardGold:" + RewardGold + ","
         + "rewardExp:" + RewardExp + ","
+        + "extractionTime:" + ExtractionTime + ","
         + "}";
     }
 }

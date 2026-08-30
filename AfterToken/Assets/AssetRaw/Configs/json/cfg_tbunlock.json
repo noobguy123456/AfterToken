@@ -1,23 +1,5 @@
 [
   {
-    "id": 1,
-    "contentType": 0,
-    "targetId": 2,
-    "requirePlayerLevel": 0,
-    "requireCompleteLevelId": 1,
-    "costGold": 0,
-    "comment": "Stage 2: clear Stage 1"
-  },
-  {
-    "id": 2,
-    "contentType": 0,
-    "targetId": 3,
-    "requirePlayerLevel": 0,
-    "requireCompleteLevelId": 2,
-    "costGold": 0,
-    "comment": "Stage 3: clear Stage 2"
-  },
-  {
     "id": 3,
     "contentType": 0,
     "targetId": 102,
