@@ -27,7 +27,7 @@ docs/Proposal/
 
 | 提案 | 路径 | 状态 | 关联模块 |
 |---|---|---|---|
-| 模拟经营 MVP 开发方案 | [`simulation/simulation-mvp.md`](./simulation/simulation-mvp.md) | 已接受 | `simulation/simulation-system`、`simulation/sim-time-system`、`simulation/building-system`、`simulation/production-system`、`simulation/order-system` |
+| 模拟经营 MVP 开发方案 | [`simulation/simulation-mvp.md`](./simulation/simulation-mvp.md) | 已落地（MVP 闭环已实测） | `simulation/simulation-system`、`simulation/sim-time-system`、`simulation/building-system`、`simulation/production-system`、`simulation/order-system` |
 
 ### 战斗系统
 
@@ -35,13 +35,38 @@ docs/Proposal/
 |---|---|---|---|
 | 逻辑子弹与视觉表现分离方案 | [`combat/bullet-logic-visual-separation.md`](./combat/bullet-logic-visual-separation.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system` |
 | 纯 C# 数据导向架构演进路线（ECS 思维，非 DOTS） | [`combat/pure-csharp-data-oriented-roadmap.md`](./combat/pure-csharp-data-oriented-roadmap.md) | 待评审 | `combat/projectile-system`、`combat/ballistic-system`、`combat/enemy-system`、`player/player-system` |
+| 爆炸效果 Shader 方案 | [`combat/explosion-shader-proposal.md`](./combat/explosion-shader-proposal.md) | 已实施（2026-08-30） | `combat/projectile-system` |
 
 ### 叙事系统
 
 | 提案 | 路径 | 状态 | 关联模块 |
 |---|---|---|---|
-| 对话系统设计方案 | [`narrative/dialogue-system.md`](./narrative/dialogue-system.md) | 待评审 | `narrative/dialogue-system`（待建） |
-| 任务系统设计方案 | [`narrative/quest-system.md`](./narrative/quest-system.md) | 待评审 | `narrative/quest-system`（待建） |
+| 对话系统设计方案 | [`narrative/dialogue-system.md`](./narrative/dialogue-system.md) | MVP 已落地（2026-08-26） | `narrative/dialogue-system` |
+| 任务系统设计方案 | [`narrative/quest-system.md`](./narrative/quest-system.md) | 已落地（2026-08-30，MVP） | `narrative/quest-system` |
+
+### 相机系统
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 有限旋转摄像机方案（Hades 风格） | [`camera/camera-scheme-b-limited-rotation.md`](./camera/camera-scheme-b-limited-rotation.md) | 部分落地（见提案文首标注） | `System/CameraSystem3D.cs` |
+
+### UI 系统
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| UI 渲染架构方案（Screen Space - Camera + 远端 UI 相机） | [`ui/ui-render-architecture.md`](./ui/ui-render-architecture.md) | 已落地（2026-08-22 方案 D） | `UIModule` / `UIRoot.prefab` |
+
+### 基础设施
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 多语言（本地化）完整方案 | [`infra/localization.md`](./infra/localization.md) | P1 已落地（2026-08-31） | `LocalizationModule`（框架 I2）/ `ConfigSystem` / `ProcedureLaunch` |
+
+### 模拟经营系统（补充）
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 经营场景与建筑摆放实现方案 | [`simulation/simulation-scene-building-placement.md`](./simulation/simulation-scene-building-placement.md) | 已落地（`BuildingPlacementSystem`/`BuildingEntity`/`BuildingSelectionUI` 已存在） | `simulation/building-system` |
 
 ---
 

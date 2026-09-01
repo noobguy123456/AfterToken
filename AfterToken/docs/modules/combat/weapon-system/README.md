@@ -10,15 +10,16 @@
 |---|---|---|
 | `WeaponSystem` | `Assets/GameScripts/HotFix/GameLogic/System/WeaponSystem.cs` | 武器系统 |
 | `WeaponInstance` | `Assets/GameScripts/HotFix/GameLogic/System/WeaponInstance.cs` | 武器运行时实例 |
-| `AimAssistSystem` | `Assets/GameScripts/HotFix/GameLogic/System/AimAssistSystem.cs` | 辅助瞄准与火箭锁定 |
-| `WeaponConfig` / `WeaponConfigMgr` | `Assets/GameScripts/HotFix/GameLogic/Config/` | 临时武器配置 |
+| `AimAssistSystem` | `Assets/GameScripts/HotFix/GameLogic/System/AimAssistSystem.cs` | 辅助瞄准（磁吸；火箭锁定已随火箭筒直射化移除） |
+| `WeaponConfig` / `WeaponConfigMgr` | `Assets/GameScripts/HotFix/GameLogic/Config/` | Luban `TbWeapon` 查询包装 |
 | `IWeaponEvent` | `Assets/GameScripts/HotFix/GameLogic/IEvent/IWeaponEvent.cs` | 武器事件接口 |
 
 ## 设计要点
 
-- 武器配置目前为硬编码，后续替换为 Luban `TbWeapon`。
+- 武器配置由 Luban `TbWeapon` 驱动（`WeaponConfigMgr` 包装）。
 - 开火后根据弹道类型分发到 `BallisticSystem`。
-- 辅助瞄准支持普通瞄准和火箭锁定两种模式。
+- 辅助瞄准为磁吸模式；火箭锁定已随火箭筒直射化移除（2026-08-30 起火箭筒为直线飞行爆炸物，无索敌/无右键瞄准，激光瞄准线常开且从枪口射出）。
+- 武器槽为 4 槽轮盘（Pistol/Rifle/Sniper/Rocket Launcher，`MAX_WEAPON_SLOTS = 4`）。
 - **自动换弹**：`WeaponInstance.Fire()` 在弹匣打空后自动调用 `Reload()`；`WeaponSystem.TryFire()` 在弹匣为空时按开火键同样自动触发 `Reload()`（单发模式的本次开火意图被消费，换弹完成后不会意外击发；连发模式按住开火则换弹完成后自动继续射击）。
 - **换弹状态事件**：`IWeaponEvent.OnReloadStateChanged(ownerId, isReloading)` 在换弹开始/完成时广播，供 UI 展示换弹准星等反馈。
 

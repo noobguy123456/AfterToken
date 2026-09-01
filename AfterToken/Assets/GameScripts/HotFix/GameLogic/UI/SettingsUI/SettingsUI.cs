@@ -46,6 +46,10 @@ namespace GameLogic
         private Sprite _previewSprite;
         private readonly Button[] _crosshairColorButtons = new Button[CrosshairSetting.PresetColors.Length];
 
+        // ---- General 页签：语言（运行时克隆生成的循环切换按钮） ----
+        private Button _languageButton;
+        private TextMeshProUGUI _languageButtonText;
+
         /// <summary>
         /// 改绑捕获结束的帧号。绑定鼠标键（如 LMB）时，按下完成绑定、松开落在按钮上会再次触发
         /// onClick 重新进入捕获——同帧忽略这次点击。
@@ -88,6 +92,11 @@ namespace GameLogic
 
             _tabGeneralButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabGeneral");
             _tabInputButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabInput");
+            _languageButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_Language");
+            if (_languageButton != null)
+            {
+                _languageButtonText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_Language/m_text_Label");
+            }
             var panelGeneral = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_General");
             _panelGeneral = panelGeneral != null ? panelGeneral.gameObject : null;
             var panelInput = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Input");
@@ -114,8 +123,13 @@ namespace GameLogic
                 _sniperAimModeToggle.isOn = SniperAimModeSetting.IsToggle;
             }
 
+            BindStaticTexts();
+            UpdateLanguageView();
+            UpdateSniperAimModeText();
+            LocalizationSystem.Instance.OnLanguageChanged += UpdateLanguageView;
+            LocalizationSystem.Instance.OnLanguageChanged += UpdateSniperAimModeText;
             BuildBindingRows();
-            SetBindingHint("Click a key button, then press a new key. ESC to cancel.");
+            SetBindingHint(Loc.Get("ui.settings.rebind_hint"));
             CrosshairSetting.OnChanged += UpdateCrosshairViews;
             UpdateCrosshairViews();
             ShowTab(true);
@@ -137,7 +151,11 @@ namespace GameLogic
             if (_sniperAimModeToggle != null)
             {
                 _sniperAimModeToggle.onValueChanged.RemoveAllListeners();
-                _sniperAimModeToggle.onValueChanged.AddListener(isOn => SniperAimModeSetting.IsToggle = isOn);
+                _sniperAimModeToggle.onValueChanged.AddListener(isOn =>
+                {
+                    SniperAimModeSetting.IsToggle = isOn;
+                    UpdateSniperAimModeText();
+                });
             }
             if (_closeButton != null)
             {
@@ -170,6 +188,11 @@ namespace GameLogic
                 // 样式/颜色视图由 CrosshairSetting.OnChanged 统一刷新，这里只负责切样式
                 _crosshairStyleButton.onClick.AddListener(() => CrosshairSetting.CycleStyle());
             }
+            if (_languageButton != null)
+            {
+                _languageButton.onClick.RemoveAllListeners();
+                _languageButton.onClick.AddListener(CycleLanguage);
+            }
             for (int i = 0; i < _crosshairColorButtons.Length; i++)
             {
                 var button = _crosshairColorButtons[i];
@@ -185,6 +208,8 @@ namespace GameLogic
         {
             CancelCapture();
             CrosshairSetting.OnChanged -= UpdateCrosshairViews;
+            LocalizationSystem.Instance.OnLanguageChanged -= UpdateLanguageView;
+            LocalizationSystem.Instance.OnLanguageChanged -= UpdateSniperAimModeText;
             DestroyPreviewSprite();
             CrosshairUpdater.Instance?.SetVisible(true);
             CursorManager.Instance?.HideCursor();
@@ -259,7 +284,8 @@ namespace GameLogic
         {
             if (_sensitivityValueText != null)
             {
-                _sensitivityValueText.text = $"Sensitivity: {value:F2}";
+                // 行首标签已说明含义，数值文本只显示数字
+                _sensitivityValueText.text = value.ToString("F2");
             }
         }
 
@@ -267,7 +293,63 @@ namespace GameLogic
         {
             if (_scopeSensitivityValueText != null)
             {
-                _scopeSensitivityValueText.text = $"Scope Sensitivity: {value:F2}";
+                _scopeSensitivityValueText.text = value.ToString("F2");
+            }
+        }
+
+        // ---- 多语言：静态文本绑定 + 语言切换 ----
+
+        /// <summary>
+        /// 把 prefab 上的硬编码静态文本绑定到词条，语言切换时自动刷新。
+        /// </summary>
+        private void BindStaticTexts()
+        {
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_text_Title"), "ui.settings.title");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabGeneral/m_text_Label"), "ui.settings.tab.general");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabInput/m_text_Label"), "ui.settings.tab.input");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_LanguageLabel"), "ui.settings.language");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_SensitivityLabel"), "ui.settings.crosshair_sensitivity");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_ScopeSensitivityLabel"), "ui.settings.scope_sensitivity");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_SniperAimLabel"), "ui.settings.sniper_aim_mode");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_CrosshairStyleLabel"), "ui.settings.crosshair_style");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_CrosshairColorLabel"), "ui.settings.crosshair_color");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_Close/m_text_Close"), "ui.common.close");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_ReturnMainMenu/m_text_Close"), "ui.common.main_menu");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Input/m_btn_ResetBindings/m_text_Label"), "ui.settings.reset_defaults");
+        }
+
+        /// <summary>
+        /// 狙击开镜模式：开关右侧文本显示当前状态（Toggle/Hold）。
+        /// </summary>
+        private void UpdateSniperAimModeText()
+        {
+            if (_sniperAimModeToggle == null) return;
+            var label = _sniperAimModeToggle.transform.Find("m_text_Label")?.GetComponent<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.text = Loc.Get(SniperAimModeSetting.IsToggle ? "ui.settings.aim_mode.toggle" : "ui.settings.aim_mode.hold");
+            }
+        }
+
+        /// <summary>
+        /// 循环切换支持的语言。
+        /// </summary>
+        private void CycleLanguage()
+        {
+            var langs = LocalizationSystem.SupportedLanguages;
+            int index = System.Array.IndexOf(langs, LocalizationSystem.Instance.Current);
+            index = (index + 1) % langs.Length;
+            LocalizationSystem.Instance.SetLanguage(langs[index]);
+        }
+
+        /// <summary>
+        /// 刷新语言按钮文本（显示语言自身的叫法，不走词条）。
+        /// </summary>
+        private void UpdateLanguageView()
+        {
+            if (_languageButtonText != null)
+            {
+                _languageButtonText.text = LocalizationSystem.GetLanguageDisplayName(LocalizationSystem.Instance.Current);
             }
         }
 

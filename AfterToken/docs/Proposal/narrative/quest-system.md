@@ -1,9 +1,9 @@
 # 提案：任务系统设计方案
 
-> 提案状态：待评审  
+> 提案状态：已落地（2026-08-30，MVP 完成并 Play 实测通过，详见 `docs/modules/narrative/quest-system/progress.md`）  
 > 提出时间：2026-08-23  
 > 提案路径：`docs/Proposal/narrative/quest-system.md`  
-> 关联模块（待建）：  
+> 关联模块：  
 > - `docs/modules/narrative/quest-system/`  
 > 关联文档：  
 > - `docs/Proposal/narrative/dialogue-system.md`（对话系统，任务接取/交付的对话载体）  

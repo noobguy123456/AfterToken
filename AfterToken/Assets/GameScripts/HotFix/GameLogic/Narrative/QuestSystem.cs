@@ -358,5 +358,16 @@ namespace GameLogic
             EnsureLoaded();
             Persist();
         }
+
+        /// <summary>
+        /// 失效缓存（存档槽位切换时由 SaveSystem 调用），下次访问从新槽位重读。
+        /// 事件订阅（_subscribed）保留——总线常驻，不重复订阅。
+        /// </summary>
+        public static void InvalidateCache()
+        {
+            _states.Clear();
+            _progress.Clear();
+            _loaded = false;
+        }
     }
 }

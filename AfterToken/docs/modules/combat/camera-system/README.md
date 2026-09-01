@@ -8,9 +8,16 @@
 
 | 类/文件 | 路径 | 说明 |
 |---|---|---|
-| `CameraSystem` | `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem.cs` | 相机控制 |
+| `CameraSystem3D` | `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem3D.cs` | 3D 俯视角相机控制（当前实现，战斗/经营场景统一使用） |
+| `Camera3DConfigMgr` | `Assets/GameScripts/HotFix/GameLogic/Config/Camera3DConfigMgr.cs` | Luban `TbCamera3D` 查询包装 |
+| `CameraSystem` | `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem.cs` | 旧 2D 相机，遗留不再维护 |
 
 ## 设计要点
+
+- 当前相机参数统一走 Luban `TbCamera3D`（数据源 `Configs/GameConfig/Datas/camera3d.xlsx`）：俯仰 60°、偏移 (0,5,-3.5)、FOV 45、玩家锚定画面底部 1/4（`_screenAnchorY` 0.25）；调相机只改 camera3d.xlsx 导表。
+- `CameraSystem3D` 为硬跟随（玩家与屏幕像素级锁定），仅留鼠标中键拖拽偏航。
+
+### 旧 2D `CameraSystem`（遗留，不再维护，仅作历史参考）
 
 - 相机在 `LateUpdate` 中直接读取 `PlayerSystem.Instance.GetPlayerEntity().transform.position` 进行跟随。
 - 玩家 `Rigidbody2D` 启用 `Interpolate`，确保 `transform.position` 在渲染帧经过插值。

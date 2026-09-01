@@ -1,6 +1,6 @@
 # 提案：模拟经营系统 MVP 开发方案
 
-> 提案状态：已接受  
+> 提案状态：已落地（2026-08-31 核对：MVP 闭环已实现并实测；正文中的 2D 摆放/Lobby 入口等描述为提案原文，实现细节以 `docs/modules/simulation/` 为准）  
 > 提出时间：2026-07-22  
 > 提案路径：`docs/Proposal/simulation/simulation-mvp.md`  
 > 关联模块：  

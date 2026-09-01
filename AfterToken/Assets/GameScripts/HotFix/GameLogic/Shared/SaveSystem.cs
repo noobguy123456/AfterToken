@@ -8,9 +8,10 @@ namespace GameLogic
 {
     /// <summary>
     /// 存档系统：玩家跨会话持久化数据的统一入口。
-    /// 后端为单个 JSON 文件（Application.persistentDataPath/save.json），
+    /// 后端为每槽位一个 JSON 文件（Application.persistentDataPath/save_N.json，N=1..SlotCount），
     /// 变动即存——各模块修改自己的数据段后调用 <see cref="Flush"/> 立即写盘。
     /// 首次访问自动初始化（懒加载），版本号不一致时走迁移钩子。
+    /// 旧版单文件 save.json 在首次运行时自动迁移为槽位 1。
     /// </summary>
     public static class SaveSystem
     {
@@ -19,11 +20,48 @@ namespace GameLogic
         /// </summary>
         public const int CurrentVersion = 1;
 
-        private const string FILE_NAME = "save.json";
+        /// <summary>
+        /// 存档位数量。
+        /// </summary>
+        public const int SlotCount = 3;
+
+        private const string LEGACY_FILE_NAME = "save.json";
+        private const string SLOT_FILE_PATTERN = "save_{0}.json";
+        private const string PREF_KEY_SLOT = "Setting.SaveSlot";
 
         private static SaveData _data;
+        private static int _currentSlot = -1;
 
-        public static string SaveFilePath => Path.Combine(Application.persistentDataPath, FILE_NAME);
+        /// <summary>
+        /// 当前存档位（1..SlotCount），持久化在 PlayerPrefs，默认 1。
+        /// </summary>
+        public static int CurrentSlot
+        {
+            get
+            {
+                if (_currentSlot < 1)
+                {
+                    _currentSlot = Mathf.Clamp(PlayerPrefs.GetInt(PREF_KEY_SLOT, 1), 1, SlotCount);
+                }
+                return _currentSlot;
+            }
+            private set
+            {
+                _currentSlot = Mathf.Clamp(value, 1, SlotCount);
+                PlayerPrefs.SetInt(PREF_KEY_SLOT, _currentSlot);
+                PlayerPrefs.Save();
+            }
+        }
+
+        public static string SaveFilePath => GetSlotPath(CurrentSlot);
+
+        /// <summary>
+        /// 指定槽位的存档文件路径。
+        /// </summary>
+        public static string GetSlotPath(int slot)
+        {
+            return Path.Combine(Application.persistentDataPath, string.Format(SLOT_FILE_PATTERN, slot));
+        }
 
         /// <summary>
         /// 存档根数据（模块读写自己的数据段）。访问前确保已初始化。
@@ -42,6 +80,7 @@ namespace GameLogic
         /// </summary>
         public static void Initialize()
         {
+            MigrateLegacyFile();
             if (_data != null) return;
 
             try
@@ -64,6 +103,113 @@ namespace GameLogic
             }
 
             Migrate(_data);
+        }
+
+        /// <summary>
+        /// 切换存档位：先把当前数据落盘，再加载目标槽位，最后失效各模块缓存。
+        /// 只在主菜单等无进行中对局的时机调用。
+        /// </summary>
+        public static void SwitchSlot(int slot)
+        {
+            slot = Mathf.Clamp(slot, 1, SlotCount);
+            if (slot == CurrentSlot && _data != null)
+            {
+                return;
+            }
+
+            // 当前槽位落盘后再切换，避免最后改动丢失
+            if (_data != null)
+            {
+                Flush();
+            }
+
+            CurrentSlot = slot;
+            _data = null;
+            Initialize();
+            Log.Info($"[SaveSystem] 切换到存档位 {slot}");
+
+            // 失效所有缓存了存档数据的模块，下次访问时从新槽位重读
+            CurrencySystem.InvalidateCache();
+            PlayerProfileSystem.InvalidateCache();
+            UnlockSystem.InvalidateCache();
+            Warehouse.InvalidateCache();
+            QuestSystem.InvalidateCache();
+            SensitivitySetting.InvalidateCache();
+
+            // 新槽位立即落盘：空槽位被选中后即在存档界面显示为有效新档（Lv.1/默认货币）
+            Flush();
+            OnSlotChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 存档位切换事件（主菜单槽位指示等 UI 刷新用）。
+        /// </summary>
+        public static event Action OnSlotChanged;
+
+        /// <summary>
+        /// 槽位摘要（存档选择界面用）。只读解析文件，不影响当前内存数据。
+        /// </summary>
+        public struct SlotSummary
+        {
+            public bool exists;
+            public int level;
+            public long gold;
+            public long diamond;
+        }
+
+        /// <summary>
+        /// 读取指定槽位的摘要信息；文件不存在/损坏时 exists=false。
+        /// </summary>
+        public static SlotSummary GetSlotSummary(int slot)
+        {
+            var summary = new SlotSummary();
+            string path = GetSlotPath(slot);
+            if (slot == 1)
+            {
+                // 旧版单文件尚未迁移时，槽位 1 的摘要直接读旧文件
+                MigrateLegacyFile();
+            }
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var data = JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
+                    if (data != null)
+                    {
+                        summary.exists = true;
+                        summary.level = data.profile != null && data.profile.initialized ? data.profile.level : 1;
+                        summary.gold = data.currency != null ? data.currency.gold : 0;
+                        summary.diamond = data.currency != null ? data.currency.diamond : 0;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[SaveSystem] 槽位 {slot} 摘要读取失败：{e.Message}");
+            }
+            return summary;
+        }
+
+        /// <summary>
+        /// 旧版单文件 save.json 迁移为槽位 1（一次性）。
+        /// </summary>
+        private static void MigrateLegacyFile()
+        {
+            try
+            {
+                string legacy = Path.Combine(Application.persistentDataPath, LEGACY_FILE_NAME);
+                string slot1 = GetSlotPath(1);
+                if (File.Exists(legacy) && !File.Exists(slot1))
+                {
+                    File.Move(legacy, slot1);
+                    Log.Info("[SaveSystem] 旧版 save.json 已迁移为 save_1.json");
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[SaveSystem] 旧版存档迁移失败：{e.Message}");
+            }
         }
 
         /// <summary>

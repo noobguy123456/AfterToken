@@ -1,5 +1,6 @@
 # 方案 B：有限旋转摄像机方案（Hades 风格）
 
+> 提案状态：部分落地（2026-08-30 核对）。已落地：固定俯视 60°、FOV 45、TbCamera3D（camera3d.xlsx）配表、鼠标中键有限旋转、玩家锚定画面底部 1/4。未落地/已偏离：WASD 手动控制与滚轮缩放（战斗内未提供）、Q/E 旋转（与切武器/交互键冲突已移除）、2D 人物 Billboard（角色已 3D 胶囊化）、代码内的 `CameraConfig` 类（参数统一读 Luban 表）。当前实现以 `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem3D.cs` 为准，正文保留作决策记录。
 > 本文档定义了2D人物 + 3D场景的固定俯视角 TPS 游戏的摄像机系统设计方案，参考 Hades 的风格。
 > 技术栈：TEngine + HybridCLR + YooAsset + UniTask + Luban。
 

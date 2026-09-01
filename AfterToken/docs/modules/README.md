@@ -14,6 +14,7 @@ docs/modules/
 ├── infra/                 # 基础设施
 ├── shared/                # 共享系统 / 跨玩法
 ├── simulation/            # 模拟经营
+├── narrative/             # 叙事（对话/任务）
 └── pipeline/              # 管线与工具
 ```
 
@@ -47,6 +48,15 @@ docs/modules/
 | `projectile-system` | [README](./combat/projectile-system/README.md) | [progress](./combat/projectile-system/progress.md) |
 | `reward-system` | [README](./combat/reward-system/README.md) | [progress](./combat/reward-system/progress.md) |
 | `weapon-system` | [README](./combat/weapon-system/README.md) | [progress](./combat/weapon-system/progress.md) |
+| `minimap-system` | [README](./combat/minimap-system/README.md) | [progress](./combat/minimap-system/progress.md) |
+| `extraction-system` | （见 progress） | [progress](./combat/extraction-system/progress.md) |
+
+### 叙事系统
+
+| 模块 | README | 进度 |
+|---|---|---|
+| `dialogue-system` | [README](./narrative/dialogue-system/README.md) | [progress](./narrative/dialogue-system/progress.md) |
+| `quest-system` | （见 progress） | [progress](./narrative/quest-system/progress.md) |
 
 ### 场景系统
 

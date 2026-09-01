@@ -4,7 +4,7 @@
 
 | 组件 | 版本/说明 | 用途 |
 |------|-----------|------|
-| Unity | 6000.0.76f1 | 引擎本体，2D 物理 + URP/内置管线 |
+| Unity | 6000.0.76f1 | 引擎本体，3D 场景 + 内置（Built-in）渲染管线 |
 | TEngine | 嵌入 `Assets/TEngine/` | 程序框架（Procedure、UI、Scene、Resource、Timer 等） |
 | HybridCLR | `Packages/com.code-philosophy.hybridclr/` | C# 代码热更 |
 | YooAsset | `Packages/YooAsset/` | 资源打包、加载、热更新 |
@@ -33,15 +33,15 @@
 
 ```
 表现层（Presentation）
-├── UIWindow / UIWidget（MainMenuUI、LobbyUI、BattleMainUI 等）
+├── UIWindow / UIWidget（MainMenuUI、SimulationMainUI、BattleMainUI 等）
 └── Entity（PlayerEntity、EnemyEntity、Projectile 等）
 
 系统层（System）
-├── PlayerSystem / WeaponSystem / CameraSystem / BattleSystem
+├── PlayerSystem / WeaponSystem / CameraSystem3D / BattleSystem
 └── 通过 GameEvent 或模块 API 与表现层解耦
 
 数据层（Data）
-├── LevelConfig / WeaponConfig（当前硬编码）
+├── Luban 配置表（ConfigSystem.Instance.Tables，见 06-ConfigSystem.md）
 └── 运行时数据（BattleContext 等临时方案）
 
 框架层（Framework）

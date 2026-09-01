@@ -68,6 +68,7 @@ namespace GameLogic
             "cfg_tbdialoguenode",
             "cfg_tbquest",
             "cfg_tbquestobjective",
+            "cfg_tblocalization",
         };
 
         /// <summary>

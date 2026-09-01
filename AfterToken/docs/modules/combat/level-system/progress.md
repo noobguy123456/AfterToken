@@ -3,7 +3,7 @@
 ## 已完成
 - [x] 硬编码 `LevelConfig` / `LevelConfigMgr`（已改为 Luban 表驱动）
 - [x] `TbLevel` Luban 表已定义并生成代码
-- [x] `ProcedureLobby` 关卡选择 UI
+- [x] 关卡选择 UI（原 `ProcedureLobby`，已随大厅流程废弃删除；现为基地 SELECT_LEVEL 传送门 / Deploy 按钮选关）
 - [x] `ProcedureBattle` 进入战斗场景
 - [x] `LevelConfigMgr` 已替换为 `TbLevel` 驱动
 - [x] `ProcedureBattle` 通过 `TbLevel` 配置应用默认武器、玩家血量、敌人数量/半径/配置 ID

@@ -50,7 +50,7 @@ private void Update()
 ### ESC 键统一关闭逻辑
 
 - `HandleEscapeInput` 在检测到 `Escape` 按下后，按 UI 层级从高到低尝试关闭最上层弹窗（一次 ESC 只关闭一个）。
-- 当前可关闭 UI 包括：`SettingsUI` → `BattleBagUI`。
+- 当前可关闭 UI 包括：`SettingsUI` → `BattleBagUI` → `LootContainerUI` → `NoteUI`。
 - 没有任何可关闭 UI 打开时，按 ESC 打开 `SettingsUI`。
 - UI 内部关闭按钮与 ESC 全局关闭不冲突（均调用 `GameModule.UI.CloseUI<T>()`）。
 

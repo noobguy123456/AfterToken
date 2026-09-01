@@ -19,13 +19,13 @@
 - [x] 新增 `PortalEntity` / `PortalSystem` / `PortalTransitionMgr`
 - [x] `ProcedureBattle` 集成 `PortalSystem`，支持自定义场景名
 - [x] 创建占位 Portal Prefab：`Assets/AssetRaw/Actor/Portal_Placeholder.prefab`
-- [x] 在 `BattleScene` 中摆放测试 Portal（ConfigId=1001，返回大厅）
+- [x] 在 `BattleScene` 中摆放测试 Portal（ConfigId=1001，返回基地；注：2D 版 BattleScene 已随 3D 化删除，现摆放于 `BattleScene_3D_L01`）
 - [x] 编译通过
 - [x] 死亡判定：玩家死亡后禁止与传送门交互，已死亡玩家无法被传送
 - [x] 跨场景状态保留：胜利时临时背包转入仓库
 
 ## 待完成
-- [ ] Play Mode 手动验证：靠近 Portal → 显示提示 → 按 E → 转场 → 返回大厅
+- [ ] Play Mode 手动验证：靠近 Portal → 显示提示 → 按 E → 转场 → 返回基地
 - [ ] 验证 `portal_next_level` 与 `portal_custom_scene` 类型
 - [ ] 验证 `keepPlayerState=true` 时 HP 与武器弹药跨场景保留
 - [ ] 后续替换占位美术资源

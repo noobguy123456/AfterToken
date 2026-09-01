@@ -2,7 +2,9 @@
 
 > 所属模块：场景模块  
 > 用途：场景间切换  
-> 状态：基础版已完成，新增多战斗场景测试与门上目的地显示；待完整 Play Mode 验证
+> 状态：已完成并 Play 实测通过
+
+> ⚠️ 部分过时（2026-08-31 注）：①大厅（Lobby）概念已废弃，`portal_return_lobby` 已改为 `portal_return_base`（返回基地 `SimulationScene`），并新增 `portal_select_level`（不切场景直接开选关窗）；②`PortalPlayerState` 已瘦身为场景上下文（不再快照玩家属性，属性由 `PlayerAttrStore` 变动即存）；③战斗结算由撤离点系统（`ExtractionSystem`）承担，`PortalSystem.ExtractToBase` 为公共撤离入口。最新实现与变更记录见 `docs/modules/scene/portal-system/progress.md`。
 
 ---
 

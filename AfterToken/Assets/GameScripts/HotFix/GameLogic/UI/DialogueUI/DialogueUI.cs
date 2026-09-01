@@ -43,11 +43,11 @@ namespace GameLogic
             _nameText = FindChildComponent<TextMeshProUGUI>("m_img_Panel/m_text_Name");
             _contentText = FindChildComponent<TextMeshProUGUI>("m_img_Panel/m_text_Content");
             _hintText = FindChildComponent<TextMeshProUGUI>("m_img_Panel/m_text_Hint");
-            _choicesRoot = FindChildComponent<RectTransform>("m_rect_Choices");
+            _choicesRoot = FindChildComponent<RectTransform>("m_img_Panel/m_rect_Choices");
             for (int i = 0; i < MaxChoices; i++)
             {
-                _choiceButtons[i] = FindChildComponent<Button>($"m_rect_Choices/m_btn_Choice{i}");
-                _choiceTexts[i] = FindChildComponent<TextMeshProUGUI>($"m_rect_Choices/m_btn_Choice{i}/m_text_Label");
+                _choiceButtons[i] = FindChildComponent<Button>($"m_img_Panel/m_rect_Choices/m_btn_Choice{i}");
+                _choiceTexts[i] = FindChildComponent<TextMeshProUGUI>($"m_img_Panel/m_rect_Choices/m_btn_Choice{i}/m_text_Label");
             }
         }
 

@@ -20,19 +20,19 @@
   - 支持 Prefab 预配置血条节点，也支持运行时动态创建占位血条。
   - 血条节点已纳入 `Assets/AssetRaw/Prefabs/Enemy.prefab`，前端可直接在 Prefab 内调整。
 - `EnemySpawnSystem` 占位生成。
+- 敌人死亡掉落：`DropSystem` 监听 `IEnemyEvent.OnEnemyDied` 按 `TbDrop` 掷点生成 `PickupEntity`（详见 `../pickup-system/`）。
 - **敌人对象池**：`EnemySpawnSystem` 使用 `PoolSystem` 预加载并复用敌人 Prefab，死亡后由 `EnemyDeadState` 回池而非销毁。
 - **A* 寻路优化**：`PathResult` 接入对象池；`AStarNavigationSystem` 路径平滑改为原地优化，减少 List 分配；`EnemyChaseState` 路径刷新间隔通过 `TbEnemy.pathRefreshInterval` 配置，并按距离动态调整（近快远慢）。
 
 ## 待完成
 
 - 敌人 AI 类型与配置
-- 掉落物 `PickupEntity`
 - 寻路系统性能调优：分帧调度、缓存失效策略、格子大小调优（A* 分配与频率已优化）
 - 动态障碍物网格更新支持
 
 ## 设计要点
 
 - 敌人逻辑由系统层驱动，Entity 只负责表现与碰撞回调。
-- 生成规则由 `LevelSystem` 根据波次配置触发。
-- 血条跟随敌人移动，使用 World Space `SpriteRenderer`，`sortingOrder` 高于敌人本体以保证可见。
+- 生成由 `ProcedureBattle` 按 `TbLevel` 配置（敌人数量/半径/配置 ID）驱动 `EnemySpawnSystem` 完成（环带随机散射）；波次生成（`TbWave`）尚未接入。
+- 敌人本体已 3D 化（胶囊占位）；血条仍使用 `SpriteRenderer`，`LateUpdate` 中钉住头顶偏移并做屏幕对齐 billboard（`rotation = Camera.main.transform.rotation`），`sortingOrder` 高于敌人本体以保证可见。
 - 死亡回收时 `EnemyEntity` 会自动恢复刚体与碰撞体，保证对象池复用正确。

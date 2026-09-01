@@ -4,7 +4,7 @@
 > 提出时间：2026-08-30  
 > 提案路径：`docs/Proposal/combat/explosion-shader-proposal.md`  
 > 关联模块：`combat/projectile-system`（爆炸触发点 `ApplyExplosionDamage` → `SpawnExplosionVisual`）  
-> 当前实现：橙色球体占位（0.3s 膨胀销毁），无 shader 特效
+> 落地实现：`Assets/AssetArt/Shaders/ExplosionFireball.shader` + `ExplosionShockwave.shader`（Built-in ShaderLab），由 `ProjectileSystem.SpawnExplosionVisual` 驱动（提案时原为橙色球体占位）
 
 > **实施修正（2026-08-30）**：项目实际为 **Built-in 渲染管线**（`GraphicsSettings.m_CustomRenderPipeline` 为空，manifest 无 URP 包），§7 的 URP 风险项不适用，shader 按 Built-in ShaderLab（`UnityCG.cginc`）编写。另两处实施偏差：①视觉网格运行时构建（球体+面片占位），未建 `ExplosionEffect.prefab`——正式美术资源接入时再 prefab 化；②冲击波外扩改为 ease-out 到 **1.5 倍半径**——同心同速会被不透明火球完全遮住（俯视实测确认），圆环必须领先火球轮廓才可见。
 

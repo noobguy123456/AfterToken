@@ -177,5 +177,17 @@ namespace GameLogic
             GameEvent.Get<ICurrencyEvent>()?.OnEnergyChanged(_energy, _maxEnergy);
             Persist();
         }
+
+        /// <summary>
+        /// 失效缓存（存档槽位切换时由 SaveSystem 调用）：回默认值，下次访问从新槽位重读。
+        /// </summary>
+        public static void InvalidateCache()
+        {
+            _loaded = false;
+            _gold = DEFAULT_GOLD;
+            _diamond = DEFAULT_DIAMOND;
+            _energy = DEFAULT_ENERGY;
+            _maxEnergy = DEFAULT_MAX_ENERGY;
+        }
     }
 }

@@ -125,6 +125,10 @@ public partial class Tables
     /// 任务目标表
     /// </summary>
     public cfg.TbQuestObjective TbQuestObjective {get; }
+    /// <summary>
+    /// 本地化词条表
+    /// </summary>
+    public cfg.TbLocalization TbLocalization {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -157,6 +161,7 @@ public partial class Tables
         TbDialogueNode = new cfg.TbDialogueNode(loader("cfg_tbdialoguenode"));
         TbQuest = new cfg.TbQuest(loader("cfg_tbquest"));
         TbQuestObjective = new cfg.TbQuestObjective(loader("cfg_tbquestobjective"));
+        TbLocalization = new cfg.TbLocalization(loader("cfg_tblocalization"));
         ResolveRef();
     }
     
@@ -190,6 +195,7 @@ public partial class Tables
         TbDialogueNode.ResolveRef(this);
         TbQuest.ResolveRef(this);
         TbQuestObjective.ResolveRef(this);
+        TbLocalization.ResolveRef(this);
     }
 }
 

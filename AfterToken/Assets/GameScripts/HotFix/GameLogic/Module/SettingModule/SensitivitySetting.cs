@@ -83,5 +83,14 @@ namespace GameLogic
         public static void Save()
         {
         }
+
+        /// <summary>
+        /// 失效缓存（存档槽位切换时由 SaveSystem 调用），下次访问从新槽位重读。
+        /// </summary>
+        public static void InvalidateCache()
+        {
+            _cachedValue = null;
+            _cachedScopeValue = null;
+        }
     }
 }

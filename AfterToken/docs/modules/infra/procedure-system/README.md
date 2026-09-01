@@ -10,9 +10,11 @@
 |---|---|---|
 | `GameplayProcedureBase` | `Assets/GameScripts/HotFix/GameLogic/Procedure/GameplayProcedureBase.cs` | 热更域流程基类 |
 | `ProcedureMainMenu` | `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureMainMenu.cs` | 主菜单流程 |
-| `ProcedureLobby` | `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureLobby.cs` | 大厅流程 |
+| `ProcedureSimulation` | `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureSimulation.cs` | 基地/模拟经营流程 |
 | `ProcedureBattle` | `Assets/GameScripts/HotFix/GameLogic/Procedure/ProcedureBattle.cs` | 战斗流程 |
 | `GameApp` | `Assets/GameScripts/HotFix/GameLogic/GameApp.cs` | 热更入口，切换流程 |
+
+> 大厅流程 `ProcedureLobby` 已废弃删除：主菜单 → 基地（ProcedureSimulation）→ 选关窗（LobbyUI）→ 战斗（ProcedureBattle）。
 
 ## 设计要点
 

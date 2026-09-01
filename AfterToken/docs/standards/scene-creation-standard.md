@@ -9,8 +9,8 @@
 
 | 场景类型 | 创建方式 | 适用场景 | 示例 |
 |----------|----------|----------|------|
-| **场景文件** | 在 Unity 编辑器中设计 | 复杂场景、需要可视化编辑的场景 | `BattleScene_L01`、`LobbyScene` |
-| **代码动态创建** | 通过代码动态创建 | 简单场景、快速验证的场景 | 经营场景（当前 MVP） |
+| **场景文件** | 在 Unity 编辑器中设计 | 复杂场景、需要可视化编辑的场景 | `BattleScene_3D_L01`、`MainMenuScene` |
+| **代码动态创建** | 通过代码动态创建 | 简单场景、快速验证的场景 | 早期经营场景 MVP（已迁入场景文件） |
 | **混合方式** | 场景文件 + 代码动态创建 | 需要基础场景 + 动态内容的场景 | `SimulationScene` |
 
 ---
@@ -23,13 +23,14 @@
 
 | 组件 | 说明 | 创建方式 |
 |------|------|----------|
-| `Global Light` | 全局光照（2D 场景使用） | 场景文件 |
+| `Directional Light` | 方向光（3D 场景使用） | 场景文件 |
 | `Ground` | 地面，用于点击检测和导航 | 场景文件 |
 | `PlayerSpawnPoint` | 玩家生成点 | 场景文件 |
-| `Main Camera` | 主相机，带 `CameraSystem` | 场景文件 |
+| `Main Camera` | 主相机，带 `CameraSystem3D` | 场景文件 |
+| `ExtractionPoint` | 撤离点（圈内倒计时撤离） | 场景文件 |
 | `BattleRoot` | 战斗系统根节点 | 代码动态创建 |
 
-**示例**：`BattleScene_L01.unity`
+**示例**：`BattleScene_3D_L01.unity`
 
 ### 2.2 经营场景（SimulationScene）
 
@@ -37,10 +38,11 @@
 
 | 组件 | 说明 | 创建方式 |
 |------|------|----------|
-| `Directional Light` | 方向光（3D 场景使用） | 代码动态创建 |
-| `Ground` | 地面，用于点击检测 | 代码动态创建 |
-| `Main Camera` | 主相机，带 `SimulationCameraController` | 场景文件 + 代码动态创建 |
-| `VirtualPlayer` | 虚拟玩家，作为相机跟随目标 | 代码动态创建 |
+| `Directional Light` | 方向光（3D 场景使用） | 场景文件 |
+| `Ground` | 地面，用于点击检测 | 场景文件 |
+| `Main Camera` | 主相机，运行时挂 `SimulationCameraController` | 场景文件 + 代码动态创建 |
+| `PlayerSpawnPoint` | 玩家生成点 | 场景文件 |
+| `Player` | 真实玩家（复用战斗 Player prefab，挂 `SimulationPlayerController`），作为相机跟随目标 | 代码动态创建 |
 | `SimulationRoot` | 经营系统根节点 | 代码动态创建 |
 | `BuildingRoot` | 建筑根节点 | 代码动态创建 |
 
@@ -52,18 +54,18 @@
 
 ### 3.1 战斗场景创建流程
 
-1. **创建场景文件**：在 Unity 编辑器中创建新场景，命名为 `BattleScene_LXX.unity`。
-2. **添加基本组件**：添加 `Global Light`、`Ground`、`PlayerSpawnPoint`、`Main Camera`。
-3. **配置相机**：在 `Main Camera` 上添加 `CameraSystem` 组件。
+1. **创建场景文件**：在 Unity 编辑器中创建新场景，命名为 `BattleScene_3D_LXX.unity`。
+2. **添加基本组件**：添加 `Directional Light`、`Ground`、`PlayerSpawnPoint`、`Main Camera`、`ExtractionPoint`。
+3. **配置相机**：在 `Main Camera` 上添加 `CameraSystem3D` 组件。
 4. **保存场景**：保存场景文件到 `Assets/AssetRaw/Scenes/`。
-5. **配置关卡**：在 `level.xlsx` 中配置关卡参数（场景名称、敌人数量、波次等）。
+5. **配置关卡**：在 `level.xlsx` 中配置关卡参数（场景名称、敌人数量、波次、撤离时间等）。
 
 ### 3.2 经营场景创建流程
 
 1. **创建场景文件**：在 Unity 编辑器中创建新场景，命名为 `SimulationScene.unity`。
-2. **添加基本组件**：添加 `Main Camera`（可选，代码动态创建时会检查）。
+2. **添加基本组件**：添加 `Directional Light`、`Ground`、`PlayerSpawnPoint`、`Main Camera`。
 3. **保存场景**：保存场景文件到 `Assets/AssetRaw/Scenes/`。
-4. **代码动态创建**：在 `ProcedureSimulation.InitializeSceneContent()` 中动态创建地面、光照、虚拟玩家等。
+4. **代码动态创建**：在 `ProcedureSimulation.InitializeSceneContent()` 中设置相机（挂 `SimulationCameraController`），`SpawnPlayerAsync()` 加载真实玩家。
 
 ---
 
@@ -84,7 +86,7 @@
 ### 4.2 光照（Light）
 
 **战斗场景**：
-- 使用 `Global Light`（2D 场景）
+- 使用 `Directional Light`（3D 场景）
 - 设置合适的颜色和强度
 
 **经营场景**：
@@ -95,14 +97,14 @@
 ### 4.3 相机（Main Camera）
 
 **战斗场景**：
-- 使用 `CameraSystem` 组件
-- 支持跟随玩家、FOV、震动、狙击镜
-- 通过 `TbCamera` 配置参数
+- 使用 `CameraSystem3D` 组件（运行时由 `ProcedureBattle` 挂载）
+- 支持跟随玩家、滚轮缩放、狙击镜
+- 参数通过 `camera3d.xlsx`（`TbCamera3D`）统一配置，与经营场景同源
 
 **经营场景**：
 - 使用 `SimulationCameraController` 组件
-- 支持跟随目标、WASD 移动、鼠标拖动、滚轮缩放
-- 通过代码设置初始位置和角度
+- 支持跟随目标、滚轮缩放
+- 参数同样读 `camera3d.xlsx`；不要在场景里手调相机
 
 ### 4.4 玩家生成点（PlayerSpawnPoint）
 
@@ -121,19 +123,19 @@
 ### 5.1 战斗场景切换
 
 ```
-ProcedureMainMenu → ProcedureLobby → ProcedureBattle
+ProcedureMainMenu → ProcedureSimulation（基地）→ ProcedureBattle
     ↓
-LoadSceneWithLoadingAsync("BattleScene_LXX")
+LoadSceneWithLoadingAsync(sceneName)（sceneName 由 level.xlsx 决定，如 BattleScene_3D_L01）
     ↓
 InitializeBattleSystems()（创建 BattleRoot、添加战斗系统）
     ↓
-ShowUIAsyncAwait<BattleMainUI>()
+ShowUIAsyncAwait<BattleMainUI>() 等 HUD
 ```
 
 ### 5.2 经营场景切换
 
 ```
-ProcedureMainMenu → ProcedureLobby → ProcedureSimulation
+ProcedureMainMenu → ProcedureSimulation（或战斗撤离/传送门返回基地）
     ↓
 LoadSceneWithLoadingAsync("SimulationScene")
     ↓

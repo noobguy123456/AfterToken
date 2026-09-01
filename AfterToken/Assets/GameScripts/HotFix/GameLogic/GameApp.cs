@@ -42,6 +42,8 @@ namespace GameLogic
 
             await ConfigSystem.Instance.LoadAsync();
 
+            LocalizationSystem.Instance.Initialize();
+
             StartGameLogic();
 
 #if UNITY_EDITOR

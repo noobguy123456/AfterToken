@@ -2,12 +2,12 @@
 
 ## 项目简介
 
-`AfterToken` 是一款使用 Unity 6000.0.76f1 开发的俯视角 2D 射击游戏原型。项目采用 TEngine 作为底层框架，HybridCLR 实现热更，YooAsset（EditorSimulateMode）管理资源，UniTask 处理异步逻辑。
+`AfterToken` 是一款使用 Unity 6000.0.76f1 开发的 3D 俯视角射击游戏原型（已从早期纯 2D 俯视转型为 3D：玩家/敌人为 3D 胶囊，场景为 3D）。项目采用 TEngine 作为底层框架，HybridCLR 实现热更，YooAsset（EditorSimulateMode）管理资源，UniTask 处理异步逻辑。
 
 ## 技术栈
 
-- **Unity**：6000.0.76f1（2D URP / 内置渲染管线，视配置而定）
-- **物理**：2D 物理（`Rigidbody2D` / `Collider2D`）
+- **Unity**：6000.0.76f1（Built-in 内置渲染管线）
+- **物理**：3D 物理（`Rigidbody` / `Collider`）
 - **框架**：TEngine（Procedure、UI、Scene、Resource、Timer 等模块）
 - **热更**：HybridCLR
 - **资源**：YooAsset（当前为 EditorSimulateMode）
@@ -32,22 +32,24 @@
 Assets/
 ├── Launcher/                       # 主包启动器代码
 ├── GameScripts/HotFix/GameLogic/   # 热更业务逻辑
-│   ├── Procedure/                  # 游戏流程（主菜单、大厅、战斗）
-│   ├── UI/                         # UIWindow（MainMenuUI、LobbyUI、LoadingUI、BattleMainUI）
+│   ├── Procedure/                  # 游戏流程（主菜单、基地经营、战斗）
+│   ├── UI/                         # UIWindow（MainMenuUI、LobbyUI、LoadingUI、BattleMainUI、SettingsUI 等，模拟经营类在 Simulation/ 子目录）
 │   ├── System/                     # 战斗运行时系统（PlayerSystem、WeaponSystem 等）
-│   ├── Config/                     # 临时配置管理（LevelConfigMgr）
+│   ├── Config/                     # Luban 配置运行时封装（WeaponConfigMgr、LevelConfigMgr 等，由 TbWeapon/TbLevel 等表驱动）
 │   └── Module/UIModule/            # TEngine UI 的本地扩展/覆盖
 ├── GameScripts/HotFix/GameProto/   # 热更数据结构
 ├── AssetRaw/Scenes/                # 可寻址场景资源
 │   ├── MainMenuScene.unity
-│   ├── LobbyScene.unity
-│   ├── BattleScene.unity
-│   └── BattleScene_L01.unity
-├── AssetRaw/UI/                    # UI Prefab
+│   ├── SimulationScene.unity
+│   ├── BattleScene_3D_L01.unity
+│   ├── BattleScene_3D_L02.unity
+│   └── BattleScene_3D_L03.unity
+├── AssetRaw/UI/                    # UI Prefab（模拟经营类在 Simulation/ 子目录）
 │   ├── MainMenuUI/
 │   ├── LobbyUI/
 │   ├── LoadingUI/
-│   └── BattleMainUI/
+│   ├── BattleMainUI/
+│   └── Simulation/
 ├── Editor/BattleSetup/             # 战斗场景/资源快速创建工具
 └── Scenes/main.unity               # 启动场景（GameEntry + UIRoot）
 ```
@@ -86,8 +88,10 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
 `GameApp.StartGameLogic()` 中：
 
 1. `GameModule.Procedure.Shutdown()` 关闭主包流程状态机。
-2. 重新 `Initialize` 热更域流程列表：`ProcedureMainMenu`、`ProcedureLobby`、`ProcedureBattle`。
+2. 重新 `Initialize` 热更域流程列表：`ProcedureMainMenu`、`ProcedureBattle`、`ProcedureSimulation`（早期的大厅流程 `ProcedureLobby` 已废弃，选关在基地内完成）。
 3. 启动 `ProcedureMainMenu`。
+
+主菜单点击“开始游戏”直接进入 `ProcedureSimulation`（模拟经营场景即基地/据点），在基地内通过 Deploy 按钮/选关传送门打开 `LobbyUI` 选择关卡进入 `ProcedureBattle`；战斗结束后经撤离点/传送门返回基地。
 
 运行时切换流程通过 `GameApp.ChangeProcedure<T>()` 调用 TEngine 内部 `_procedureFsm.ChangeState<T>()`（反射实现，见 [ADR-0004](adr/0004-hotfix-procedure-takeover.md)）。
 
@@ -111,11 +115,11 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
   - `m_img_`：Image 组件
   - `m_slider_`：Slider 组件
 - `LoadingUI` 位于 `UILayer.System`，保证覆盖在所有普通 UI 之上。
-- `MainMenuUI`、`LobbyUI` 已改为 Prefab 驱动，布局与逻辑分离。
+- 所有 UI 窗口均为 Prefab 驱动（`Assets/AssetRaw/UI/` 下，模拟经营类在 `Simulation/` 子目录），布局与逻辑分离；新建 UI Prefab 根节点必须挂 `Canvas` + `GraphicRaycaster`。
 
 ## 跨流程数据
 
-当前使用静态类 `BattleContext.CurrentLevelId` 在 `LobbyUI` 与 `ProcedureBattle` 之间传递关卡 ID。这是临时方案，后续应迁移到正式运行时数据层。
+当前使用静态类 `BattleContext.CurrentLevelId` 在 `LobbyUI`（基地内选关窗口）与 `ProcedureBattle` 之间传递关卡 ID，`BattleContext.CustomSceneName` 用于传送门自定义场景跳转。这是临时方案，后续应迁移到正式运行时数据层。
 
 ## 编辑器工具
 
@@ -125,9 +129,11 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
 
 用于：
 
-- 创建/更新战斗场景（`BattleScene`、`BattleScene_L01`）及所需系统根节点。
-- 创建/更新 UI Prefab（`MainMenuUI`、`LobbyUI`、`LoadingUI`、`BattleMainUI`）。
+- 创建/更新主菜单场景（`MainMenuScene`）及战斗所需 Prefab（`Player`、`Enemy`、`Projectile_Normal` 等）。
+- 创建/更新 UI Prefab（`MainMenuUI`、`LobbyUI`、`LoadingUI`、`BattleMainUI` 等）。
 - 执行 `EditorSimulateModeHelper.SimulateBuild("DefaultPackage")` 更新 YooAsset 模拟清单。
+
+> 注：早期的 2D 战斗场景（`BattleScene`、`BattleScene_L01`）与 `LobbyScene` 已删除；当前战斗关卡为 3D 场景 `BattleScene_3D_L01/L02/L03`，由关卡表 `level.xlsx` 配置驱动。
 
 ### Tools/Force Recompile
 
@@ -139,7 +145,7 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
 
 1. **GameApp 反射切换流程**：`ChangeProcedure<T>()` 通过反射调用 TEngine 内部 FSM，脆弱且存在 AOT 风险。长期应推动 TEngine 暴露 `ChangeState<T>()`。
 2. **BattleContext 静态状态**：跨流程数据使用全局可变状态，不利于测试与扩展。
-3. **硬编码关卡表**：`LevelConfigMgr` 当前为硬编码，后续应接入 Luban 配置表。
+3. ~~硬编码关卡表~~（已解决）：`LevelConfigMgr`、`WeaponConfigMgr` 已接入 Luban 配置表（`TbLevel`/`TbWeapon`），相机参数由 `camera3d.xlsx`（`TbCamera3D`）统一驱动。
 4. **CameraSystem 生命周期**：战斗场景的主相机在 `ProcedureBattle` 中动态获取或添加 `CameraSystem`，离开战斗时销毁组件；需持续验证多场景切换稳定性。
 5. **运行时验证依赖 Editor**：当前资源为 EditorSimulateMode，完整真机包体验需配置 YooAsset 真实构建流程。
 
@@ -158,6 +164,6 @@ ProcedureLaunch → ... → ProcedureLoadAssembly
 
 1. 打开 `Assets/Scenes/main.unity`。
 2. 进入 Play Mode，观察 Launcher 流程是否正常加载热更 DLL 并进入 `ProcedureMainMenu`。
-3. 点击“开始游戏”进入 `ProcedureLobby`，选择关卡进入 `ProcedureBattle`。
+3. 点击"开始游戏"进入 `ProcedureSimulation`（基地），通过 Deploy 按钮或选关传送门打开 `LobbyUI` 选关，进入 `ProcedureBattle`。
 4. 若热更代码修改后未生效，使用 `Tools/Force Recompile`。
 5. 若修改了战斗场景或 UI Prefab，运行 `Battle/Setup Battle Scene & Resources` 后重新执行 `EditorSimulateModeHelper.SimulateBuild`。

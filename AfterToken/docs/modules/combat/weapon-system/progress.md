@@ -1,7 +1,7 @@
 # Weapon System 进度
 
 ## 已完成
-- [x] `WeaponSystem` 武器槽管理（3 槽位）
+- [x] `WeaponSystem` 武器槽管理（4 槽位；2026-08-30 由 3 槽扩为 4 槽，见变更记录）
 - [x] 开火、换弹、瞄准调度
 - [x] 武器扩散、后坐力、移动速度系数
 - [x] `AimAssistSystem` 辅助瞄准与火箭锁定

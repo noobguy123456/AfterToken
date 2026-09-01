@@ -123,7 +123,9 @@ EnsureOrUpdatePrefab("Assets/AssetRaw/UI/BattleMainUI.prefab", go =>
 
 ---
 
-## 4. 2D 正交相机不要用 `fieldOfView`
+## 4. 相机 zoom：`fieldOfView` 与 `orthographicSize` 别用混
+
+> 2026-08-31 注：项目已全面转为 3D 透视相机（`CameraSystem3D`），`fieldOfView` 现在直接有效。本节保留作通用知识——如果未来再遇到正交相机，zoom 要调 `orthographicSize`。
 
 ### 现象
 
@@ -132,7 +134,7 @@ EnsureOrUpdatePrefab("Assets/AssetRaw/UI/BattleMainUI.prefab", go =>
 
 ### 根因
 
-`Camera.fieldOfView` 只对透视相机有效。2D 项目使用的相机通常是 `orthographic = true`，需要修改 `orthographicSize`。
+`Camera.fieldOfView` 只对透视相机有效。正交相机（`orthographic = true`）需要修改 `orthographicSize`。
 
 ### 正确做法
 
@@ -173,7 +175,7 @@ _scopeCamera.orthographicSize = _defaultOrthographicSize * (25f / _defaultFov);
 
 ### 根因
 
-`MainMenuScene`、`LobbyScene` 等纯 UI 场景如果没有 `Main Camera`，颜色缓冲不会被清除，Overlay UI 虽然仍会渲染，但很多截图/显示路径会表现为黑屏。
+`MainMenuScene` 等纯 UI 场景如果没有 `Main Camera`，颜色缓冲不会被清除，Overlay UI 虽然仍会渲染，但很多截图/显示路径会表现为黑屏。
 
 ### 正确做法
 
@@ -315,12 +317,12 @@ GameApp.ChangeProcedure<ProcedureBattle>();
 
 - [ ] Prefab 放在 `Assets/AssetRaw/UI/`，不要放 `Assets/Resources/`。
 - [ ] 热更脚本里的 `[Window]` 特性的 `location` 和 Prefab 文件名一致。
-- [ ] `ScriptGenerator()` 里绑定的节点路径和 Prefab 节点路径完全一致。
+- [ ] `ScriptGenerator()` 里绑定的节点路径和 Prefab 节点路径完全一致（**prefab 结构调整/改父级后必须同步改路径前缀**，否则绑定静默失败、控件显示 prefab 默认空态——小地图与对话选项框都中过）。
 - [ ] `OnCreate()` 里调用了 `FixFullScreenCanvas()`（全屏窗口）。
 - [ ] 如果 Prefab 结构大改，运行 `Battle/Setup Battle Scene & Resources`，必要时先删旧 Prefab。
 - [ ] 纯 UI 场景里要有 `tag = MainCamera` 且 `clearFlags = SolidColor` 的相机。
 - [ ] 修改热更代码后，重新编译热更 DLL（`GameLogic.csproj` / HybridCLR 构建）。
-- [ ] 2D 相机相关的 zoom 逻辑用 `orthographicSize`，不要只改 `fieldOfView`。
+- [ ] 正交相机相关的 zoom 逻辑用 `orthographicSize`，透视相机用 `fieldOfView`（当前项目为透视相机）。
 
 ---
 
@@ -330,7 +332,7 @@ GameApp.ChangeProcedure<ProcedureBattle>();
 |------|------|
 | `Assets/GameScripts/HotFix/GameLogic/Module/UIModule/UIWindow.cs` | UI 窗口基类，`FixFullScreenCanvas` |
 | `Assets/GameScripts/HotFix/GameLogic/Module/UIModule/UIModule.cs` | UI 栈管理、加载入口 |
-| `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem.cs` | 正交相机 zoom / 狙击镜 |
+| `Assets/GameScripts/HotFix/GameLogic/System/CameraSystem3D.cs` | 3D 俯视相机跟随 / 缩放 / 狙击镜 |
 | `Assets/Editor/BattleSetup/BattleSceneSetup.cs` | Prefab / 场景一键初始化工具 |
 | `Assets/GameScripts/HotFix/GameLogic/Procedure/GameplayProcedureBase.cs` | 带 Loading 的场景加载基类 |
 | `Assets/GameScripts/HotFix/GameLogic/GameApp.cs` | 流程切换入口 |
@@ -339,4 +341,4 @@ GameApp.ChangeProcedure<ProcedureBattle>();
 
 ## 11. 一句话总结
 
-> **Prefab 增量更新会留旧节点，全屏 UI 必须设 anchor 拉伸，2D 相机调 orthographicSize，纯 UI 场景不能缺主相机。**
+> **Prefab 增量更新会留旧节点，全屏 UI 必须设 anchor 拉伸，相机 zoom 分清透视/正交，纯 UI 场景不能缺主相机。**

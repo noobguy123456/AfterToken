@@ -16,13 +16,13 @@
 | `GameLogic/Item/Warehouse.cs` | 玩家仓库（静态，本期内存态）。`TryAdd / AddAll / Items / UsedSlots / MaxSlots` |
 | `GameLogic/IEvent/IItemEvent.cs` | 事件接口：`OnItemPickedUp / OnTempInventoryChanged / OnWarehouseChanged / OnInventoryFull` |
 | `GameLogic/UI/BattleBagUI/` | 战斗内临时背包面板（B 键开关），显示 `当前容量/最大容量` 与全部容量格子（空槽位以深灰框占位）；打开时隐藏准星、暂停时间，含关闭按钮，再按 B 键可关闭 |
-| `GameLogic/UI/WarehouseUI/` | 仓库面板（大厅 LobbyUI 的 Warehouse 按钮进入），含关闭按钮；大厅中按 ESC 可关闭 |
+| `GameLogic/UI/WarehouseUI/` | 仓库面板（基地内打开），含关闭按钮；按 ESC 可关闭 |
 
 ## 生命周期规则
 
-- **新一局开始**：`ProcedureLobby.OnEnter` 统一 `RunInventory.Clear()`（主菜单/死亡/胜利回大厅均覆盖）。
+- **新一局开始**：`ProcedureSimulation.EnterAsync` 统一 `RunInventory.Clear()`（进入基地即一局结束/全新开始）。
 - **死亡**：`PlayerDeathHandler.OnPlayerDied` 清空临时背包（死亡全丢）。
-- **胜利（RETURN_TO_LOBBY 传送门）**：`PortalSystem.ExecuteTransition` 先 `Warehouse.AddAll(RunInventory.Items)` 再切流程。
+- **撤离回基地**：`PortalSystem.ExtractToBase`（撤离点/返回传送门共用）先 `Warehouse.AddAll(RunInventory.Items)` 再切流程。
 - **传送门跨战斗场景**（NEXT_LEVEL / CUSTOM_SCENE）：临时背包保留。
 
 ## 设计要点

@@ -18,7 +18,9 @@ namespace GameLogic
         public override float TimeScaleWhenVisible => InspectorTimeScale ?? 0f;
 
         private TextMeshProUGUI _titleText;
+        private TextMeshProUGUI _slotInfoText;
         private Button _startButton;
+        private Button _savesButton;
         private Button _exitButton;
         private Button _settingsButton;
 
@@ -26,7 +28,9 @@ namespace GameLogic
         protected override void ScriptGenerator()
         {
             _titleText = FindChildComponent<TextMeshProUGUI>("m_text_Title");
+            _slotInfoText = FindChildComponent<TextMeshProUGUI>("m_text_SlotInfo");
             _startButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Start");
+            _savesButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Saves");
             _exitButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Exit");
             _settingsButton = FindChildComponent<Button>("m_rect_ButtonRoot/m_btn_Settings");
         }
@@ -38,11 +42,16 @@ namespace GameLogic
             FixFullScreenCanvas();
             SetupDefaultCursor();
             CursorManager.Instance?.ShowCursor();
+            BindLocalizedTexts();
             BindEvents();
+            LocalizationSystem.Instance.OnLanguageChanged += UpdateSlotInfo;
+            SaveSystem.OnSlotChanged += UpdateSlotInfo;
         }
 
         protected override void OnDestroy()
         {
+            LocalizationSystem.Instance.OnLanguageChanged -= UpdateSlotInfo;
+            SaveSystem.OnSlotChanged -= UpdateSlotInfo;
             CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }
@@ -104,18 +113,46 @@ namespace GameLogic
             return tex;
         }
 
-        private void BindEvents()
+        /// <summary>
+        /// 绑定多语言文本（按钮文字走词条；标题 AfterToken 是游戏名不翻译）。
+        /// </summary>
+        private void BindLocalizedTexts()
         {
             if (_titleText != null)
             {
                 _titleText.text = "AfterToken";
             }
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ButtonRoot/m_btn_Start/Text"), "ui.mainmenu.start");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ButtonRoot/m_btn_Saves/Text"), "ui.mainmenu.saves");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ButtonRoot/m_btn_Settings/Text"), "ui.settings.title");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ButtonRoot/m_btn_Exit/Text"), "ui.mainmenu.exit");
+            UpdateSlotInfo();
+        }
 
+        /// <summary>
+        /// 刷新当前存档位指示（参数化词条，语言切换时重刷）。
+        /// </summary>
+        private void UpdateSlotInfo()
+        {
+            if (_slotInfoText != null)
+            {
+                _slotInfoText.text = Loc.Get("ui.mainmenu.current_slot", SaveSystem.CurrentSlot);
+            }
+        }
+
+        private void BindEvents()
+        {
             if (_startButton != null)
             {
                 _startButton.onClick.RemoveAllListeners();
                 // Start 直接进入基地（模拟经营场景即据点，选关在基地内进行）
                 _startButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureSimulation>());
+            }
+
+            if (_savesButton != null)
+            {
+                _savesButton.onClick.RemoveAllListeners();
+                _savesButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<SaveSlotSelectUI>());
             }
 
             if (_exitButton != null)

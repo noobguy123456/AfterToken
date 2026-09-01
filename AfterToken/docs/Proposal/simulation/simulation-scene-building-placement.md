@@ -1,5 +1,7 @@
 # 经营场景与建筑摆放实现方案
 
+> 提案状态：已落地（2026-08-30 核对）。`BuildingPlacementSystem` / `BuildingEntity` / `BuildingSelectionUI` 均已实现（`Assets/GameScripts/HotFix/GameLogic/Simulation/`），正文保留作设计记录。
+
 ## 1. 场景结构
 
 ```

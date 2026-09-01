@@ -119,5 +119,17 @@ namespace GameLogic
             GameEvent.Get<IPlayerProfileEvent>()?.OnExpChanged(_exp, _expToNextLevel);
             Persist();
         }
+
+        /// <summary>
+        /// 失效缓存（存档槽位切换时由 SaveSystem 调用）：回默认值，下次访问从新槽位重读。
+        /// </summary>
+        public static void InvalidateCache()
+        {
+            _loaded = false;
+            _level = DEFAULT_LEVEL;
+            _exp = DEFAULT_EXP;
+            _expToNextLevel = DEFAULT_EXP_TO_NEXT;
+            _completedLevels.Clear();
+        }
     }
 }

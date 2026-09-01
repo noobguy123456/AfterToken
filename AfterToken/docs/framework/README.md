@@ -4,7 +4,7 @@
 
 ## 项目定位
 
-AfterToken 是一款使用 Unity 6000.0.76f1 开发的俯视角 2D 射击游戏原型。整体框架采用：
+AfterToken 是一款使用 Unity 6000.0.76f1 开发的 3D 俯视角射击游戏原型（内置 Built-in 渲染管线）。整体框架采用：
 
 - **TEngine**：程序框架（Procedure、UI、Scene、Resource、Timer 等）
 - **HybridCLR**：C# 热更
@@ -21,8 +21,9 @@ AfterToken 是一款使用 Unity 6000.0.76f1 开发的俯视角 2D 射击游戏�
 | [03-HotfixPipeline.md](./03-HotfixPipeline.md) | HybridCLR 配置、热更 DLL 编译与加载、AOT 元数据补充 |
 | [04-SceneAndProcedure.md](./04-SceneAndProcedure.md) | 启动场景、主包流程、热更域流程、场景切换 |
 | [05-UIWorkflow.md](./05-UIWorkflow.md) | UI Prefab 规范、UIWindow 生命周期、加载接口、编辑器工具 |
-| [06-ConfigSystem.md](./06-ConfigSystem.md) | 当前硬编码配置、Luban 接入规划 |
+| [06-ConfigSystem.md](./06-ConfigSystem.md) | Luban 配置表清单、生成脚本、运行时访问方式 |
 | [07-BuildAndRelease.md](./07-BuildAndRelease.md) | TEngine 发布工具、一键构建流程、最小包模式 |
+| [08-DataFlowAndDebug.md](./08-DataFlowAndDebug.md) | 配置/运行时数据流、调试方法、GM 工具 |
 
 ## 快速索引
 

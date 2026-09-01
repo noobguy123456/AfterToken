@@ -14,7 +14,7 @@
 | 配置管理 | `GameLogic/Config/DialogueConfigMgr.cs` | 对话头/节点查询，`GetStartNode` 按条件选开场节点 |
 | 解释器 | `GameLogic/System/DialogueSystem.cs` | 单例（`ProcedureSimulation` 挂载）。状态机 Idle→Playing→WaitingChoice；E/回车推进（打字中先补全）、数字键 1~4 选选项、走出触发区打断 |
 | 呈现 | `GameLogic/UI/DialogueUI/DialogueUI.cs` + `Assets/AssetRaw/UI/DialogueUI/DialogueUI.prefab` | 底部约 1/4 屏对话框 + 中部选项按钮；打字机 45 字/秒；不暂停、不显示系统光标 |
-| 条件/动作 | `GameLogic/Narrative/NarrativeCondition.cs` / `NarrativeAction.cs` | 最小领域语言（与任务系统共用）：`flag:key` / `flag:!key` / `level:>=N`；`flag:+key` / `flag:-key` / `give:gold:N`；`quest:*` 待任务系统落地 |
+| 条件/动作 | `GameLogic/Narrative/NarrativeCondition.cs` / `NarrativeAction.cs` | 最小领域语言（与任务系统共用）：`flag:key` / `flag:!key` / `level:>=N` / `quest:id:active/ready/done/accept`；`flag:+key` / `flag:-key` / `give:gold:N` / `quest:accept:id` / `quest:turnin:id` |
 | 标志位 | `GameLogic/Narrative/DialogueFlagSystem.cs` | 数据黑板（`SaveData.dialogue.flags`，变动即存）；onceOnly 对话读写 `dlg_seen_{id}` |
 | 事件 | `GameLogic/IEvent/IDialogueEvent.cs` | Started / Line / Choices / Ended |
 
@@ -40,6 +40,6 @@
 ## 注意
 
 - 解释器不知道 UI 存在（只发事件），UI 不知道表结构（只消费事件载荷）
-- 条件/动作刻意不做算术与脚本，策划填错在运行期告警；`quest:*` 词汇待任务系统落地后生效
+- 条件/动作刻意不做算术与脚本，策划填错在运行期告警；`quest:*` 词汇已随任务系统 MVP 落地生效（2026-08-30）
 - 对话不暂停游戏、不动光标/准星（键盘驱动）
 - 统一 IInteractable 仲裁器仍待做（NPC/Portal/Note/容器触发区勿重叠）

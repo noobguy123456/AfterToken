@@ -100,7 +100,7 @@ entryMethod.Invoke(appType, new object[] { new object[] { _hotfixAssemblyList } 
 `GameApp.StartGameLogic`（`Assets/GameScripts/HotFix/GameLogic/GameApp.cs`）：
 
 1. `GameModule.Procedure.Shutdown()` 关闭主包流程状态机。
-2. 重新初始化热更域流程：`ProcedureMainMenu`、`ProcedureLobby`、`ProcedureBattle`。
+2. 重新初始化热更域流程：`ProcedureMainMenu`、`ProcedureBattle`、`ProcedureSimulation`。
 3. 启动 `ProcedureMainMenu`。
 
 ### 流程切换

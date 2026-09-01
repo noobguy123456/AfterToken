@@ -62,8 +62,10 @@ ProcedureLaunch
 | 流程 | 目标场景 | 打开的 UI |
 |------|----------|-----------|
 | `ProcedureMainMenu` | `MainMenuScene` | `MainMenuUI` |
-| `ProcedureLobby` | `LobbyScene` | `LobbyUI` |
-| `ProcedureBattle` | `BattleScene` / `BattleScene_L01` | `BattleMainUI`、`DamageNumberUI`、`HitFeedbackUI` |
+| `ProcedureSimulation` | `SimulationScene`（基地/据点） | `SimulationMainUI`、`QuestTrackerUI` |
+| `ProcedureBattle` | `BattleScene_3D_L01` ~ `L03`（由 `level.xlsx` 的 `sceneName` 决定） | `BattleMainUI`、`QuestTrackerUI`、`DamageNumberUI`、`HitFeedbackUI`、`MinimapUI` |
+
+> 早期的大厅流程 `ProcedureLobby` 已废弃：主菜单"开始游戏"直接进入基地（`ProcedureSimulation`），选关在基地内通过 Deploy 按钮/选关传送门打开 `LobbyUI` 窗口（纯 UI 窗口，不再是独立场景/流程）。
 
 ### GameplayProcedureBase
 
@@ -96,12 +98,15 @@ ProcedureLaunch
 ```
 Assets/AssetRaw/Scenes/
 ├── MainMenuScene.unity
-├── LobbyScene.unity
-├── BattleScene.unity
-└── BattleScene_L01.unity
+├── SimulationScene.unity
+├── BattleScene_3D_L01.unity
+├── BattleScene_3D_L02.unity
+└── BattleScene_3D_L03.unity
 ```
 
-纯 UI 场景（`MainMenuScene`、`LobbyScene`）必须包含 `tag = MainCamera`、`clearFlags = SolidColor` 的相机，避免黑屏或截图异常。
+纯 UI 场景（`MainMenuScene`）必须包含 `tag = MainCamera`、`clearFlags = SolidColor` 的相机，避免黑屏或截图异常。
+
+> 早期的 2D 场景（`LobbyScene`、`BattleScene`、`BattleScene_L01`~`L03`）已随 3D 化全部删除。
 
 ## 传送门系统
 
@@ -109,9 +114,10 @@ Assets/AssetRaw/Scenes/
 
 - 传送门实体挂载 `PortalEntity` 脚本，通过 `ConfigId` 关联 `portal.xlsx` 配置表。
 - 触发方式：玩家进入触发区域后按交互键 `E`。
-- 传送门类型：
-  - `portal_return_lobby`：返回关卡选择大厅（`ProcedureLobby`）
+- 传送门类型（`PortalType.cs`）：
+  - `portal_return_base`：返回基地（`ProcedureSimulation`）
   - `portal_next_level`：进入下一关卡（`ProcedureBattle`）
+  - `portal_select_level`：不切场景，直接打开 `LobbyUI` 选关窗口（基地内 Deploy 门）
   - `portal_custom_scene`：自定义场景跳转
 - 流程切换统一通过 `GameApp.ChangeProcedure<T>` 完成，转场效果由 `TransitionUI` 提供灰色渐变。
 - 玩家状态保留通过 `PortalPlayerState` 实现，是否保留由配置表 `keepPlayerState` 控制。

@@ -1,0 +1,234 @@
+[
+  {
+    "key": "ui.settings.title",
+    "en": "Settings",
+    "zh_cn": "设置",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.tab.general",
+    "en": "General",
+    "zh_cn": "通用",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.tab.input",
+    "en": "Input",
+    "zh_cn": "输入",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.crosshair_sensitivity",
+    "en": "Crosshair Sensitivity",
+    "zh_cn": "准星灵敏度",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.scope_sensitivity",
+    "en": "Scope Sensitivity",
+    "zh_cn": "开镜灵敏度",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.sniper_aim_mode",
+    "en": "Sniper Aim Mode",
+    "zh_cn": "狙击瞄准模式",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.aim_mode.toggle",
+    "en": "Toggle",
+    "zh_cn": "切换",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.aim_mode.hold",
+    "en": "Hold",
+    "zh_cn": "按住",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.crosshair_style",
+    "en": "Crosshair Style",
+    "zh_cn": "准星样式",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.crosshair_color",
+    "en": "Crosshair Color",
+    "zh_cn": "准星颜色",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.language",
+    "en": "Language",
+    "zh_cn": "语言",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.reset_defaults",
+    "en": "Reset to Defaults",
+    "zh_cn": "重置为默认",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.rebind_hint",
+    "en": "Click a key button, then press a new key. ESC to cancel.",
+    "zh_cn": "点击按键框后按下新按键，ESC 取消。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.action",
+    "en": "Action",
+    "zh_cn": "动作",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.common.close",
+    "en": "Close",
+    "zh_cn": "关闭",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.common.main_menu",
+    "en": "Main Menu",
+    "zh_cn": "主菜单",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.common.confirm",
+    "en": "Confirm",
+    "zh_cn": "确认",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.common.cancel",
+    "en": "Cancel",
+    "zh_cn": "取消",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.mainmenu.start",
+    "en": "Start Game",
+    "zh_cn": "开始游戏",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.mainmenu.exit",
+    "en": "Exit Game",
+    "zh_cn": "退出游戏",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.mainmenu.saves",
+    "en": "Save Slots",
+    "zh_cn": "存档",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.mainmenu.current_slot",
+    "en": "Save Slot {0}",
+    "zh_cn": "当前存档：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.title",
+    "en": "Select Save",
+    "zh_cn": "选择存档",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.slot_n",
+    "en": "Slot {0}",
+    "zh_cn": "存档 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.empty",
+    "en": "Empty",
+    "zh_cn": "空",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.new_game",
+    "en": "New Game",
+    "zh_cn": "新游戏",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.level",
+    "en": "Lv.{0}",
+    "zh_cn": "等级 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.gold",
+    "en": "Gold",
+    "zh_cn": "金币",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.saveslot.diamond",
+    "en": "Diamond",
+    "zh_cn": "钻石",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  }
+]
