@@ -62,10 +62,7 @@ namespace GameLogic
 
             for (int i = 0; i < _enemyCount; i++)
             {
-                // 在 [_spawnRadius, _spawnRadius*1.5] 圆环带内随机散射，避免正圆环的人工感
-                float angle = Random.Range(0f, Mathf.PI * 2f);
-                float radius = Random.Range(_spawnRadius, _spawnRadius * 1.5f);
-                Vector2 spawnPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                Vector2 spawnPos = RollSpawnPosition(spawnCenter);
 
                 GameObject go;
                 if (PoolSystem.Instance != null)
@@ -94,6 +91,34 @@ namespace GameLogic
 
                 await UniTask.Yield(cancellationToken);
             }
+        }
+
+        /// <summary>
+        /// 在 [_spawnRadius, _spawnRadius*1.5] 圆环带内随机散射，避免正圆环的人工感。
+        /// 落点必须可行走：不可走则重掷，多次失败吸附到最近可走格，保证不生成在障碍里。
+        /// </summary>
+        private const int SPAWN_RETRY_MAX = 8;
+
+        private Vector2 RollSpawnPosition(Vector2 spawnCenter)
+        {
+            var nav = GameLogic.Navigation.NavigationSystem.Instance;
+            Vector2 lastPos = spawnCenter;
+            for (int attempt = 0; attempt < SPAWN_RETRY_MAX; attempt++)
+            {
+                float angle = Random.Range(0f, Mathf.PI * 2f);
+                float radius = Random.Range(_spawnRadius, _spawnRadius * 1.5f);
+                lastPos = spawnCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                if (nav == null || nav.IsWalkable(lastPos))
+                {
+                    return lastPos;
+                }
+            }
+
+            if (nav != null && nav.TryGetNearestWalkable(lastPos, out Vector2 snapped))
+            {
+                return snapped;
+            }
+            return lastPos;
         }
 
         private async UniTask<GameObject> LoadEnemyPrefabAsync(string prefabAddress, CancellationToken cancellationToken)

@@ -24,8 +24,18 @@ namespace GameLogic.Navigation
         bool IsWalkable(Vector2 worldPos);
 
         /// <summary>
+        /// 找世界坐标附近最近的可行走点（格中心），找不到返回 false。
+        /// </summary>
+        bool TryGetNearestWalkable(Vector2 worldPos, out Vector2 walkablePos);
+
+        /// <summary>
         /// 重新构建网格。
         /// </summary>
         void Rebuild();
+
+        /// <summary>
+        /// 局部更新网格：对 worldBounds 覆盖的格子重新判定可走性（供动态障碍使用）。
+        /// </summary>
+        void UpdateRegion(Bounds worldBounds);
     }
 }

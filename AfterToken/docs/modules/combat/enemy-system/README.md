@@ -23,12 +23,13 @@
 - 敌人死亡掉落：`DropSystem` 监听 `IEnemyEvent.OnEnemyDied` 按 `TbDrop` 掷点生成 `PickupEntity`（详见 `../pickup-system/`）。
 - **敌人对象池**：`EnemySpawnSystem` 使用 `PoolSystem` 预加载并复用敌人 Prefab，死亡后由 `EnemyDeadState` 回池而非销毁。
 - **A* 寻路优化**：`PathResult` 接入对象池；`AStarNavigationSystem` 路径平滑改为原地优化，减少 List 分配；`EnemyChaseState` 路径刷新间隔通过 `TbEnemy.pathRefreshInterval` 配置，并按距离动态调整（近快远慢）。
+- **复杂地形寻路（2026-09-01）**：障碍按代理半径膨胀（`ColliderGridBuilder.AgentRadius`）、LOS 平滑改 SphereCast、stuck 检测恢复、寻路失败退避收敛、分离可行走校验、生成点可行走校验与吸附；场景障碍统一落 Obstacle（10）层（trigger 交互区物体除外）。
+- **敌人半径配置化 + 动态障碍局部更新（2026-09-01）**：①`TbEnemy` 新增 `radius` 字段（碰撞/寻路膨胀半径，米），`ColliderGridBuilder.AgentRadius` 由硬编码 0.3 改为运行时取全表最大 `radius`（表不可用兜底 0.3 并告警一次），LOS SphereCast 半径同步为 `AgentRadius*0.9`，烘焙日志输出实际生效值；②导航网格支持局部更新——`INavigationSystem.UpdateRegion(Bounds)`（`ColliderGridBuilder` 复用 CheckSphere 重扫覆盖格、越界 clamp，`NavigationSystem` 门面更新后清空路径缓存），新增 `NavObstacle` 组件挂到运行时生成/销毁的动态障碍上（OnEnable/OnDisable 以自身 Collider bounds 外扩代理半径触发更新；OnDisable 延迟一帧执行，等销毁的 Collider 移出物理场景；非 Play/导航未初始化/场景切换静默跳过）。场景烘焙前已存在的静态障碍无需挂载。注意：项目关闭了 `Physics.autoSyncTransforms`，组件内部已 `Physics.SyncTransforms()` 兜底。
 
 ## 待完成
 
 - 敌人 AI 类型与配置
 - 寻路系统性能调优：分帧调度、缓存失效策略、格子大小调优（A* 分配与频率已优化）
-- 动态障碍物网格更新支持
 
 ## 设计要点
 

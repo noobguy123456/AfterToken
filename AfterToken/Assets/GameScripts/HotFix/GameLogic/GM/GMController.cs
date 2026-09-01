@@ -407,6 +407,13 @@ namespace GameLogic.GM
                 return;
             }
 
+            // 生成点吸附到可走区域，避免 GM 刷怪落进障碍
+            var nav = GameLogic.Navigation.NavigationSystem.Instance;
+            if (nav != null && !nav.IsWalkable(position.ToXZ()) && nav.TryGetNearestWalkable(position.ToXZ(), out var snapped))
+            {
+                position = snapped.ToWorld(position.y);
+            }
+
             go.transform.position = position;
             // autoSyncTransforms 关闭，需同步刚体位置防止物理回写覆盖瞬移
             var rb = go.GetComponent<Rigidbody>();

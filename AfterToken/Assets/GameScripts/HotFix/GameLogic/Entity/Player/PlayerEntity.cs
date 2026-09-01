@@ -128,7 +128,11 @@ namespace GameLogic
         public void SetDead()
         {
             IsDead = true;
-            _rb.linearVelocity = Vector3.zero;
+            // 重复死亡（如死亡事件重复派发）时刚体已是 Kinematic，写 linearVelocity 会打警告
+            if (!_rb.isKinematic)
+            {
+                _rb.linearVelocity = Vector3.zero;
+            }
             _rb.isKinematic = true;
         }
 

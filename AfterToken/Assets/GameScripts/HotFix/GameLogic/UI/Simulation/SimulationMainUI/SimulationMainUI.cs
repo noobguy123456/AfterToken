@@ -78,6 +78,10 @@ namespace GameLogic
             BindButtons();
             RegisterSimulationEvents();
 
+            // HUD 初始值：不能只依赖事件推送，否则加载旧存档后无事件触发时会停留在 Prefab 默认值
+            RefreshHud();
+            SaveSystem.OnSlotChanged += RefreshHud;
+
             SetPanelVisible(false);
             RefreshBuildingList();
             RefreshOrderList();
@@ -85,6 +89,7 @@ namespace GameLogic
 
         protected override void OnDestroy()
         {
+            SaveSystem.OnSlotChanged -= RefreshHud;
             ClearListItems();
             // 注意：不要在子类调用 RemoveAllUIEvent()，UIWindow.InternalDestroy 已统一释放，重复调用会触发内存池二次释放异常
             CursorManager.Instance?.HideCursor();
@@ -158,6 +163,13 @@ namespace GameLogic
                 _cachedSimulationSystem = root?.GetComponent<SimulationSystem>();
             }
             return _cachedSimulationSystem;
+        }
+
+        /// <summary>按当前系统数据刷新 HUD（创建时与切档后调用，作为事件推送之外的兜底）。</summary>
+        private void RefreshHud()
+        {
+            OnGoldChanged(CurrencySystem.Gold);
+            OnExpChanged(PlayerProfileSystem.Exp, PlayerProfileSystem.ExpToNextLevel);
         }
 
         private void OnGoldChanged(long gold)

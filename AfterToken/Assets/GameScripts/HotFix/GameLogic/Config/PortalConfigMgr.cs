@@ -20,10 +20,10 @@ namespace GameLogic
         private void EnsureLoaded()
         {
             if (_loaded) return;
-            _loaded = true;
             var table = ConfigSystem.Instance?.Tables?.TbPortal;
             if (table == null)
             {
+                // 表未加载完成时不得闩锁 _loaded，否则首次抢跑后永久返回空表
                 Log.Error("[PortalConfigMgr] TbPortal 未加载");
                 return;
             }
@@ -32,6 +32,7 @@ namespace GameLogic
             {
                 _configs[portal.Id] = new PortalConfig(portal);
             }
+            _loaded = true;
         }
 
         public PortalConfig Get(int id)

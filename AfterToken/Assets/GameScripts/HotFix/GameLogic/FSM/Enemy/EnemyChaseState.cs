@@ -21,8 +21,24 @@ namespace GameLogic
         private const float DIRECT_CHASE_DISTANCE = 1.5f;
         private const float SEPARATION_RADIUS = 0.6f;
         private const float SEPARATION_WEIGHT = 0.6f;
+        private const float SEPARATION_PROBE_DISTANCE = 0.3f; // 分离方向预判步长（≈敌人半径）
         private const float CHASE_RANGE_FALLBACK = 5f; // 未配置仇恨范围时的回退值
         private const float MAX_INTERVAL_SCALE = 3f; // 远距离最大倍率
+
+        // 卡住检测：一段时间内位移过小判定顶墙，强制重寻路；连续卡住则短暂待机再重试
+        private const float STUCK_CHECK_INTERVAL = 0.8f;
+        private const float STUCK_DISTANCE_THRESHOLD = 0.1f;
+        private const int STUCK_RECOVER_THRESHOLD = 3;
+        private const float STUCK_RECOVER_TIME = 0.5f;
+        // 寻路失败退避：重试间隔递增封顶，避免每帧跑 A*
+        private const float BASE_FAIL_RETRY_INTERVAL = 0.5f;
+        private const float MAX_FAIL_RETRY_INTERVAL = 2f;
+
+        private float _stuckTimer;
+        private Vector2 _stuckCheckPos;
+        private int _stuckCount;
+        private float _stuckRecoverTimer;
+        private float _pathFailInterval = BASE_FAIL_RETRY_INTERVAL;
 
         // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的结果数组分配。
         private static readonly int EnemyMask = LayerMask.GetMask("Enemy");
@@ -34,6 +50,11 @@ namespace GameLogic
             _currentPath = null;
             _currentWaypointIndex = 0;
             _pathRefreshTimer = 0f;
+            _stuckTimer = 0f;
+            _stuckCheckPos = Owner.transform.position.ToXZ();
+            _stuckCount = 0;
+            _stuckRecoverTimer = 0f;
+            _pathFailInterval = BASE_FAIL_RETRY_INTERVAL;
             RefreshPath();
         }
 
@@ -56,6 +77,16 @@ namespace GameLogic
             Vector2 toTarget = targetPos - ownerPos;
             float distanceToTarget = toTarget.magnitude;
 
+            // 卡住恢复中：原地待机，倒计时结束后再行动
+            if (_stuckRecoverTimer > 0f)
+            {
+                _stuckRecoverTimer -= elapse;
+                StopMoving();
+                return;
+            }
+
+            UpdateStuckDetection(ownerPos, elapse);
+
             // 很近且直线可达时直接冲刺
             if (distanceToTarget <= DIRECT_CHASE_DISTANCE && HasLineOfSight(ownerPos, targetPos))
             {
@@ -64,16 +95,28 @@ namespace GameLogic
             }
 
             _pathRefreshTimer += elapse;
-            if (_pathRefreshTimer >= GetDynamicRefreshInterval() || _currentPath == null || !_currentPath.Success)
+            // 路径无效时按退避间隔（递增封顶）重试，避免寻路失败每帧跑 A*
+            float refreshInterval = IsPathValid() ? GetDynamicRefreshInterval() : _pathFailInterval;
+            if (_pathRefreshTimer >= refreshInterval)
             {
                 _pathRefreshTimer = 0f;
                 RefreshPath();
+                _pathFailInterval = IsPathValid()
+                    ? BASE_FAIL_RETRY_INTERVAL
+                    : Mathf.Min(_pathFailInterval * 2f, MAX_FAIL_RETRY_INTERVAL);
             }
 
-            if (_currentPath == null || !_currentPath.Success || _currentPath.Waypoints.Count == 0)
+            if (!IsPathValid() || _currentPath.Waypoints.Count == 0)
             {
-                //  fallback：直接朝玩家移动（可能穿墙，但总比卡住好）
-                MoveTowards(toTarget.normalized, elapse);
+                // 寻路失败 fallback：有视线才直追，无视线原地等待退避重试，避免顶墙死锁
+                if (HasLineOfSight(ownerPos, targetPos))
+                {
+                    MoveTowards(toTarget.normalized, elapse);
+                }
+                else
+                {
+                    StopMoving();
+                }
                 return;
             }
 
@@ -126,6 +169,48 @@ namespace GameLogic
             return Mathf.Lerp(baseInterval, baseInterval * MAX_INTERVAL_SCALE, t);
         }
 
+        private bool IsPathValid()
+        {
+            return _currentPath != null && _currentPath.Success;
+        }
+
+        /// <summary>
+        /// 位移监控：窗口内位移小于阈值判定卡住，立即强制重寻路；
+        /// 连续卡住达到上限则短暂待机后再重试，避免顶墙死锁。
+        /// </summary>
+        private void UpdateStuckDetection(Vector2 ownerPos, float elapse)
+        {
+            _stuckTimer += elapse;
+            if (_stuckTimer < STUCK_CHECK_INTERVAL) return;
+
+            float moved = Vector2.Distance(ownerPos, _stuckCheckPos);
+            _stuckCheckPos = ownerPos;
+            _stuckTimer = 0f;
+            if (moved >= STUCK_DISTANCE_THRESHOLD)
+            {
+                _stuckCount = 0;
+                return;
+            }
+
+            _stuckCount++;
+            Log.Info($"[EnemyChase] 敌人 {Owner.GetInstanceID()} 疑似卡住（连续 {_stuckCount} 次），强制重寻路");
+            _pathRefreshTimer = 0f;
+            RefreshPath();
+            if (_stuckCount >= STUCK_RECOVER_THRESHOLD)
+            {
+                _stuckCount = 0;
+                _stuckRecoverTimer = STUCK_RECOVER_TIME;
+            }
+        }
+
+        private void StopMoving()
+        {
+            if (Owner.Rigidbody != null)
+            {
+                Owner.Rigidbody.linearVelocity = Vector3.zero;
+            }
+        }
+
         private void MoveTowards(Vector2 direction, float elapse)
         {
             Vector2 finalDirection = ApplySeparation(direction);
@@ -168,7 +253,14 @@ namespace GameLogic
 
             if (count == 0) return desiredDirection;
             separation /= count;
-            return (desiredDirection + separation * SEPARATION_WEIGHT).normalized;
+            Vector2 combined = (desiredDirection + separation * SEPARATION_WEIGHT).normalized;
+            // 分离不能把敌人推进障碍：预判前方位置不可走则丢弃分离分量，只保留路径方向
+            var nav = Context.NavigationSystem;
+            if (nav != null && !nav.IsWalkable(ownerPos + combined * SEPARATION_PROBE_DISTANCE))
+            {
+                return desiredDirection;
+            }
+            return combined;
         }
 
         private bool HasLineOfSight(Vector2 from, Vector2 to)

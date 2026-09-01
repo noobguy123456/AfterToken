@@ -34,6 +34,7 @@ public sealed partial class Enemy : Luban.BeanBase
         PathRefreshInterval = (float)_obj.GetValue("pathRefreshInterval");
         Prefab = (string)_obj.GetValue("prefab");
         ChaseRange = (float)_obj.GetValue("chaseRange");
+        Radius = (float)_obj.GetValue("radius");
     }
 
     public static Enemy DeserializeEnemy(JToken _buf)
@@ -85,6 +86,10 @@ public sealed partial class Enemy : Luban.BeanBase
     /// 仇恨范围（追击触发距离）
     /// </summary>
     public readonly float ChaseRange;
+    /// <summary>
+    /// 碰撞/寻路膨胀半径（米）
+    /// </summary>
+    public readonly float Radius;
 
 
     public const int __ID__ = 1431269726;
@@ -108,6 +113,7 @@ public sealed partial class Enemy : Luban.BeanBase
         + "pathRefreshInterval:" + PathRefreshInterval + ","
         + "prefab:" + Prefab + ","
         + "chaseRange:" + ChaseRange + ","
+        + "radius:" + Radius + ","
         + "}";
     }
 }

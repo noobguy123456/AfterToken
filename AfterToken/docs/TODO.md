@@ -54,7 +54,7 @@
 | 辅助瞄准系统 | ✅ | - | - | 并入武器系统文档 | 仅辅助磁吸（火箭锁定已随火箭筒直射化移除，2026-08-30） |
 | 相机系统 | 🟡 | P1 | - | `docs/modules/combat/camera-system/` | 跟随、边界、抖动、Duckov 式狙击镜、玩家屏幕锚点（底部 1/4）、经营/战斗参数统一（`TbCamera3D` 单源）已完成；待关卡边界限制 |
 | 小地图系统 | ✅ | - | - | `docs/modules/combat/minimap-system/` | 2D 烘焙缩略图（无光影）+ 敌我图标投影 + M 键大地图；打包需加 Unlit/Color 到 Always Included Shaders |
-| 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通；3D 胶囊占位已替换 Sprite；待寻路绕障 Play 验证、`TbWave` 波次接入、攻击伤害判定 |
+| 敌人系统 | 🟡 | P1 | 关卡/战斗系统 | `docs/modules/combat/enemy-system/` | `EnemyEntity`、生成、`TbEnemy` 已接入；FSM + 自研 A* 寻路已跑通并 Play 实测绕障（障碍膨胀/stuck 恢复/生成点校验，2026-09-01）；3D 胶囊占位已替换 Sprite；待 `TbWave` 波次接入、攻击伤害判定 |
 | 掉落与拾取系统 | ✅ | - | - | `docs/modules/combat/pickup-system/` | 敌人死亡掉落、`PickupEntity`、拾取入临时背包已完成 |
 | 战利品容器系统 | ✅ | - | - | `docs/modules/combat/loot-container-system/` | 搜打撤开箱全链路已实测（`TbLootContainer` 权重表 + E 键开箱面板 + 单格拿取/Take All）；待统一 IInteractable 仲裁器（Portal/Container 触发区重叠）、美术替换、正式摆放规则 |
 | 撤离点系统 | ✅ | - | - | `docs/modules/combat/extraction-system/` | 撤离圈+倒计时（`TbLevel.extractionTime`）+敌人进圈暂停+顶部 UI+撤离结算复用 `PortalSystem.ExtractToBase`，端到端 Play 实测通过；101 已摆 (18,0,18)；待美术替换占位圆盘、正式点位规则、Portal/撤离圈重叠仲裁 |
@@ -377,3 +377,30 @@ Luban 配置表数据补充
 - 2026-08-31 多存档位 + 存档选择界面 + 主菜单本地化：①`SaveSystem` 改造为 3 槽位（save_N.json，旧 save.json 自动迁移为槽位 1），`CurrentSlot` 存 PlayerPrefs；`SwitchSlot` = 落盘当前档→加载新槽→统一调 6 个缓存模块的 `InvalidateCache`（Currency/PlayerProfile/Unlock/Warehouse/Quest/SensitivitySetting，新增约定见 save-system README）→新槽立即落盘→`OnSlotChanged` 事件；`GetSlotSummary` 只读摘要（exists/level/gold/diamond）；②新增 `SaveSlotSelectUI`（prefab 在 AssetRaw/UI/SaveSlotSelectUI/，3 个 300x640 竖槽位：Player prefab 渲染到共享 RenderTexture 的人物预览 + 左上角黄色等级 + 人物下方金币/钻石 + 底部槽位名，当前槽位绿底+▶，空槽显示 Empty/New Game 不显示模型，整槽可点）；③主菜单新增"存档"按钮（m_btn_Saves）与"当前存档：N"指示（订阅 OnSlotChanged/OnLanguageChanged），全部按钮文本 key 化（ui.mainmenu.* 词条）；④词条表新增 11 条。Play 实测：切槽位 3 空档→文件创建+主菜单指示即时刷新+缓存正确重置（gold 500/Lv1），切回槽位 1 数据恢复（gold 1850/Lv3）；中文显示全链路正常。截图 Assets/Screenshots/mainmenu_zh.png、saveslot_zh2.png、saveslot_final2.png
 
 - 2026-08-31 修复"存档界面点槽位后无法进入游戏"：根因是交互设计缺陷——SaveSlotSelectUI 为不透明全屏窗口且背景吃射线，点槽位只选中不关闭，用户被困在界面里（开始游戏按钮被盖住）。修复（后按用户要求调整）：点槽位=选中并直接进入游戏（`OnSlotSelected` → SwitchSlot + CloseUI + ChangeProcedure<ProcedureSimulation>，符合"点存档即开局"直觉）。另排查出两个测试侧假象：①Play 中改代码不会热重载（LockAssemblyReloadInPlayMode 锁定），MCP 验证必须重启 Play；②流程切换中抢跑（场景异步加载未完成时 ChangeProcedure）会让 UIModule.OnInit 崩溃留下脏状态（未注册的窗口残骸 GameObject 关不掉），属编辑器测试竞态，正式流程未复现。Play 回归通过：选槽位→自动关→开始游戏→进 SimulationScene（ts=1，gold/等级正确）
+
+## 2026-09-01 修复：存档数据进游戏后 HUD 显示对不上
+- 现象：选 3 级存档（金币 1850）进游戏，Simulation 顶部 HUD 仍显示 `Gold: 0 Lv: 1`。
+- 根因：`SimulationMainUI` 的金币/等级文本只在 `OnGoldChanged`/`OnExpChanged` 事件里更新；加载旧存档后这两个值本就不变、事件不触发，文本停留在 Prefab 默认值。
+- 修复：`SimulationMainUI` 新增 `RefreshHud()`（直接读 `CurrencySystem.Gold` 与 `PlayerProfileSystem.Level/Exp/ExpToNextLevel`），在 `OnCreate` 中调用，并订阅 `SaveSystem.OnSlotChanged` 兜底（`OnDestroy` 中退订）。
+- 待验证：MCP 复现"主菜单→存档槽位 1→进 Simulation"，HUD 应显示 Lv 3 / Gold 1850。
+
+## 2026-09-01 复杂地形敌人寻路判定改造（3D 化后寻路真正落地）
+- 背景：3D 化后全项目没有任何物体在 Obstacle 层，导航网格认为全图可走；排查中另发现一个存量阻塞 bug——`AStarNavigationSystem` 的 `_gCost` 复用数组不清零、未访问格默认 0，导致 `tentativeG < _gCost[n]` 永假、A* 从未真正扩展过任何节点（此前敌人追击实际一直走"直线冲玩家"fallback，即顶墙死锁的根因）。修复：新增 `_gGeneration` 代数标记，本代未写入 g 值的格子视为无穷大。
+- 障碍层落地：L01 场景 `Test_Cube`/`Test_Sphere`/`Test_Capsule` 改 Obstacle（10）层（MCP additive 开场景改完 SaveScene 再关）。`Note_1`/`LootContainer_1/2` 不改——其实体 Awake 把 BoxCollider 强制为 2m trigger 交互区，改层会让导航 CheckSphere 与子弹 SphereCast（mask 含 Obstacle）误撞触发区。运行时无动态生成的障碍物。
+- `ColliderGridBuilder`：可行走判定球半径从 cellSize*0.25 改为代理半径 `AgentRadius=0.3f`（TbEnemy 无半径字段，取敌人胶囊半径常量，已注释）；CheckSphere 加 `QueryTriggerInteraction.Ignore`；网格边界改为扫描范围与障碍 bounds 求并集（障碍入层后原"只包障碍"逻辑会裁掉远离障碍的可行走区）。
+- `AStarNavigationSystem`：LOS 平滑从零宽 Linecast 改 `Physics.SphereCast`（半径=AgentRadius*0.9，Ignore trigger）；新增 `TryGetNearestWalkable`（`INavigationSystem`/`NavigationSystem` 同步暴露）供出生点吸附。
+- `EnemyChaseState`：①stuck 检测——0.8s 窗口位移 <0.1m 判定卡住立即强制重寻路，连续 3 次待机 0.5s 再重试；②寻路失败 fallback 收敛——无 LOS 原地等待+退避重试（0.5s 起递增封顶 2s），有 LOS 保留直追；③`ApplySeparation` 分离方向预判 0.3m 不可走则丢弃分离分量。
+- `EnemySpawnSystem`：生成点圆环带随机后校验 `IsWalkable`，不可走重掷最多 8 次，再失败吸附最近可走格；GM 刷怪命令同样吸附；刚体同步处理保持。
+- Play 实测（101 关）：网格 216x216 含 36 不可走格；方块边缘外 0.4m 内不可走（膨胀生效）；敌人从球/胶囊北侧绕障三面合围玩家；stuck 日志"[EnemyChase] 疑似卡住，强制重寻路"实际触发；Console 0 error，旧 warning（双 EventSystem / DontDestroyOnLoad / I2Localization 导出 CSV）均未出现。截图 `Assets/Screenshots/nav_obstacle_avoidance_mid.png` / `nav_obstacle_avoidance_final.png`。
+- 坑位：关卡 ID 是 101~103 不是 1/2/3；`LevelConfigMgr.EnsureLoaded` 有 `_loaded` 闩锁，配置表加载完成前首次 Get 会永久缓存空表（GM reload 可解，本次踩到）。
+
+## 2026-09-01 第二轮 warning 清理
+- `PlayerEntity.SetDead`：重复死亡时刚体已是 Kinematic，写 `linearVelocity` 触发 "Setting linear velocity of a kinematic body is not supported" 警告（每局 3 次）；加 `!_rb.isKinematic` 守卫。MCP 实测两轮"死亡→Restart→再死亡"后 Console 0 error、该警告不再出现。
+- 孤儿 meta（nav_obstacle_avoidance_t1/t2.png.meta）为测试中临时文件、已被清理，告警为存量日志，自然消失。
+- 本轮验证后 Console 仅余 2 条有意保留的项目日志级 warning：开战 banner（Start Battle Game Logic）与 EditorSimulateMode 提示。
+
+## 2026-09-01 敌人半径配置化 + 导航网格动态障碍局部更新
+- `TbEnemy` 新增 `radius` 字段（碰撞/寻路膨胀半径，米；9001/9002 填 0.3）：`enemy.xlsx` 加列 + `__beans__.xlsx` 的 `cfg.Enemy` bean 加字段后跑 `gen_code_bin_to_project.bat` 导表；导表用模板覆盖 `GameProto/ConfigSystem.cs`，本次导后 `git diff` 确认 `_tableFiles` 清单未丢（模板与工程文件一致）。改 JSON 后已 `SimulateBuild("DefaultPackage")`。
+- `ColliderGridBuilder.AgentRadius` 由硬编码 0.3f 常量改为运行时属性：取 `ConfigSystem.Instance.Tables.TbEnemy` 全表最大 `radius`，表不可用/为空兜底 0.3f 并 Log.Warning 一次；LOS SphereCast 半径（`AStarNavigationSystem.LosRadius`）同步改属性取值 ×0.9；烘焙完成日志输出 `agentRadius` 实际生效值。
+- 动态障碍局部更新：`INavigationGridBuilder`/`INavigationSystem`/`AStarNavigationSystem`/`NavigationSystem` 链路新增 `UpdateRegion(Bounds)`（复用 CheckSphere 重判、越界 clamp、无网格静默忽略），门面更新后清空路径缓存；新增 `NavObstacle` 组件（`GameLogic/Navigation/NavObstacle.cs`），挂运行时动态障碍上即可（静态障碍烘焙已包含，不用挂）。两个坑位已在组件内处理：①项目 `Physics.autoSyncTransforms=false`，生成/移动后立刻读 bounds 是旧值 → 组件内 `Physics.SyncTransforms()`；②OnDisable 时自身 Collider 还在物理场景里，立即重扫会误判阻挡 → 延迟一帧经 NavigationSystem 协程执行。
+- Play 实测（101 关，重启 Play 后验证）：烘焙日志 `agentRadius=0.3m（TbEnemy 最大 radius）`；运行时反射把 9001 radius 改 0.6 再 Rebuild，日志变 0.6，改回恢复（免二次导表验证 max 生效）；运行时创建 Obstacle 层立方体（挂 NavObstacle）→ 不可走格 36→48（2×2 障碍时 36→68）、路径缓存清零、目标格不可走、敌人绕东侧进入攻击状态（路径点距障碍中心 ≥0.89m）；销毁后一帧不可走格恢复 36、格子恢复可走。Console 0 error（generators.ai.unity.com 报错为 Unity AI 包网络噪音，与项目无关）。截图 `Assets/Screenshots/nav_dynamic_obstacle_chase.png` / `nav_dynamic_obstacle_removed.png`。

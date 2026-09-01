@@ -16,6 +16,8 @@ namespace GameLogic.Navigation
         private float[] _fCost;
         private int[] _parent;
         private int[] _visited;
+        // g 值的代数标记：_gCost 复用不清零，未标记本代的格子视为无穷大
+        private int[] _gGeneration;
         private int _currentGeneration;
         private readonly SimplePriorityQueue<int> _openQueue = new();
         private readonly HashSet<int> _openSet = new();
@@ -23,6 +25,8 @@ namespace GameLogic.Navigation
         private static readonly int[] Dx = { 0, 0, 1, -1 };
         private static readonly int[] Dy = { 1, -1, 0, 0 };
         private static readonly int ObstacleLayerMask = LayerMask.GetMask("Obstacle");
+        // 视线检测球半径略小于代理半径，避免平滑路径穿角/蹭墙，又不至于把合法缝隙误判为阻挡
+        private static float LosRadius => ColliderGridBuilder.AgentRadius * 0.9f;
 
         public AStarNavigationSystem(INavigationGridBuilder builder)
         {
@@ -39,6 +43,7 @@ namespace GameLogic.Navigation
                 _fCost = new float[total];
                 _parent = new int[total];
                 _visited = new int[total];
+                _gGeneration = new int[total];
             }
         }
 
@@ -50,6 +55,15 @@ namespace GameLogic.Navigation
                 return;
             }
             SetGrid(_builder.Build());
+        }
+
+        /// <summary>
+        /// 局部更新网格：对 worldBounds 覆盖的格子重新判定可走性；网格未初始化时静默忽略。
+        /// </summary>
+        public void UpdateRegion(Bounds worldBounds)
+        {
+            if (_grid == null || _builder == null) return;
+            _builder.UpdateRegion(_grid, worldBounds);
         }
 
         public bool IsWalkable(Vector2 worldPos)
@@ -97,11 +111,13 @@ namespace GameLogic.Navigation
             {
                 _currentGeneration = 1;
                 System.Array.Clear(_visited, 0, _visited.Length);
+                System.Array.Clear(_gGeneration, 0, _gGeneration.Length);
             }
             _openQueue.Clear();
             _openSet.Clear();
 
             _gCost[startIndex] = 0;
+            _gGeneration[startIndex] = _currentGeneration;
             _fCost[startIndex] = Heuristic(startX, startY, endX, endY);
             _parent[startIndex] = -1;
             _openQueue.Enqueue(startIndex, _fCost[startIndex]);
@@ -133,8 +149,10 @@ namespace GameLogic.Navigation
                     if (_visited[neighborIndex] == _currentGeneration) continue;
 
                     float tentativeG = _gCost[currentIndex] + CellDistance;
-                    if (tentativeG < _gCost[neighborIndex])
+                    // 本代未写入过 g 值的格子视为无穷大，直接接受新路径
+                    if (_gGeneration[neighborIndex] != _currentGeneration || tentativeG < _gCost[neighborIndex])
                     {
+                        _gGeneration[neighborIndex] = _currentGeneration;
                         _gCost[neighborIndex] = tentativeG;
                         _fCost[neighborIndex] = tentativeG + Heuristic(nx, ny, endX, endY);
                         _parent[neighborIndex] = currentIndex;
@@ -218,8 +236,23 @@ namespace GameLogic.Navigation
             float distance = direction.magnitude;
             if (distance < 0.001f) return true;
 
-            // 使用较小的 box 检测，避免贴边被误判为阻挡
-            return !Physics.Linecast(from.ToWorld(0.5f), to.ToWorld(0.5f), ObstacleLayerMask);
+            // 带宽度检测（忽略 trigger），避免零宽 Linecast 平滑出穿角/蹭墙的路径
+            Vector3 origin = from.ToWorld(0.5f);
+            return !Physics.SphereCast(origin, LosRadius, direction.normalized.ToWorld(), out _, distance, ObstacleLayerMask, QueryTriggerInteraction.Ignore);
+        }
+
+        /// <summary>
+        /// 找世界坐标附近最近的可行走格中心，用于出生点吸附等兜底。
+        /// </summary>
+        public bool TryGetNearestWalkable(Vector2 worldPos, out Vector2 walkablePos)
+        {
+            walkablePos = worldPos;
+            if (FindNearestWalkable(worldPos, out int x, out int y))
+            {
+                walkablePos = _grid.GetWorldPosition(x, y);
+                return true;
+            }
+            return false;
         }
 
         private float CalculatePathLength(List<Vector2> waypoints)

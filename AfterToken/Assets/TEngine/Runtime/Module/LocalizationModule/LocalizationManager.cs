@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Object = UnityEngine.Object;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -170,7 +170,8 @@ namespace TEngine
             {
                 if (innerLocalizationCsv == null)
                 {
-                    Log.Warning($"请使用I2Localization.asset导出CSV创建内置多语言.");
+                    // 项目已改用 GameLogic.LocalizationSystem（Luban 词条表），TEngine 内置多语言不再使用，降为 Info 避免告警噪音。
+                    Log.Info($"I2Localization 内置多语言未配置（项目使用 Luban 词条表多语言）.");
                     return;
                 }
 

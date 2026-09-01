@@ -820,7 +820,7 @@ GameObject:
   - component: {fileID: 1900000013}
   - component: {fileID: 1900000012}
   - component: {fileID: 1900000015}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Test_Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -928,7 +928,7 @@ GameObject:
   - component: {fileID: 1900000023}
   - component: {fileID: 1900000022}
   - component: {fileID: 1900000025}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Test_Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1036,7 +1036,7 @@ GameObject:
   - component: {fileID: 1900000033}
   - component: {fileID: 1900000032}
   - component: {fileID: 1900000035}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Test_Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}

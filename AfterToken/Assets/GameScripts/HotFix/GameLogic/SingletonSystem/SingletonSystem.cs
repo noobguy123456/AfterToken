@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using TEngine;
@@ -87,7 +87,8 @@ namespace GameLogic
 
             if (_gameObjects.TryAdd(go.name, go))
             {
-                if (Application.isPlaying)
+                // DontDestroyOnLoad 只对根对象生效；子对象（如 LoadTipsUI）由根对象携带存活，仅注册不重复标记。
+                if (Application.isPlaying && go.transform.parent == null)
                 {
                     Object.DontDestroyOnLoad(go);
                 }

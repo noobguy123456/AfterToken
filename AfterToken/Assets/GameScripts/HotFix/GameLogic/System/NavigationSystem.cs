@@ -100,11 +100,37 @@ namespace GameLogic.Navigation
         }
 
         /// <summary>
+        /// 找世界坐标附近最近的可行走点，用于出生点吸附等兜底。
+        /// </summary>
+        public bool TryGetNearestWalkable(Vector2 worldPos, out Vector2 walkablePos)
+        {
+            walkablePos = worldPos;
+            return _navigator != null && _navigator.TryGetNearestWalkable(worldPos, out walkablePos);
+        }
+
+        /// <summary>
         /// 重新构建网格。
         /// </summary>
         public void Rebuild()
         {
             _navigator?.Rebuild();
+            ClearPathCache();
+        }
+
+        /// <summary>
+        /// 局部更新导航网格（供动态障碍使用）。
+        /// 更新后清空路径缓存，避免旧缓存路径穿过新增障碍。
+        /// 导航未初始化时静默忽略。
+        /// </summary>
+        public void UpdateRegion(Bounds worldBounds)
+        {
+            if (_navigator == null) return;
+            _navigator.UpdateRegion(worldBounds);
+            ClearPathCache();
+        }
+
+        private void ClearPathCache()
+        {
             foreach (var entry in _pathCache.Values)
             {
                 PathResult.Release(entry.Result);

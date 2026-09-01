@@ -37,9 +37,12 @@
 - [x] **接入 Unity MCP 验证链路**：`http://localhost:8080/mcp`（mcp-for-unity-server），辅助脚本 `.tmp_unity_mcp.py` 支持编译检查 / Console 读取 / Play Mode / `execute_code` 运行时检查
 - [x] **血条钉住固定朝向与位置（2026-08-05）**：敌人刚体约束不锁 Y 旋转（`FreezeRotationX/Z` only），物理推挤会让根节点打转，挂在根节点下的血条跟着转。修复：`EnsureHealthBar` 末尾捕获生成时刻的世界朝向/偏移（`_healthBarFixedRotation`/`_healthBarFixedOffset`，对象池复用时随 `Initialize` 重新捕获），新增 `LateUpdate` 每帧钉住 `_healthBarRoot.rotation` 与 `position`。实测：敌人根节点转 137°，血条保持 (0,0,0) 朝向 + 头顶 (0,0.6,0) 偏移不变
 - [x] **血条改屏幕对齐 billboard（2026-08-06）**：固定世界朝向在相机偏航旋转后相对屏幕倾斜。修复：`LateUpdate` 中 `_healthBarRoot.rotation = Camera.main.transform.rotation`（血条平面平行屏幕，X=屏幕右/Y=屏幕上，相机偏航/俯仰任意变化角度都不变；相机引用静态缓存避免每帧 Find，无相机时退回 `_healthBarFixedRotation`）。位置仍钉住头顶偏移。实测：相机偏航 0°→60°，血条朝向从 (60,0,0) 同步为 (60,60,0) 与相机完全一致
+- [x] **复杂地形寻路判定改造（2026-09-01）**：①修复存量阻塞 bug——A* `_gCost` 复用数组默认 0 导致节点永不扩展（寻路从未真正工作，敌人一直走直线 fallback），新增 `_gGeneration` 代数标记；②L01 场景 Test_Cube/Sphere/Capsule 落 Obstacle 层（Note/LootContainer 为 2m trigger 交互区，不改层）；③障碍按代理半径 0.3m 膨胀（`ColliderGridBuilder.AgentRadius`），LOS 平滑改 SphereCast；④`EnemyChaseState` stuck 检测恢复（0.8s 位移 <0.1m 强制重寻路、连卡 3 次待机 0.5s）+ 失败 fallback 收敛（无 LOS 原地等待退避重试封顶 2s）+ 分离可行走校验；⑤`EnemySpawnSystem`/GM 刷怪生成点可行走校验与吸附（新增 `INavigationSystem.TryGetNearestWalkable`）。Play 实测绕障合围、stuck 日志触发、Console 0 error；截图 `Assets/Screenshots/nav_obstacle_avoidance_mid/final.png`
+
+- [x] **敌人半径配置化（2026-09-01）**：`TbEnemy` 新增 `radius` 字段（碰撞/寻路膨胀半径，米；9001/9002 均填 0.3），`ColliderGridBuilder.AgentRadius` 由硬编码常量改为运行时取 TbEnemy 全表最大 `radius`（表不可用/为空兜底 0.3f 并 Warning 一次），LOS SphereCast 半径同步 `AgentRadius*0.9`，网格烘焙日志输出实际生效值。Play 实测：烘焙日志 `agentRadius=0.3m（TbEnemy 最大 radius）`；运行时反射改 9001 radius=0.6 后 Rebuild 日志变 0.6，改回恢复 0.3，max 取值生效
+- [x] **动态障碍物网格更新支持（2026-09-01）**：`INavigationGridBuilder`/`INavigationSystem` 新增 `UpdateRegion(Bounds)`——`ColliderGridBuilder` 对 bounds 覆盖格复用 CheckSphere 重判可走性（越界 clamp、网格空静默忽略）；`NavigationSystem` 门面更新后清空路径缓存防旧路径穿新障碍；新增 `NavObstacle` 组件（Navigation 目录，RequireComponent Collider），OnEnable/OnDisable 以自身 bounds 外扩代理半径触发局部更新，OnDisable 延迟一帧（等销毁 Collider 移出物理场景），非 Play/未初始化/场景切换静默跳过。坑位：项目 `Physics.autoSyncTransforms=false`，运行时生成/移动后立刻读 `Collider.bounds` 是旧值，组件内 `Physics.SyncTransforms()` 兜底。Play 实测（101 关）：运行时创建 1×1×1 立方体（Obstacle 层）→ 不可走格 36→48、路径缓存清空、覆盖格不可走、寻路绕行（路径点距立方体中心 ≥0.89m）、敌人从障碍南侧绕东侧进入攻击状态；销毁后一帧不可走格恢复 36、格子可走。截图 `Assets/Screenshots/nav_dynamic_obstacle_chase/removed.png`
 
 ## 进行中
-- [ ] Play Mode 验证敌人绕过 `Ground` 障碍物追击玩家
 - [ ] 敌人攻击行为与伤害判定（攻击逻辑已写，实际伤害派发待补齐）
 - [ ] 接入 `TbWave` 波次生成逻辑
 
@@ -47,11 +50,9 @@
 - [ ] 敌人攻击行为与技能
 - [ ] 精英/BOSS 差异化行为
 - [ ] 寻路系统性能调优：分帧调度、缓存失效策略、格子大小调优（A* 分配与频率已优化）
-- [ ] 动态障碍物网格更新支持
 
 ## 阻塞
 - 等待 `TbWave` 表接入波次生成。
-- 寻路系统 Play Mode 验证待继续。
 
 ---
 
