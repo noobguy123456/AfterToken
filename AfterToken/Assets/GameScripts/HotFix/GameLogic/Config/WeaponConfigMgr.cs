@@ -15,17 +15,23 @@ namespace GameLogic
 
         private readonly Dictionary<int, WeaponConfig> _configs = new Dictionary<int, WeaponConfig>();
         private bool _loaded;
+        // 表未就绪的告警只打一次，防止轮询调用刷屏；加载成功后重置以便重新导表后再报
+        private bool _fallbackWarned;
 
         private WeaponConfigMgr() { }
 
         private void EnsureLoaded()
         {
             if (_loaded) return;
-            var table = ConfigSystem.Instance.Tables.TbWeapon;
+            var table = ConfigSystem.Instance?.Tables?.TbWeapon;
             if (table == null)
             {
                 // 表未加载完成时不得闩锁 _loaded，否则首次抢跑后永久返回空表
-                Log.Error("[WeaponConfigMgr] TbWeapon 未加载");
+                if (!_fallbackWarned)
+                {
+                    _fallbackWarned = true;
+                    Log.Error("[WeaponConfigMgr] TbWeapon 未加载");
+                }
                 return;
             }
             foreach (var pair in table.DataMap)
@@ -33,6 +39,7 @@ namespace GameLogic
                 _configs[pair.Key] = new WeaponConfig(pair.Value);
             }
             _loaded = true;
+            _fallbackWarned = false;
         }
 
         public WeaponConfig Get(int id)

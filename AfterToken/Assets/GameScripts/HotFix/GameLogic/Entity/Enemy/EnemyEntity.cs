@@ -48,9 +48,15 @@ namespace GameLogic
         public float PathRefreshInterval { get; private set; }
 
         /// <summary>
-        /// 仇恨范围（追击触发距离），由 TbEnemy 配置注入。
+        /// 检测距离（玩家进入此距离触发追击），由 TbEnemy 配置注入。
         /// </summary>
         public float ChaseRange { get; private set; }
+
+        /// <summary>
+        /// 追踪距离（追击状态下玩家超过此距离则丢失目标转散步），由 TbEnemy 配置注入。
+        /// 与 ChaseRange 形成滞回区间，避免边界抖动。
+        /// </summary>
+        public float PursuitRange { get; private set; }
 
         /// <summary>
         /// 对象池标识。死亡回收时用于归还到对应池中。
@@ -136,17 +142,30 @@ namespace GameLogic
             }
         }
 
-        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval, float pathRefreshInterval = 0.3f, float chaseRange = 5f)
+        public void Initialize(int configId, int maxHp, float moveSpeed, int attackDamage, float attackRange, float attackInterval, float pathRefreshInterval = 0.3f, float chaseRange = 5f, float pursuitRange = 10f)
         {
             _configId = configId;
             _maxHp = maxHp;
             _hp = maxHp;
             MoveSpeed = moveSpeed;
             AttackDamage = attackDamage;
-            AttackRange = attackRange;
             AttackInterval = attackInterval;
             PathRefreshInterval = pathRefreshInterval;
+
+            // 滞回区间校验：必须满足 attackRange <= chaseRange <= pursuitRange，
+            // 否则会出现 Chase↔Wander 或 Attack↔Idle 状态乒乓；不满足时 clamp 到合理值并告警一次。
+            float rawChaseRange = chaseRange;
+            float rawPursuitRange = pursuitRange;
+            chaseRange = Mathf.Max(chaseRange, attackRange);
+            pursuitRange = Mathf.Max(pursuitRange, chaseRange);
+            if (rawChaseRange != chaseRange || rawPursuitRange != pursuitRange)
+            {
+                Log.Warning($"[EnemyEntity] 敌人配置 {configId} 范围异常（attack={attackRange}, chase={rawChaseRange}, pursuit={rawPursuitRange}），已修正为 chase={chaseRange}, pursuit={pursuitRange}");
+            }
+
+            AttackRange = attackRange;
             ChaseRange = chaseRange;
+            PursuitRange = pursuitRange;
 
             Context = new EnemyStateContext();
             Context.IsDead = false;
@@ -184,6 +203,8 @@ namespace GameLogic
             {
                 "Idle" => "Enemy_Idle",
                 "Chase" => "Enemy_Run",
+                // Wander 复用移动动画，待 TbEnemyAnimation 接入后配置化
+                "Wander" => "Enemy_Run",
                 "Attack" => "Enemy_Attack",
                 "Dead" => "Enemy_Dead",
                 _ => null
@@ -225,6 +246,7 @@ namespace GameLogic
                 this,
                 new EnemyIdleState(),
                 new EnemyChaseState(),
+                new EnemyWanderState(),
                 new EnemyAttackState(),
                 new EnemyDeadState()
             );

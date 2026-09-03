@@ -433,7 +433,8 @@ namespace GameLogic.GM
                 enemyCfg?.AttackRange ?? 1.2f,
                 enemyCfg?.AttackInterval ?? 0.5f,
                 enemyCfg?.PathRefreshInterval ?? 0.3f,
-                enemyCfg?.ChaseRange ?? 5f);
+                enemyCfg?.ChaseRange ?? 5f,
+                enemyCfg?.PursuitRange ?? 10f);
 
             GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), enemyId);
             LogToConsole($"生成敌人 {enemyId} 在 {position}");

@@ -14,6 +14,8 @@ namespace GameLogic
 
         private readonly Dictionary<int, PortalConfig> _configs = new Dictionary<int, PortalConfig>();
         private bool _loaded;
+        // 表未就绪的告警只打一次，防止轮询调用刷屏；加载成功后重置以便重新导表后再报
+        private bool _fallbackWarned;
 
         private PortalConfigMgr() { }
 
@@ -24,7 +26,11 @@ namespace GameLogic
             if (table == null)
             {
                 // 表未加载完成时不得闩锁 _loaded，否则首次抢跑后永久返回空表
-                Log.Error("[PortalConfigMgr] TbPortal 未加载");
+                if (!_fallbackWarned)
+                {
+                    _fallbackWarned = true;
+                    Log.Error("[PortalConfigMgr] TbPortal 未加载");
+                }
                 return;
             }
 
@@ -33,6 +39,7 @@ namespace GameLogic
                 _configs[portal.Id] = new PortalConfig(portal);
             }
             _loaded = true;
+            _fallbackWarned = false;
         }
 
         public PortalConfig Get(int id)

@@ -14,17 +14,23 @@ namespace GameLogic
 
         private readonly Dictionary<int, LevelConfig> _configs = new Dictionary<int, LevelConfig>();
         private bool _loaded;
+        // 表未就绪的告警只打一次，防止轮询调用刷屏；加载成功后重置以便重新导表后再报
+        private bool _fallbackWarned;
 
         private LevelConfigMgr() { }
 
         private void EnsureLoaded()
         {
             if (_loaded) return;
-            var table = ConfigSystem.Instance.Tables.TbLevel;
+            var table = ConfigSystem.Instance?.Tables?.TbLevel;
             if (table == null)
             {
                 // 表未加载完成时不得闩锁 _loaded，否则首次抢跑后永久返回空表
-                Log.Error("[LevelConfigMgr] TbLevel 未加载");
+                if (!_fallbackWarned)
+                {
+                    _fallbackWarned = true;
+                    Log.Error("[LevelConfigMgr] TbLevel 未加载");
+                }
                 return;
             }
             foreach (var level in table.DataList)
@@ -32,6 +38,7 @@ namespace GameLogic
                 _configs[level.Id] = new LevelConfig(level);
             }
             _loaded = true;
+            _fallbackWarned = false;
         }
 
         public LevelConfig Get(int id)

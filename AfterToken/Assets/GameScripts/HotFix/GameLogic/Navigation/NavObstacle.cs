@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace GameLogic.Navigation
@@ -19,6 +20,8 @@ namespace GameLogic.Navigation
 
         private void OnEnable()
         {
+            // 注意：调用方需先定位（设置 position）再激活对象；
+            // 若"先 SetActive 再改 position"，本回调会以旧位置标记障碍
             UpdateNavRegion();
         }
 
@@ -39,20 +42,13 @@ namespace GameLogic.Navigation
 
             // OnDisable 阶段自身 Collider 仍在物理场景中，立即重扫会把格子误判为阻挡；
             // 延迟一帧，待销毁/停用的 Collider 从物理场景移除后再更新。
-            // 协程挂在 NavigationSystem 上，自身销毁后仍能执行。
-            try
-            {
-                nav.StartCoroutine(DelayedUpdateRegion(nav, bounds));
-            }
-            catch (System.Exception)
-            {
-                // 场景切换销毁时 NavigationSystem 可能已在回收，静默忽略
-            }
+            // 任务绑定 NavigationSystem 的销毁令牌：导航销毁/切场景时自动取消，不再执行。
+            DelayedUpdateRegionAsync(nav, bounds).Forget();
         }
 
-        private static System.Collections.IEnumerator DelayedUpdateRegion(NavigationSystem nav, Bounds bounds)
+        private static async UniTaskVoid DelayedUpdateRegionAsync(NavigationSystem nav, Bounds bounds)
         {
-            yield return null;
+            await UniTask.Yield(PlayerLoopTiming.Update, nav.GetCancellationTokenOnDestroy());
             if (nav != null)
             {
                 nav.UpdateRegion(bounds);

@@ -1,3 +1,5 @@
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using TEngine;
 using UnityEngine;
@@ -182,12 +184,12 @@ namespace GameLogic
             cam.targetTexture = _previewRt;
             cam.cullingMask = ~0;
 
-            LoadPreviewModel();
+            LoadPreviewModel(gameObject.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private async void LoadPreviewModel()
+        private async UniTaskVoid LoadPreviewModel(CancellationToken cancellationToken)
         {
-            var model = await GameModule.Resource.LoadGameObjectAsync("Player", _previewRig.transform, default);
+            var model = await GameModule.Resource.LoadGameObjectAsync("Player", _previewRig.transform, cancellationToken);
             if (model == null)
             {
                 Log.Warning("[SaveSlotSelectUI] Player prefab 加载失败，预览区留空");
@@ -213,7 +215,9 @@ namespace GameLogic
             }
             if (_previewRt != null)
             {
+                // 先释放 GPU 显存，再销毁托管对象，确保彻底释放
                 _previewRt.Release();
+                Object.Destroy(_previewRt);
                 _previewRt = null;
             }
         }

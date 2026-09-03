@@ -102,7 +102,8 @@ namespace GameLogic.Navigation
             {
                 var directResult = PathResult.Acquire();
                 directResult.Success = true;
-                directResult.Waypoints.Add(to);
+                // 终点已吸附到可行走格，末点用格中心而非原始 to（原始 to 可能落在障碍膨胀区内）
+                directResult.Waypoints.Add(_grid.GetWorldPosition(endX, endY));
                 return directResult;
             }
 

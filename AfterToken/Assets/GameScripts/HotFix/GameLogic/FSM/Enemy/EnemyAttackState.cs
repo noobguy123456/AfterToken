@@ -39,7 +39,15 @@ namespace GameLogic
 
             if (_elapsed >= AttackInterval)
             {
-                RequestState<EnemyIdleState>();
+                // 攻击结束时玩家仍在追踪距离内则继续追击（滞回区间不掉回待机），超出追踪距离才回待机
+                if (!Context.PlayerOutOfPursuit)
+                {
+                    RequestState<EnemyChaseState>();
+                }
+                else
+                {
+                    RequestState<EnemyIdleState>();
+                }
             }
         }
 

@@ -116,6 +116,10 @@ namespace GameLogic
         private static readonly Color ExtractionNormalColor = new Color(0.55f, 1f, 0.6f);
         private static readonly Color ExtractionPausedColor = new Color(1f, 0.45f, 0.35f);
 
+        // 倒计时显示缓存：避免每帧字符串插值分配与 TMP 置脏
+        private int _extractionShownTenths = -1; // 已显示的 0.1s 量化剩余时间，-1 表示未显示
+        private bool _extractionPauseShown;      // 当前是否正在显示暂停文本
+
         /// <summary>
         /// 撤离倒计时显示（屏幕顶部居中）：拉取 <see cref="ExtractionSystem"/> 状态，
         /// 圈内显示剩余秒数；圈内有敌人时暂停并红字提示。
@@ -133,18 +137,33 @@ namespace GameLogic
                 }
                 if (extraction.IsPaused)
                 {
-                    _textExtraction.text = "EXTRACTION PAUSED - ENEMY IN ZONE";
-                    _textExtraction.color = ExtractionPausedColor;
+                    // 暂停状态没变就不重赋值
+                    if (!_extractionPauseShown)
+                    {
+                        _extractionPauseShown = true;
+                        _extractionShownTenths = -1;
+                        _textExtraction.text = "EXTRACTION PAUSED - ENEMY IN ZONE";
+                        _textExtraction.color = ExtractionPausedColor;
+                    }
                 }
                 else
                 {
-                    _textExtraction.text = $"EXTRACTING  {extraction.RemainingSeconds:F1}s";
-                    _textExtraction.color = ExtractionNormalColor;
+                    // 剩余时间按 0.1s 量化，显示值没变就不重赋值
+                    int tenths = Mathf.RoundToInt(extraction.RemainingSeconds * 10f);
+                    if (_extractionPauseShown || tenths != _extractionShownTenths)
+                    {
+                        _extractionPauseShown = false;
+                        _extractionShownTenths = tenths;
+                        _textExtraction.text = $"EXTRACTING  {tenths / 10f:F1}s";
+                        _textExtraction.color = ExtractionNormalColor;
+                    }
                 }
             }
             else if (_textExtraction.gameObject.activeSelf)
             {
                 _textExtraction.gameObject.SetActive(false);
+                _extractionPauseShown = false;
+                _extractionShownTenths = -1;
             }
         }
 

@@ -14,48 +14,58 @@ namespace GameLogic.Navigation
         internal const float FallbackAgentRadius = 0.3f;
 
         private static bool _fallbackWarned;
+        // 代理半径解析结果缓存：避免每次访问都遍历 TbEnemy 整表；null 表示未解析/已失效
+        private static float? _cachedAgentRadius;
 
         /// <summary>
         /// 导航代理半径（米）：障碍按此半径膨胀，路径不再贴障碍边。
-        /// 运行时取 TbEnemy 全表最大 radius；表不可用/为空时兜底 <see cref="FallbackAgentRadius"/>。
+        /// 首次访问时取 TbEnemy 全表最大 radius 并缓存；表不可用/为空时兜底 <see cref="FallbackAgentRadius"/>。
+        /// 配置重载/网格重建后由 <see cref="InvalidateAgentRadiusCache"/> 失效缓存。
         /// </summary>
-        internal static float AgentRadius
-        {
-            get
-            {
-                float maxRadius = 0f;
-                bool found = false;
-                try
-                {
-                    var tbEnemy = ConfigSystem.Instance.Tables?.TbEnemy;
-                    if (tbEnemy != null)
-                    {
-                        foreach (var enemy in tbEnemy.DataList)
-                        {
-                            if (enemy.Radius > maxRadius)
-                            {
-                                maxRadius = enemy.Radius;
-                            }
-                            found = true;
-                        }
-                    }
-                }
-                catch (System.Exception)
-                {
-                    // 配置系统未就绪（如编辑器下直接触发），走兜底
-                }
+        internal static float AgentRadius => _cachedAgentRadius ??= ResolveAgentRadius();
 
-                if (!found || maxRadius <= 0f)
+        /// <summary>
+        /// 失效代理半径缓存，下一次访问重新解析 TbEnemy 表。
+        /// </summary>
+        internal static void InvalidateAgentRadiusCache()
+        {
+            _cachedAgentRadius = null;
+        }
+
+        private static float ResolveAgentRadius()
+        {
+            float maxRadius = 0f;
+            bool found = false;
+            try
+            {
+                var tbEnemy = ConfigSystem.Instance.Tables?.TbEnemy;
+                if (tbEnemy != null)
                 {
-                    if (!_fallbackWarned)
+                    foreach (var enemy in tbEnemy.DataList)
                     {
-                        _fallbackWarned = true;
-                        Log.Warning($"[ColliderGridBuilder] TbEnemy 表不可用或无有效 radius，导航代理半径兜底为 {FallbackAgentRadius}m");
+                        if (enemy.Radius > maxRadius)
+                        {
+                            maxRadius = enemy.Radius;
+                        }
+                        found = true;
                     }
-                    return FallbackAgentRadius;
                 }
-                return maxRadius;
             }
+            catch (System.Exception)
+            {
+                // 配置系统未就绪（如编辑器下直接触发），走兜底
+            }
+
+            if (!found || maxRadius <= 0f)
+            {
+                if (!_fallbackWarned)
+                {
+                    _fallbackWarned = true;
+                    Log.Warning($"[ColliderGridBuilder] TbEnemy 表不可用或无有效 radius，导航代理半径兜底为 {FallbackAgentRadius}m");
+                }
+                return FallbackAgentRadius;
+            }
+            return maxRadius;
         }
 
         private readonly float _cellSize;

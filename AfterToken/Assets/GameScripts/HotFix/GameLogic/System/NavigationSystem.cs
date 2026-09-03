@@ -77,7 +77,11 @@ namespace GameLogic.Navigation
             {
                 if (entry.IsValid(from, to))
                 {
-                    return entry.Result;
+                    // 命中续期，避免热点路径创建 2 秒后被 CleanupCache 误回收
+                    entry.Timestamp = Time.time;
+                    // 缓存自有的 PathResult 绝不直接返回给调用方（淘汰时会 Release 回池），
+                    // 命中时拷贝一份新实例返回，所有权归调用方
+                    return CloneResult(entry.Result);
                 }
                 _pathCache.Remove(cacheKey);
                 PathResult.Release(entry.Result);
@@ -86,9 +90,24 @@ namespace GameLogic.Navigation
             var result = _navigator.FindPath(from, to);
             if (result.Success)
             {
-                _pathCache[cacheKey] = new PathCacheEntry(from, to, result, Time.time);
+                // 缓存存独立副本：返回给调用方的实例由调用方持有，缓存淘汰只释放缓存自有实例，互不影响
+                _pathCache[cacheKey] = new PathCacheEntry(from, to, CloneResult(result), Time.time);
             }
             return result;
+        }
+
+        /// <summary>
+        /// 拷贝一份 PathResult（从对象池取新实例）。
+        /// 所有权协议：FindPath 返回的实例归调用方所有（当前调用方用完即弃，由 GC 回收）；
+        /// 缓存持有的副本归缓存所有，仅由缓存淘汰/清空时 Release 回池。两边永不共享同一实例。
+        /// </summary>
+        private static PathResult CloneResult(PathResult source)
+        {
+            var clone = PathResult.Acquire();
+            clone.Success = source.Success;
+            clone.Waypoints.AddRange(source.Waypoints);
+            clone.PathLength = source.PathLength;
+            return clone;
         }
 
         /// <summary>
@@ -113,6 +132,8 @@ namespace GameLogic.Navigation
         /// </summary>
         public void Rebuild()
         {
+            // 配置可能已重载（如 GM reload），重建前失效代理半径缓存，下一次访问重新解析 TbEnemy
+            ColliderGridBuilder.InvalidateAgentRadiusCache();
             _navigator?.Rebuild();
             ClearPathCache();
         }

@@ -18,6 +18,7 @@ namespace GameLogic
         {
             RegisterInterceptor(new EnemyDeathInterceptor());
             RegisterInterceptor(new EnemyAttackInterceptor());
+            RegisterInterceptor(new EnemyWanderInterceptor());
             RegisterInterceptor(new EnemyChaseInterceptor());
         }
 
@@ -66,6 +67,8 @@ namespace GameLogic
             {
                 context.WantsToChase = false;
                 context.WantsToAttack = false;
+                // 玩家不存在视为丢失目标，让 Chase 经 WanderInterceptor 落入散步
+                context.PlayerOutOfPursuit = true;
                 return;
             }
 
@@ -77,9 +80,13 @@ namespace GameLogic
             // 攻击/追击范围从敌人实体读取（由 TbEnemy 配置注入）
             float attackRange = owner.AttackRange > 0.01f ? owner.AttackRange : 1.2f;
             float chaseRange = owner.ChaseRange > 0.01f ? owner.ChaseRange : 5f;
+            float pursuitRange = owner.PursuitRange > 0.01f ? owner.PursuitRange : 10f;
 
             context.WantsToAttack = distance <= attackRange;
+            // WantsToChase 保持检测语义（d <= chaseRange）；Chase 中的丢失判定用 PlayerOutOfPursuit（d > pursuitRange），
+            // 两者构成滞回：chaseRange ~ pursuitRange 之间保持追击，避免边界抖动
             context.WantsToChase = !context.WantsToAttack && distance <= chaseRange;
+            context.PlayerOutOfPursuit = distance > pursuitRange;
         }
     }
 }

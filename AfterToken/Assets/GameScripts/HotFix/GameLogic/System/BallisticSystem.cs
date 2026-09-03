@@ -29,6 +29,9 @@ namespace GameLogic
         private readonly Queue<TracerVisual> _tracerPool = new Queue<TracerVisual>();
         private Transform _tracerRoot;
         private LineRenderer _rocketLaser;
+        // 火箭瞄准激光的枪口组件缓存：按玩家实体缓存，避免每帧 GetComponent
+        private PlayerEntity _mountViewOwner;
+        private WeaponMountView _cachedMountView;
         // 常态瞄准激光颜色（暗红半透明）
         private static readonly Color LaserIdleColor = new Color(1f, 0.25f, 0.25f, 0.35f);
         private Material _tracerMaterial;
@@ -371,9 +374,14 @@ namespace GameLogic
 
             // 激光常态展示（RPG 无锁定）：从武器枪口沿瞄准方向延伸的直线瞄准指示。
             _rocketLaser.enabled = true;
-            var mountView = player.GetComponent<WeaponMountView>();
-            Vector3 origin = mountView != null
-                ? mountView.GetMuzzleWorldPos()
+            // 玩家实体不变时复用缓存的枪口组件，仅玩家切换/重建时懒获取一次
+            if (_mountViewOwner != player)
+            {
+                _mountViewOwner = player;
+                _cachedMountView = player.GetComponent<WeaponMountView>();
+            }
+            Vector3 origin = _cachedMountView != null
+                ? _cachedMountView.GetMuzzleWorldPos()
                 : player.transform.position + Vector3.up * BALLISTIC_HEIGHT;
 
             Vector2 aimOffset = player.AimPosition - player.transform.position.ToXZ();

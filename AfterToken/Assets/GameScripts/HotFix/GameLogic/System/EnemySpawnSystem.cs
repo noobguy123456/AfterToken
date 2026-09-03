@@ -49,7 +49,8 @@ namespace GameLogic
             float attackInterval = enemyCfg?.AttackInterval ?? 0.5f;
             float pathRefreshInterval = enemyCfg?.PathRefreshInterval ?? 0.3f;
             float chaseRange = enemyCfg?.ChaseRange ?? 5f;
-            Log.Info($"[EnemySpawn] level={BattleContext.CurrentLevelId} count={_enemyCount} radius={_spawnRadius} chaseRange={chaseRange} center={spawnCenter}");
+            float pursuitRange = enemyCfg?.PursuitRange ?? 10f;
+            Log.Info($"[EnemySpawn] level={BattleContext.CurrentLevelId} count={_enemyCount} radius={_spawnRadius} chaseRange={chaseRange} pursuitRange={pursuitRange} center={spawnCenter}");
 
             GameObject prefab = await LoadEnemyPrefabAsync(prefabAddress, cancellationToken);
             string poolKey = !string.IsNullOrEmpty(prefabAddress) ? prefabAddress : "Enemy_Placeholder";
@@ -57,8 +58,9 @@ namespace GameLogic
             if (PoolSystem.Instance != null)
             {
                 PoolSystem.Instance.Preload(poolKey, prefab, transform, _enemyCount);
-                prefab.SetActive(false); // 隐藏作为模板的预制体本身
             }
+            // 隐藏作为模板的预制体本身：无对象池时同样隐藏，避免模板泄漏在场景里
+            prefab.SetActive(false);
 
             for (int i = 0; i < _enemyCount; i++)
             {
@@ -84,7 +86,7 @@ namespace GameLogic
 
                 var enemy = go.GetComponent<EnemyEntity>();
                 if (enemy == null) enemy = go.AddComponent<EnemyEntity>();
-                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval, pathRefreshInterval, chaseRange);
+                enemy.Initialize(_enemyConfigId, maxHp, moveSpeed, attackDamage, attackRange, attackInterval, pathRefreshInterval, chaseRange, pursuitRange);
                 enemy.PoolKey = poolKey;
 
                 GameEvent.Get<IEnemyEvent>().OnEnemySpawned(enemy.GetInstanceID(), _enemyConfigId);
@@ -118,7 +120,9 @@ namespace GameLogic
             {
                 return snapped;
             }
-            return lastPos;
+            // 最终兜底：落点在网格外吸附失败时回到出生点中心（玩家出生点必可走），
+            // 不能返回 lastPos，否则敌人可能生成在障碍里
+            return spawnCenter;
         }
 
         private async UniTask<GameObject> LoadEnemyPrefabAsync(string prefabAddress, CancellationToken cancellationToken)

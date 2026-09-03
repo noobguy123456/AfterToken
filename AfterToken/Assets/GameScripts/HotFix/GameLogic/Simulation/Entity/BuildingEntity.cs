@@ -24,7 +24,14 @@ namespace GameLogic
         private Color _upgradingColor = new Color(0.5f, 0.5f, 1f, 0.7f);
         private GameObject _labelInstance;
         private TextMeshProUGUI _labelText;
+        private string _labelName;   // 已显示的名称缓存（UpdateLabel 变化检测）
+        private int _labelLevel = -1; // 已显示的等级缓存
         private Camera _mainCamera;
+        // 染色走 MaterialPropertyBlock，避免 .material 写操作实例化材质、破坏合批
+        private MaterialPropertyBlock _mpb;
+        private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+        private BuildingState _lastState;
+        private int _lastProgressPercent = -1; // 已应用的 1% 量化进度缓存
 
         public int InstanceId => _instanceId;
         public int ConfigId => _configId;
@@ -138,7 +145,7 @@ namespace GameLogic
             _originalColors = new Color[_renderers.Length];
             for (int i = 0; i < _renderers.Length; i++)
             {
-                _originalColors[i] = _renderers[i] != null ? _renderers[i].material.color : Color.white;
+                _originalColors[i] = _renderers[i] != null ? _renderers[i].sharedMaterial.color : Color.white;
             }
         }
 
@@ -184,36 +191,51 @@ namespace GameLogic
 
             _labelText = textGo.AddComponent<TextMeshProUGUI>();
             _labelText.text = $"{buildingName} Lv{level}";
+            _labelName = buildingName;
+            _labelLevel = level;
             _labelText.fontSize = 0.3f;
             _labelText.alignment = TextAlignmentOptions.Center;
             _labelText.color = Color.white;
         }
 
         /// <summary>
-        /// 更新建筑标签文本。
+        /// 更新建筑标签文本。名称与等级均未变化时跳过，避免每帧字符串分配与 TMP 置脏。
         /// </summary>
         public void UpdateLabel(string buildingName, int level)
         {
-            if (_labelText != null)
-            {
-                _labelText.text = $"{buildingName} Lv{level}";
-            }
+            if (_labelText == null) return;
+            if (_labelLevel == level && _labelName == buildingName) return;
+            _labelName = buildingName;
+            _labelLevel = level;
+            _labelText.text = $"{buildingName} Lv{level}";
         }
 
         public void UpdateState(BuildingState state, float progress)
         {
             if (_renderers == null || _originalColors == null) return;
 
+            // 进度量化到 1%：状态推进按帧回调，量化值未变则跳过，避免每帧写材质属性
+            int progressPercent = Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f);
+            if (state == _lastState && progressPercent == _lastProgressPercent)
+            {
+                return;
+            }
+            _lastState = state;
+            _lastProgressPercent = progressPercent;
+
+            _mpb ??= new MaterialPropertyBlock();
             for (int i = 0; i < _renderers.Length; i++)
             {
                 if (_renderers[i] == null) continue;
                 Color original = _originalColors[i];
-                _renderers[i].material.color = state switch
+                Color color = state switch
                 {
                     BuildingState.Building => Color.Lerp(_buildingColor, original, progress),
                     BuildingState.Upgrading => Color.Lerp(_upgradingColor, original, progress),
                     _ => original,
                 };
+                _mpb.SetColor(ColorPropertyId, color);
+                _renderers[i].SetPropertyBlock(_mpb);
             }
         }
 
@@ -221,10 +243,12 @@ namespace GameLogic
         {
             if (_renderers == null || _originalColors == null) return;
 
+            _mpb ??= new MaterialPropertyBlock();
             for (int i = 0; i < _renderers.Length; i++)
             {
                 if (_renderers[i] == null) continue;
-                _renderers[i].material.color = selected ? Color.yellow : _originalColors[i];
+                _mpb.SetColor(ColorPropertyId, selected ? Color.yellow : _originalColors[i]);
+                _renderers[i].SetPropertyBlock(_mpb);
             }
         }
 

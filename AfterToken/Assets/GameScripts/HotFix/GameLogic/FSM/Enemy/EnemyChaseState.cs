@@ -66,11 +66,8 @@ namespace GameLogic
                 return;
             }
 
-            if (!Context.WantsToChase)
-            {
-                RequestState<EnemyIdleState>();
-                return;
-            }
+            // 丢失目标（玩家超出追踪距离）由 EnemyWanderInterceptor 统一切到 Wander；
+            // chaseRange ~ pursuitRange 滞回区间内 WantsToChase 为 false 时仍继续追击
 
             Vector2 ownerPos = Owner.transform.position.ToXZ();
             Vector2 targetPos = Context.PlayerPosition;
@@ -193,9 +190,14 @@ namespace GameLogic
             }
 
             _stuckCount++;
-            Log.Info($"[EnemyChase] 敌人 {Owner.GetInstanceID()} 疑似卡住（连续 {_stuckCount} 次），强制重寻路");
-            _pathRefreshTimer = 0f;
-            RefreshPath();
+            // 玩家长期不可达时每个敌人每 STUCK_CHECK_INTERVAL 触发一次，日志降级为 Debug 避免刷屏
+            Log.Debug($"[EnemyChase] 敌人 {Owner.GetInstanceID()} 疑似卡住（连续 {_stuckCount} 次），强制重寻路");
+            if (IsPathValid())
+            {
+                // 仅路径有效时强制重寻路；路径无效交给 Update 里的退避重试，避免绕过 _pathFailInterval 每 0.8s 跑一次 A*
+                _pathRefreshTimer = 0f;
+                RefreshPath();
+            }
             if (_stuckCount >= STUCK_RECOVER_THRESHOLD)
             {
                 _stuckCount = 0;
