@@ -4,3 +4,5 @@
 ,1001,Pest Control,Clear out the Training Dummies in Stage 101.,1,,gold:200|exp:50,1002
 ,1002,Bring Back Timber,"Bring back 3 Wood. It only counts once it's in the warehouse.",1,quest:1001:done,gold:150|item:10005:2,1003
 ,1003,Into the Factory,Deploy to Stage 101 and extract alive.,2,quest:1001:done,gold:300|exp:100,0
+,1004,Bot Cull,Assault Bots keep probing the perimeter. Take out 3 of them.,0,,gold:120|exp:40,0
+,1005,Stockpile Stone,"Deliver 5 Stone to the warehouse. It only counts once it's in storage.",0,,gold:100|item:10004:2,0

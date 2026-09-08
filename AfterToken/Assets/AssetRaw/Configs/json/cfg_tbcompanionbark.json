@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.1",
+    "weight": 3,
+    "cooldown": 0
+  },
+  {
+    "id": 2,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.2",
+    "weight": 3,
+    "cooldown": 0
+  },
+  {
+    "id": 3,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.3",
+    "weight": 2,
+    "cooldown": 0
+  },
+  {
+    "id": 4,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.4",
+    "weight": 1,
+    "cooldown": 0
+  },
+  {
+    "id": 10,
+    "trigger": "combat_start",
+    "textKey": "companion.bark.combat_start.1",
+    "weight": 3,
+    "cooldown": 4
+  },
+  {
+    "id": 11,
+    "trigger": "combat_start",
+    "textKey": "companion.bark.combat_start.2",
+    "weight": 2,
+    "cooldown": 4
+  },
+  {
+    "id": 20,
+    "trigger": "kill",
+    "textKey": "companion.bark.kill.1",
+    "weight": 3,
+    "cooldown": 2
+  },
+  {
+    "id": 21,
+    "trigger": "kill",
+    "textKey": "companion.bark.kill.2",
+    "weight": 2,
+    "cooldown": 2
+  },
+  {
+    "id": 30,
+    "trigger": "ping_move",
+    "textKey": "companion.bark.ping_move",
+    "weight": 1,
+    "cooldown": 2
+  },
+  {
+    "id": 31,
+    "trigger": "ping_loot",
+    "textKey": "companion.bark.ping_loot",
+    "weight": 1,
+    "cooldown": 2
+  },
+  {
+    "id": 32,
+    "trigger": "ping_attack",
+    "textKey": "companion.bark.ping_attack",
+    "weight": 1,
+    "cooldown": 2
+  },
+  {
+    "id": 40,
+    "trigger": "follow_on",
+    "textKey": "companion.bark.follow_on",
+    "weight": 1,
+    "cooldown": 2
+  },
+  {
+    "id": 41,
+    "trigger": "follow_off",
+    "textKey": "companion.bark.follow_off",
+    "weight": 1,
+    "cooldown": 2
+  },
+  {
+    "id": 50,
+    "trigger": "link_lost",
+    "textKey": "companion.bark.link_lost",
+    "weight": 1,
+    "cooldown": 0
+  },
+  {
+    "id": 51,
+    "trigger": "link_recovered",
+    "textKey": "companion.bark.link_recovered",
+    "weight": 1,
+    "cooldown": 0
+  },
+  {
+    "id": 52,
+    "trigger": "link_degraded",
+    "textKey": "companion.bark.link_degraded",
+    "weight": 1,
+    "cooldown": 8
+  },
+  {
+    "id": 60,
+    "trigger": "low_hp",
+    "textKey": "companion.bark.low_hp",
+    "weight": 1,
+    "cooldown": 6
+  },
+  {
+    "id": 61,
+    "trigger": "dead",
+    "textKey": "companion.bark.dead",
+    "weight": 1,
+    "cooldown": 0
+  }
+]

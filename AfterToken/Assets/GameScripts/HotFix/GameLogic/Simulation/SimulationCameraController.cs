@@ -29,9 +29,6 @@ namespace GameLogic
 
         private void Awake()
         {
-            // 诊断：确认该组件在哪个 GameObject/场景/时机被激活（启动早期激活会抢跑配置懒加载）。
-            Log.Info($"[SimCam] Awake on '{gameObject.name}' scene='{gameObject.scene.name}' frame={Time.frameCount} t={Time.realtimeSinceStartup:F2}s active={gameObject.activeInHierarchy}");
-
             _camera = GetComponent<Camera>();
             if (_camera == null)
             {
@@ -55,8 +52,6 @@ namespace GameLogic
             }
             // 旧版不设旋转，沿用场景里相机残留的俯仰角，与战斗视角不一致；显式钉住
             transform.rotation = Quaternion.Euler(_pitchAngle, 0f, 0f);
-
-            Log.Info($"[SimulationCameraController] 初始化完成，位置: {transform.position}, 高度: {_currentZoom}, 俯仰: {_pitchAngle}");
         }
 
         private void Update()
@@ -83,7 +78,6 @@ namespace GameLogic
                 if (_isFollowing)
                 {
                     _isFollowing = false;
-                    Log.Info("[SimulationCameraController] 键盘输入，取消跟随，改为手动控制");
                 }
 
                 Vector3 movement = new Vector3(horizontal, 0f, vertical) * _moveSpeed * Time.deltaTime;
@@ -113,7 +107,6 @@ namespace GameLogic
                 if (_isFollowing)
                 {
                     _isFollowing = false;
-                    Log.Info("[SimulationCameraController] 鼠标拖动，取消跟随，改为手动控制");
                 }
             }
             else if (Input.GetMouseButtonUp(1))
@@ -154,7 +147,6 @@ namespace GameLogic
         {
             _followTarget = target;
             _isFollowing = true;
-            Log.Info($"[SimulationCameraController] 设置跟随目标: {target?.name ?? "null"}");
         }
 
         /// <summary>

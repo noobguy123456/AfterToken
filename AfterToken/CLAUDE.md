@@ -32,6 +32,11 @@ TEngine 基于 HybridCLR + YooAsset + UniTask + Luban 构建。
 
 **知识源**：`.claude/skills/tengine-dev/references/`（AI 专用精炼文档，唯一权威来源）
 
+> **环境回退（2026-09-06 补充）**：`tengine-dev` 是 Claude Code skill。在 Kimi Code CLI 等无法调用该 skill 的环境中，改用以下替代流程，效力等同：
+> 1. 直接 Read `.claude/skills/tengine-dev/references/` 下的对应主题文档；
+> 2. 用 Grep/Read 核对实际代码签名（references 与代码冲突时以代码为准，记录到 `.claude/memory/`）；
+> 3. 大范围摸底可派 explore 子代理并行检索（见「子代理使用约定」）。
+
 #### 调用方式
 
 ```
@@ -81,21 +86,45 @@ TEngine 基于 HybridCLR + YooAsset + UniTask + Luban 构建。
 
 ---
 
-## 🎮 MCP 操作边界
+## 🎮 MCP 操作边界（2026-09-06 修订）
 
-AI 通过 MCP 工具可以修改代码、资源、预制体、场景对象和编辑器设置，但**不应强行执行需要实际游戏运行状态的操作**，包括但不限于：
+AI 通过 MCP 工具可以修改代码、资源、预制体、场景对象和编辑器设置，并**允许驱动编辑器做自动化验证**。当前生效的边界：
 
-- 进入 / 退出 Play Mode 进行手玩验证
-- 模拟玩家输入（WASD、鼠标、按键）以触发移动/开火/闪避/换弹
-- 通过代码或工具直接触发死亡、击杀、掉落等战斗结果
-- 在 Play Mode 中切换场景、加载关卡、运行流程验证
-- 任何需要读取 Game View 实时反馈来判断玩法正确性的操作
+### 允许
 
-**处理方式**：
+- 进 / 退 Play Mode 做**自动化验证**：读 Console（反射 `UnityEditor.LogEntries`/`LogEntry`）、反射读写运行时状态、切换流程（`GameApp.ChangeProcedure`）、执行 GM 命令、截图核对画面
+- 编辑器模式下用代码创建/修改 prefab、材质、场景对象、编辑器设置（AssetDatabase API 优先，不手编 YAML）
+- 资产移动用 `AssetDatabase.MoveAsset`（保持 GUID 不丢引用）
 
-1. 若任务涉及上述内容，AI 应编写代码、生成验证清单、更新文档，并**明确告知用户由其在编辑器或真机中完成实际验证**。
-2. 可以提供 `expected behavior` 和 `checklist`，方便用户按步骤确认。
-3. 不因为 MCP 无法完成而反复尝试绕过限制（如多次调用 Play Mode、反射注入输入事件等）。
+### 禁止
+
+- **打开 / 关闭 Unity 编辑器本体**（用户明确要求，2026-08）
+- 模拟玩家实时输入（WASD/鼠标/按键注入）来替代手玩——手感、实时判定类验证仍由用户在编辑器或真机完成
+- 验证中污染用户存档后不还原（动了货币/仓库/任务等数据，测完必须恢复并 Flush）
+- 不因为一次失败反复重试同一 MCP 调用绕过限制
+
+### 验证责任划分
+
+AI 完成：编译零错误、Console 零异常、状态/数据断言、截图核对。
+用户完成：手感、节奏、视觉细节的真人确认。
+
+---
+
+## 🤖 子代理使用约定（2026-09-06 新增）
+
+Kimi Code CLI 的 coder/explore 子代理是主代理的上下文管理手段，**允许并鼓励**在以下场景使用：
+
+- **并行摸底**：多个独立模块的现状勘察（explore 并行，prompt 里写清已知文件路径和要回答的问题）
+- **大实施任务整包委托**：涉及"改代码 + MCP 建/改资产 + Play 实测"的任务，写清背景、规则、文件清单、验证步骤后委托 coder 执行，主代理拿回结论
+- **大体量输出隔离**：prefab dump、Console 长日志等会冲爆主上下文的中间产物
+
+不允许：
+
+- 一两步就能完成的琐事（已知路径的 Read、小改动）——委托的交接成本高于直接做
+- 委托"理解"本身——关键文件路径、根因判断必须主代理先拿到再写进 brief
+- 多个子代理同时驱动同一个 Unity 编辑器 MCP（编译/Play 状态会互相踩踏）——需要 MCP 的任务串行执行
+
+Claude Code 侧的既有规定不变：`wiki-query-agent` 仅限 wiki 同步任务，日常 TEngine 开发走 `tengine-dev` skill。
 
 ---
 

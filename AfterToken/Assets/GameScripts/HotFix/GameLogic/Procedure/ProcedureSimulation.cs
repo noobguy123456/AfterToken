@@ -25,22 +25,17 @@ namespace GameLogic
                 PlayerAttrStore.Clear();
                 PortalPlayerState.Clear();
 
-                Log.Info("[ProcedureSimulation] step1 InitializeSceneContent");
                 InitializeSceneContent();
-                Log.Info("[ProcedureSimulation] step2 InitializeSimulationSystems");
                 InitializeSimulationSystems();
-                Log.Info("[ProcedureSimulation] step3 CursorManager");
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
                 CursorManager.Instance?.ForceShowCursor();
-                Log.Info("[ProcedureSimulation] step4 SpawnPlayer begin");
                 await SpawnPlayerAsync(ct);
-                Log.Info("[ProcedureSimulation] step5 ShowUIAsyncAwait begin");
                 await GameModule.UI.ShowUIAsyncAwait<SimulationMainUI>();
                 // 任务追踪 HUD（左侧常驻，纯展示）
                 await GameModule.UI.ShowUIAsyncAwait<QuestTrackerUI>();
-                Log.Info("[ProcedureSimulation] step6 ShowUI done");
+                // 队友字幕条（底部常驻，有台词才显示）
+                await GameModule.UI.ShowUIAsyncAwait<CompanionSubtitleUI>();
                 _simulationSystem?.Enter();
-                Log.Info("[ProcedureSimulation] step7 all done");
             });
         }
 
@@ -61,7 +56,6 @@ namespace GameLogic
             if (CameraSystem.Instance != null)
             {
                 Object.Destroy(CameraSystem.Instance);
-                Log.Info("[ProcedureSimulation] 销毁战斗场景 CameraSystem");
             }
 
             // 检查并设置 Main Camera
@@ -92,7 +86,6 @@ namespace GameLogic
             if (cam3d != null)
             {
                 Object.Destroy(cam3d);
-                Log.Info("[ProcedureSimulation] 移除 CameraSystem3D");
             }
 
             // 添加经营相机控制器（跟随玩家 / 滚轮缩放）
@@ -100,7 +93,6 @@ namespace GameLogic
             if (cameraController == null)
             {
                 cameraController = mainCamera.gameObject.AddComponent<SimulationCameraController>();
-                Log.Info("[ProcedureSimulation] SimulationCameraController 已添加");
             }
             _cameraController = cameraController;
 
@@ -177,7 +169,6 @@ namespace GameLogic
 
             // 相机跟随玩家（WASD 驱动玩家，相机不再手动平移）
             _cameraController?.SetFollowTarget(_player.transform);
-            Log.Info($"[ProcedureSimulation] 玩家已生成，位置: {_player.transform.position}");
         }
 
         private void InitializeSimulationSystems()
@@ -188,7 +179,6 @@ namespace GameLogic
 
             // 添加 SimulationInputSystem，处理 Esc 键（打开/关闭设置菜单）与 E 键（传送门交互）
             var inputSystem = _simulationRoot.AddComponent<SimulationInputSystem>();
-            Log.Info("[ProcedureSimulation] SimulationInputSystem 已添加，处理 Esc/E 键");
 
             // 基地内传送门支持（选关门）：扫描场景中 PortalEntity 并处理交互
             _simulationRoot.AddComponent<Portal.PortalSystem>();
@@ -198,6 +188,17 @@ namespace GameLogic
 
             // 对话系统：消费 NPC 交谈，解释执行 TbDialogue/TbDialogueNode 并驱动 DialogueUI
             _simulationRoot.AddComponent<DialogueSystem>();
+
+            // 任务板系统：场景 QuestBoardEntity 的交互提示与 QuestBoardUI 入口
+            _simulationRoot.AddComponent<QuestBoardSystem>();
+
+            // AI 队友系统：基地内跟随玩家（无导航网格，直走跟随；无战斗与标点）
+            _simulationRoot.AddComponent<CompanionSystem>();
+
+            // GM 调试控制器（基地可用，与战斗场景同等挂载）
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _simulationRoot.AddComponent<GameLogic.GM.GMController>();
+#endif
 
             GrantTestMaterials();
         }

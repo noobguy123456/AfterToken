@@ -19,8 +19,10 @@ namespace GameLogic
         private float _pathRefreshTimer;
         private const float WAYPOINT_REACHED_THRESHOLD = 0.15f;
         private const float DIRECT_CHASE_DISTANCE = 1.5f;
-        private const float SEPARATION_RADIUS = 0.6f;
-        private const float SEPARATION_WEIGHT = 0.6f;
+        // 分离半径需明显大于接触距离（两胶囊 0.3+0.3=0.6m 才互相推开），
+        // 让转向在接触发生前就生效，避免挤作一团后物理位置修正把敌人瞬间弹开（追击时的抽搐感）
+        private const float SEPARATION_RADIUS = 0.9f;
+        private const float SEPARATION_WEIGHT = 0.8f;
         private const float SEPARATION_PROBE_DISTANCE = 0.3f; // 分离方向预判步长（≈敌人半径）
         private const float CHASE_RANGE_FALLBACK = 5f; // 未配置仇恨范围时的回退值
         private const float MAX_INTERVAL_SCALE = 3f; // 远距离最大倍率
@@ -118,6 +120,12 @@ namespace GameLogic
             }
 
             // 跟随路径点
+            // 上一帧走完最后一个路径点后索引已越界（直接冲刺分支不回退索引），下次刷新前直接朝玩家移动
+            if (_currentWaypointIndex >= _currentPath.Waypoints.Count)
+            {
+                MoveTowards(toTarget.normalized, elapse);
+                return;
+            }
             Vector2 waypoint = _currentPath.Waypoints[_currentWaypointIndex];
             Vector2 toWaypoint = waypoint - ownerPos;
             if (toWaypoint.magnitude <= WAYPOINT_REACHED_THRESHOLD)
@@ -152,6 +160,37 @@ namespace GameLogic
 
             _currentPath = nav.FindPath(Owner.transform.position.ToXZ(), Context.PlayerPosition);
             _currentWaypointIndex = 0;
+            SkipPassedWaypoints();
+        }
+
+        /// <summary>
+        /// 跳过已越过/可直达的前置路径点。
+        /// 路径起点会吸附到导航格中心（缓存命中还有 0.5m 量化误差），waypoint[0] 可能落在敌人身后；
+        /// 不跳过的话每次刷新路径敌人都会先回头走向身后的格中心，表现为追击时的周期性往回抖。
+        /// 判定从敌人实际位置对下下个路径点做带宽度视线检查，与 A* 平滑的 SphereCast 语义一致，避免穿角。
+        /// </summary>
+        private void SkipPassedWaypoints()
+        {
+            if (!IsPathValid()) return;
+            var waypoints = _currentPath.Waypoints;
+            Vector2 ownerPos = Owner.transform.position.ToXZ();
+            while (_currentWaypointIndex < waypoints.Count - 1 &&
+                   HasWideLineOfSight(ownerPos, waypoints[_currentWaypointIndex + 1]))
+            {
+                _currentWaypointIndex++;
+            }
+        }
+
+        /// <summary>
+        /// 带宽度视线检查：与 AStarNavigationSystem 路径平滑同一半径（AgentRadius × 0.9）。
+        /// </summary>
+        private static bool HasWideLineOfSight(Vector2 from, Vector2 to)
+        {
+            Vector2 direction = to - from;
+            float distance = direction.magnitude;
+            if (distance < 0.001f) return true;
+            Vector3 origin = from.ToWorld(0.5f);
+            return !Physics.SphereCast(origin, ColliderGridBuilder.AgentRadius * 0.9f, direction.normalized.ToWorld(), out _, distance, ObstacleMask, QueryTriggerInteraction.Ignore);
         }
 
         /// <summary>

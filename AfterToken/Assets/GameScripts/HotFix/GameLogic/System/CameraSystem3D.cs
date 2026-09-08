@@ -33,6 +33,12 @@ namespace GameLogic
 
         private Camera _mainCamera;
 
+        // 抖动（订阅 ICameraEvent.OnCameraShake；3D 战斗由本系统消费，2D CameraSystem 不在场）
+        private readonly GameEventMgr _eventMgr = new GameEventMgr();
+        private float _shakeMagnitude;
+        private float _shakeDuration;
+        private const float SHAKE_DAMPING = 2.5f;
+
         // 狙击镜（Duckov 式放大镜）：镜相机与主相机同位、只旋转对准瞄准点，
         // 渲染到 RenderTexture，由 SniperScopeUI 显示为跟随鼠标的圆形镜窗
         private Camera _scopeCamera;
@@ -54,6 +60,8 @@ namespace GameLogic
             }
 
             ApplyConfig();
+
+            _eventMgr.AddEvent<float, float>(ICameraEvent_Event.OnCameraShake, OnCameraShake);
         }
 
         /// <summary>
@@ -75,8 +83,39 @@ namespace GameLogic
 
         private void OnDestroy()
         {
+            _eventMgr.Clear();
             Instance = null;
             ReleaseScopeRenderTexture();
+        }
+
+        private void OnCameraShake(float magnitude, float duration)
+        {
+            _shakeMagnitude = Mathf.Max(_shakeMagnitude, magnitude);
+            _shakeDuration = duration;
+        }
+
+        /// <summary>
+        /// 在跟随定位之后叠加随机抖动偏移（俯视角下只在水平面抖动，不晃俯仰）。
+        /// </summary>
+        private Vector3 GetShakeOffset()
+        {
+            if (_shakeDuration > 0f)
+            {
+                _shakeDuration -= Time.unscaledDeltaTime;
+                _shakeMagnitude = Mathf.Lerp(_shakeMagnitude, 0f, SHAKE_DAMPING * Time.unscaledDeltaTime);
+                if (_shakeDuration <= 0f)
+                {
+                    _shakeMagnitude = 0f;
+                }
+            }
+            if (_shakeMagnitude <= 0.001f)
+            {
+                return Vector3.zero;
+            }
+            return new Vector3(
+                (Mathf.PerlinNoise(Time.unscaledTime * 20f, 0f) - 0.5f) * 2f,
+                0f,
+                (Mathf.PerlinNoise(0f, Time.unscaledTime * 20f) - 0.5f) * 2f) * _shakeMagnitude;
         }
 
         private void LateUpdate()
@@ -120,6 +159,8 @@ namespace GameLogic
             transform.rotation = Quaternion.Euler(_pitchAngle, _yawAngle, 0f);
 
             ApplyScreenAnchor(targetPos);
+
+            transform.position += GetShakeOffset();
         }
 
         /// <summary>
@@ -152,7 +193,6 @@ namespace GameLogic
         public void SetFollowTarget(Transform target)
         {
             _followTarget = target;
-            Log.Info($"[CameraSystem3D] 设置跟随目标: {target?.name ?? "null"}");
         }
 
         /// <summary>

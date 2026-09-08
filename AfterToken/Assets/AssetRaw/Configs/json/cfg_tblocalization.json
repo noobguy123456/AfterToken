@@ -16,9 +16,57 @@
     "ko": ""
   },
   {
+    "key": "ui.settings.tab.audio",
+    "en": "Audio",
+    "zh_cn": "音频",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.tab.graphics",
+    "en": "Graphics",
+    "zh_cn": "画质",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
     "key": "ui.settings.tab.input",
     "en": "Input",
     "zh_cn": "输入",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.master_volume",
+    "en": "Master Volume",
+    "zh_cn": "主音量",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.music_volume",
+    "en": "Music Volume",
+    "zh_cn": "音乐音量",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.sound_volume",
+    "en": "SFX Volume",
+    "zh_cn": "音效音量",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.quality",
+    "en": "Quality",
+    "zh_cn": "画质档位",
     "zh_tw": "",
     "ja": "",
     "ko": ""
@@ -227,6 +275,246 @@
     "key": "ui.saveslot.diamond",
     "en": "Diamond",
     "zh_cn": "钻石",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.questboard.title",
+    "en": "Quest Board",
+    "zh_cn": "任务板",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.questboard.prompt",
+    "en": "Press E to View Jobs",
+    "zh_cn": "按 E 查看委托",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.questboard.empty",
+    "en": "No jobs available right now.",
+    "zh_cn": "暂无可用委托",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.title",
+    "en": "EXTRACTION COMPLETE",
+    "zh_cn": "撤离成功",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.level",
+    "en": "Level {0}",
+    "zh_cn": "关卡 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.rewards",
+    "en": "Rewards",
+    "zh_cn": "撤离奖励",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.rewards.empty",
+    "en": "No bonus rewards",
+    "zh_cn": "无额外奖励",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.loot",
+    "en": "Loot Recovered",
+    "zh_cn": "回收物资",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.loot.empty",
+    "en": "No loot recovered",
+    "zh_cn": "没有带回任何物资",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.loot.value",
+    "en": "Estimated Value: {0}G",
+    "zh_cn": "估值合计：{0}G",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settlement.confirm",
+    "en": "Return to Base",
+    "zh_cn": "返回基地",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.rook.name",
+    "en": "Rook",
+    "zh_cn": "Rook",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.1",
+    "en": "Sector's quiet. Too quiet.",
+    "zh_cn": "这片区域真安静。安静过头了。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.2",
+    "en": "Perimeter looks clear.",
+    "zh_cn": "周边看起来安全。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.3",
+    "en": "Remember to check your ammo.",
+    "zh_cn": "记得检查弹药。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.4",
+    "en": "Another day after the Token fell.",
+    "zh_cn": "通证坠落后的又一天。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_start.1",
+    "en": "Contact! Covering you.",
+    "zh_cn": "遭遇敌人！掩护你。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_start.2",
+    "en": "Hostiles! Watch your flank.",
+    "zh_cn": "有敌人！注意侧翼。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.kill.1",
+    "en": "Target down.",
+    "zh_cn": "目标倒下。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.kill.2",
+    "en": "One less problem.",
+    "zh_cn": "少一个麻烦。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.ping_move",
+    "en": "Moving to your mark.",
+    "zh_cn": "正在前往标记点。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.ping_loot",
+    "en": "Going for the loot.",
+    "zh_cn": "去拿战利品。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.ping_attack",
+    "en": "Engaging marked target.",
+    "zh_cn": "正在攻击标记目标。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.follow_on",
+    "en": "On your six.",
+    "zh_cn": "我在你身后。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.follow_off",
+    "en": "Holding position.",
+    "zh_cn": "原地驻守。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.link_lost",
+    "en": "...Signal lost. Switching to local protocols.",
+    "zh_cn": "……信号丢失。切换到本地协议。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.link_recovered",
+    "en": "Signal restored. Back on the grid.",
+    "zh_cn": "信号恢复。重新上线。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.link_degraded",
+    "en": "You're breaking up—interference on this channel.",
+    "zh_cn": "你的信号断断续续——频道有干扰。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.low_hp",
+    "en": "I'm hit bad. Falling back.",
+    "zh_cn": "我重伤。正在撤退。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.dead",
+    "en": "Rook is down!",
+    "zh_cn": "Rook 倒下了！",
     "zh_tw": "",
     "ja": "",
     "ko": ""

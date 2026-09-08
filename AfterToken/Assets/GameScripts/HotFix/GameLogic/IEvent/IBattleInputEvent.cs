@@ -23,5 +23,6 @@ namespace GameLogic
         void OnDodgePressed();
         void OnCycleCrosshairStyle();
         void OnInteractPressed();
+        void OnPingPressed();
     }
 }

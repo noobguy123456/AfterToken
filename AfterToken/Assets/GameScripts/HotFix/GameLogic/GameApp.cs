@@ -44,6 +44,10 @@ namespace GameLogic
 
             LocalizationSystem.Instance.Initialize();
 
+            // 从存档读回音量/画质设置并应用（SaveSystem 首次访问时懒加载，此处已可用）
+            VolumeSetting.ApplyAll();
+            QualitySetting.Apply();
+
             StartGameLogic();
 
 #if UNITY_EDITOR

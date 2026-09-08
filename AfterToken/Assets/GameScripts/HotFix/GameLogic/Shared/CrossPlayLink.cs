@@ -12,30 +12,25 @@ namespace GameLogic
         /// <summary>
         /// 战斗成功撤离（RETURN_BASE 传送门）时调用：
         /// 按 TbLevel 配置发放金币/经验，并标记该关卡已通关（驱动关卡链解锁）。
+        /// 返回奖励发放结果（供撤离结算画面展示）；找不到关卡配置时返回空结果。
         /// </summary>
-        public static void OnBattleExtracted(int levelId)
+        public static RewardResult OnBattleExtracted(int levelId)
         {
+            string source = $"level:{levelId}:extract";
             var cfg = LevelConfigMgr.Instance.Get(levelId);
             if (cfg == null)
             {
                 Log.Warning($"[CrossPlayLink] 找不到关卡配置 id={levelId}，跳过撤离奖励");
-                return;
+                return new RewardResult { Source = source };
             }
 
-            if (cfg.rewardGold > 0)
-            {
-                CurrencySystem.AddGold(cfg.rewardGold);
-            }
-            if (cfg.rewardExp > 0)
-            {
-                PlayerProfileSystem.AddExp(cfg.rewardExp);
-            }
+            // meta 奖励统一走 RewardSystem 发放（局内战利品仍走 RunInventory → 入库链路）
+            var result = RewardSystem.Grant(new RewardData().AddGold(cfg.rewardGold).AddExp(cfg.rewardExp), source);
             PlayerProfileSystem.MarkLevelCompleted(levelId);
-
-            Log.Info($"[CrossPlayLink] 关卡 {levelId} 撤离结算：+{cfg.rewardGold}G +{cfg.rewardExp}EXP");
 
             // 任务系统 extract 目标推进（与奖励发放同一时机）
             QuestSystem.OnBattleExtracted(levelId);
+            return result;
         }
     }
 }

@@ -64,9 +64,13 @@ namespace GameLogic
 
             // 先扣除物品，再发放奖励，避免奖励发放失败后物品未扣除
             InventorySystem.TryConsumeItems(cfg.RequiredItems);
-            CurrencySystem.AddGold(cfg.RewardGold);
-            InventorySystem.AddItems(cfg.RewardItems);
-            PlayerProfileSystem.AddExp(cfg.RewardExp);
+            // meta 奖励统一走 RewardSystem 发放
+            var reward = new RewardData().AddGold(cfg.RewardGold).AddExp(cfg.RewardExp);
+            foreach (var item in cfg.RewardItems)
+            {
+                reward.AddItem(item.Id, item.Num);
+            }
+            RewardSystem.Grant(reward, $"order:{order.ConfigId}");
 
             _orders.Remove(order);
             GameEvent.Get<ISimulationEvent>().OnOrderCompleted(order.ConfigId, order.InstanceId);

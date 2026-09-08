@@ -28,9 +28,6 @@ namespace GameLogic
             _levelButtonTemplate = FindChildComponent<Button>("m_rect_LevelList/m_btn_LevelTemplate");
             _backButton = FindChildComponent<Button>("m_btn_Back");
             _warehouseButton = FindChildComponent<Button>("m_btn_Warehouse");
-
-            // 调试日志：检查组件是否正确获取
-            Log.Info($"[LobbyUI] ScriptGenerator: _titleText={_titleText != null}, _levelListRoot={_levelListRoot != null}, _levelButtonTemplate={_levelButtonTemplate != null}, _backButton={_backButton != null}, _warehouseButton={_warehouseButton != null}");
         }
         #endregion
 

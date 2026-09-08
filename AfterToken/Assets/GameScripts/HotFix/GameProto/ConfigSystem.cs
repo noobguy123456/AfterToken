@@ -69,6 +69,8 @@ namespace GameLogic
             "cfg_tbquest",
             "cfg_tbquestobjective",
             "cfg_tblocalization",
+            "cfg_tbcompanion",
+            "cfg_tbcompanionbark",
         };
 
         /// <summary>

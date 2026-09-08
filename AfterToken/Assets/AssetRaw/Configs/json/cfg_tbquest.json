@@ -25,5 +25,23 @@
     "prereq": "quest:1001:done",
     "rewards": "gold:300|exp:100",
     "nextQuest": 0
+  },
+  {
+    "id": 1004,
+    "name": "Bot Cull",
+    "desc": "Assault Bots keep probing the perimeter. Take out 3 of them.",
+    "giverNpc": 0,
+    "prereq": "",
+    "rewards": "gold:120|exp:40",
+    "nextQuest": 0
+  },
+  {
+    "id": 1005,
+    "name": "Stockpile Stone",
+    "desc": "Deliver 5 Stone to the warehouse. It only counts once it's in storage.",
+    "giverNpc": 0,
+    "prereq": "",
+    "rewards": "gold:100|item:10004:2",
+    "nextQuest": 0
   }
 ]

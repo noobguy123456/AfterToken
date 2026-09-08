@@ -129,6 +129,14 @@ public partial class Tables
     /// 本地化词条表
     /// </summary>
     public cfg.TbLocalization TbLocalization {get; }
+    /// <summary>
+    /// 队友人设卡
+    /// </summary>
+    public cfg.TbCompanion TbCompanion {get; }
+    /// <summary>
+    /// 队友本地台词表
+    /// </summary>
+    public cfg.TbCompanionBark TbCompanionBark {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -162,6 +170,8 @@ public partial class Tables
         TbQuest = new cfg.TbQuest(loader("cfg_tbquest"));
         TbQuestObjective = new cfg.TbQuestObjective(loader("cfg_tbquestobjective"));
         TbLocalization = new cfg.TbLocalization(loader("cfg_tblocalization"));
+        TbCompanion = new cfg.TbCompanion(loader("cfg_tbcompanion"));
+        TbCompanionBark = new cfg.TbCompanionBark(loader("cfg_tbcompanionbark"));
         ResolveRef();
     }
     
@@ -196,6 +206,8 @@ public partial class Tables
         TbQuest.ResolveRef(this);
         TbQuestObjective.ResolveRef(this);
         TbLocalization.ResolveRef(this);
+        TbCompanion.ResolveRef(this);
+        TbCompanionBark.ResolveRef(this);
     }
 }
 

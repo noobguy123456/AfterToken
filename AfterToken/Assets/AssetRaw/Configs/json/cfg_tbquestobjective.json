@@ -22,5 +22,21 @@
     "targetId": "101",
     "count": 1,
     "desc": "Extract from Stage 101"
+  },
+  {
+    "id": 10041,
+    "questId": 1004,
+    "type": "kill",
+    "targetId": "9002",
+    "count": 3,
+    "desc": "Eliminate 3 Assault Bots"
+  },
+  {
+    "id": 10051,
+    "questId": 1005,
+    "type": "collect",
+    "targetId": "10005",
+    "count": 5,
+    "desc": "Have 5 Stone in the warehouse"
   }
 ]

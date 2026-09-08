@@ -47,6 +47,7 @@ namespace GameLogic
                 await GameModule.UI.ShowUIAsyncAwait<DamageNumberUI>();
                 await GameModule.UI.ShowUIAsyncAwait<HitFeedbackUI>();
                 await GameModule.UI.ShowUIAsyncAwait<MinimapUI>();
+                await GameModule.UI.ShowUIAsyncAwait<CompanionSubtitleUI>();
             });
         }
 
@@ -72,12 +73,15 @@ namespace GameLogic
             _battleRoot.AddComponent<DropSystem>();
             _battleRoot.AddComponent<HitFeedbackSystem>();
             _battleRoot.AddComponent<PoolSystem>();
+            _battleRoot.AddComponent<EffectSystem>();
             _battleRoot.AddComponent<NavigationSystem>();
             _battleRoot.AddComponent<PortalSystem>();
             _battleRoot.AddComponent<LootContainerSystem>();
             _battleRoot.AddComponent<NoteSystem>();
             _battleRoot.AddComponent<MinimapSystem>();
             _battleRoot.AddComponent<ExtractionSystem>();
+            _battleRoot.AddComponent<CompanionSystem>();
+            _battleRoot.AddComponent<PingSystem>();
             _battleRoot.AddComponent<PlayerDeathHandler>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -122,6 +126,9 @@ namespace GameLogic
             }
 
             InitBattleBoundary();
+
+            // 特效预热（异步加载 + 分帧实例化一半池容量）
+            EffectSystem.Preload();
         }
 
         /// <summary>
@@ -179,6 +186,7 @@ namespace GameLogic
         private void CleanupBattleSystems()
         {
             PoolSystem.Instance?.ClearAll();
+            EffectSystem.ClearAll();
             BattleBoundary.Clear();
 
             if (_cameraSystem3D != null)

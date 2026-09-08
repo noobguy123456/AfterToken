@@ -46,6 +46,11 @@ namespace GameLogic
         private GameObject _panelGo;
 
         private readonly List<Image> _enemyDotPool = new();
+        private Image _companionDot;
+        private Image _pingMarker;
+
+        private static readonly Color CompanionDotColor = new Color(0.3f, 1f, 0.4f);
+        private static readonly Color PingMarkerColor = new Color(1f, 0.6f, 0.1f);
 
         #region 脚本工具生成的代码
 
@@ -122,6 +127,75 @@ namespace GameLogic
             }
 
             UpdateEnemyDots(minimap, window);
+            UpdateCompanionDot(minimap, window);
+            UpdatePingMarker(minimap, window);
+        }
+
+        /// <summary>
+        /// 队友绿点（复用敌人圆点模板染色）。
+        /// </summary>
+        private void UpdateCompanionDot(MinimapSystem minimap, Rect window)
+        {
+            var companion = CompanionSystem.Instance != null ? CompanionSystem.Instance.Companion : null;
+            if (companion == null || !companion.gameObject.activeInHierarchy || companion.IsDead)
+            {
+                if (_companionDot != null && _companionDot.gameObject.activeSelf)
+                {
+                    _companionDot.gameObject.SetActive(false);
+                }
+                return;
+            }
+
+            if (!TryMapUvToPanel(minimap.WorldToMapUv(companion.transform.position), window, _innerSize, out Vector2 pos))
+            {
+                if (_companionDot != null && _companionDot.gameObject.activeSelf)
+                {
+                    _companionDot.gameObject.SetActive(false);
+                }
+                return;
+            }
+
+            if (_companionDot == null)
+            {
+                _companionDot = Object.Instantiate(_enemyDotTemplate, _iconRoot);
+                _companionDot.name = "m_img_CompanionDot";
+                _companionDot.color = CompanionDotColor;
+            }
+            if (!_companionDot.gameObject.activeSelf)
+            {
+                _companionDot.gameObject.SetActive(true);
+            }
+            ((RectTransform)_companionDot.transform).anchoredPosition = pos;
+        }
+
+        /// <summary>
+        /// 标点图标（橙色菱形：模板旋转 45°）。
+        /// </summary>
+        private void UpdatePingMarker(MinimapSystem minimap, Rect window)
+        {
+            var ping = PingSystem.Instance;
+            if (ping == null || !ping.HasActivePing
+                || !TryMapUvToPanel(minimap.WorldToMapUv(ping.ActivePingPos.ToWorld(0f)), window, _innerSize, out Vector2 pos))
+            {
+                if (_pingMarker != null && _pingMarker.gameObject.activeSelf)
+                {
+                    _pingMarker.gameObject.SetActive(false);
+                }
+                return;
+            }
+
+            if (_pingMarker == null)
+            {
+                _pingMarker = Object.Instantiate(_enemyDotTemplate, _iconRoot);
+                _pingMarker.name = "m_img_PingMarker";
+                _pingMarker.color = PingMarkerColor;
+                _pingMarker.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            }
+            if (!_pingMarker.gameObject.activeSelf)
+            {
+                _pingMarker.gameObject.SetActive(true);
+            }
+            ((RectTransform)_pingMarker.transform).anchoredPosition = pos;
         }
 
         /// <summary>

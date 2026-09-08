@@ -16,12 +16,19 @@ docs/Proposal/
 ├── pipeline/        # 管线与工具相关提案
 ├── shared/          # 共享系统 / 跨玩法相关提案
 ├── simulation/      # 模拟经营相关提案
+├── ai/              # AI（LLM 队友等）相关提案
 └── ui/              # UI 相关提案
 ```
 
 ---
 
 ## 当前提案列表
+
+### AI 系统
+
+| 提案 | 路径 | 状态 | 关联模块 |
+|---|---|---|---|
+| 基于 LLM 的 AI 队友系统 | [`ai/llm-companion.md`](./ai/llm-companion.md) | 待评审 | `ai/llm-companion`（待建）、`combat/enemy-system`（FSM 复用） |
 
 ### 模拟经营系统
 

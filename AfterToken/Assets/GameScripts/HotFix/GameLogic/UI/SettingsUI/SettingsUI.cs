@@ -7,7 +7,9 @@ namespace GameLogic
 {
     /// <summary>
     /// 设置面板。
-    /// General 页签：灵敏度/开镜灵敏度/狙击开镜模式/准星样式颜色/返回主界面。
+    /// General 页签：灵敏度/开镜灵敏度/狙击开镜模式/准星样式颜色/语言/返回主界面。
+    /// Audio 页签：主音量/音乐/音效滑条（VolumeSetting，写 SaveSystem 并即时应用 AudioModule）。
+    /// Graphics 页签：画质档位左右切换（QualitySetting，写 SaveSystem 并即时应用 QualitySettings）。
     /// Input 页签：战斗按键改绑（KeyBindingSetting，点击按键按钮后按新键生效，ESC 取消）。
     /// </summary>
     [Window(UILayer.Top, location: "SettingsUI", fullScreen: false)]
@@ -34,10 +36,35 @@ namespace GameLogic
         private Button _returnMainMenuButton;
 
         // ---- 页签 ----
+        private enum SettingsTab
+        {
+            General,
+            Audio,
+            Graphics,
+            Input,
+        }
+
         private Button _tabGeneralButton;
+        private Button _tabAudioButton;
+        private Button _tabGraphicsButton;
         private Button _tabInputButton;
         private GameObject _panelGeneral;
+        private GameObject _panelAudio;
+        private GameObject _panelGraphics;
         private GameObject _panelInput;
+
+        // ---- Audio 页签：音量 ----
+        private Slider _masterVolumeSlider;
+        private TextMeshProUGUI _masterVolumeValueText;
+        private Slider _musicVolumeSlider;
+        private TextMeshProUGUI _musicVolumeValueText;
+        private Slider _soundVolumeSlider;
+        private TextMeshProUGUI _soundVolumeValueText;
+
+        // ---- Graphics 页签：画质 ----
+        private Button _qualityPrevButton;
+        private Button _qualityNextButton;
+        private TextMeshProUGUI _qualityValueText;
 
         // ---- General 页签：准星 ----
         private Button _crosshairStyleButton;
@@ -91,6 +118,8 @@ namespace GameLogic
             }
 
             _tabGeneralButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabGeneral");
+            _tabAudioButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabAudio");
+            _tabGraphicsButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabGraphics");
             _tabInputButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabInput");
             _languageButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_Language");
             if (_languageButton != null)
@@ -99,8 +128,23 @@ namespace GameLogic
             }
             var panelGeneral = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_General");
             _panelGeneral = panelGeneral != null ? panelGeneral.gameObject : null;
+            var panelAudio = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Audio");
+            _panelAudio = panelAudio != null ? panelAudio.gameObject : null;
+            var panelGraphics = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Graphics");
+            _panelGraphics = panelGraphics != null ? panelGraphics.gameObject : null;
             var panelInput = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Input");
             _panelInput = panelInput != null ? panelInput.gameObject : null;
+
+            _masterVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_MasterVolume");
+            _masterVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MasterVolumeValue");
+            _musicVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_MusicVolume");
+            _musicVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeValue");
+            _soundVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_SoundVolume");
+            _soundVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeValue");
+
+            _qualityPrevButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_Graphics/m_btn_QualityPrev");
+            _qualityNextButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_Graphics/m_btn_QualityNext");
+            _qualityValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Graphics/m_text_QualityValue");
 
             _bindingHintText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Input/m_text_BindingHint");
             _bindingListRoot = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Input/m_rect_BindingList");
@@ -132,7 +176,9 @@ namespace GameLogic
             SetBindingHint(Loc.Get("ui.settings.rebind_hint"));
             CrosshairSetting.OnChanged += UpdateCrosshairViews;
             UpdateCrosshairViews();
-            ShowTab(true);
+            InitializeVolume();
+            UpdateQualityView();
+            ShowTab(SettingsTab.General);
         }
 
         protected override void RegisterEvent()
@@ -170,12 +216,47 @@ namespace GameLogic
             if (_tabGeneralButton != null)
             {
                 _tabGeneralButton.onClick.RemoveAllListeners();
-                _tabGeneralButton.onClick.AddListener(() => ShowTab(true));
+                _tabGeneralButton.onClick.AddListener(() => ShowTab(SettingsTab.General));
+            }
+            if (_tabAudioButton != null)
+            {
+                _tabAudioButton.onClick.RemoveAllListeners();
+                _tabAudioButton.onClick.AddListener(() => ShowTab(SettingsTab.Audio));
+            }
+            if (_tabGraphicsButton != null)
+            {
+                _tabGraphicsButton.onClick.RemoveAllListeners();
+                _tabGraphicsButton.onClick.AddListener(() => ShowTab(SettingsTab.Graphics));
             }
             if (_tabInputButton != null)
             {
                 _tabInputButton.onClick.RemoveAllListeners();
-                _tabInputButton.onClick.AddListener(() => ShowTab(false));
+                _tabInputButton.onClick.AddListener(() => ShowTab(SettingsTab.Input));
+            }
+            if (_masterVolumeSlider != null)
+            {
+                _masterVolumeSlider.onValueChanged.RemoveAllListeners();
+                _masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+            }
+            if (_musicVolumeSlider != null)
+            {
+                _musicVolumeSlider.onValueChanged.RemoveAllListeners();
+                _musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
+            }
+            if (_soundVolumeSlider != null)
+            {
+                _soundVolumeSlider.onValueChanged.RemoveAllListeners();
+                _soundVolumeSlider.onValueChanged.AddListener(OnSoundVolumeChanged);
+            }
+            if (_qualityPrevButton != null)
+            {
+                _qualityPrevButton.onClick.RemoveAllListeners();
+                _qualityPrevButton.onClick.AddListener(() => CycleQuality(-1));
+            }
+            if (_qualityNextButton != null)
+            {
+                _qualityNextButton.onClick.RemoveAllListeners();
+                _qualityNextButton.onClick.AddListener(() => CycleQuality(1));
             }
             if (_resetBindingsButton != null)
             {
@@ -231,17 +312,105 @@ namespace GameLogic
 
         // ---- 页签切换 ----
 
-        private void ShowTab(bool general)
+        private void ShowTab(SettingsTab tab)
         {
             // 切页签时取消进行中的改绑，避免在不可见面板上挂着"按任意键"状态
             CancelCapture();
             if (_panelGeneral != null)
             {
-                _panelGeneral.SetActive(general);
+                _panelGeneral.SetActive(tab == SettingsTab.General);
+            }
+            if (_panelAudio != null)
+            {
+                _panelAudio.SetActive(tab == SettingsTab.Audio);
+            }
+            if (_panelGraphics != null)
+            {
+                _panelGraphics.SetActive(tab == SettingsTab.Graphics);
             }
             if (_panelInput != null)
             {
-                _panelInput.SetActive(!general);
+                _panelInput.SetActive(tab == SettingsTab.Input);
+            }
+        }
+
+        // ---- Audio 页签：音量 ----
+
+        private void InitializeVolume()
+        {
+            if (_masterVolumeSlider != null)
+            {
+                _masterVolumeSlider.minValue = VolumeSetting.Min;
+                _masterVolumeSlider.maxValue = VolumeSetting.Max;
+                _masterVolumeSlider.wholeNumbers = false;
+                _masterVolumeSlider.value = VolumeSetting.Master;
+            }
+            if (_musicVolumeSlider != null)
+            {
+                _musicVolumeSlider.minValue = VolumeSetting.Min;
+                _musicVolumeSlider.maxValue = VolumeSetting.Max;
+                _musicVolumeSlider.wholeNumbers = false;
+                _musicVolumeSlider.value = VolumeSetting.Music;
+            }
+            if (_soundVolumeSlider != null)
+            {
+                _soundVolumeSlider.minValue = VolumeSetting.Min;
+                _soundVolumeSlider.maxValue = VolumeSetting.Max;
+                _soundVolumeSlider.wholeNumbers = false;
+                _soundVolumeSlider.value = VolumeSetting.Sound;
+            }
+
+            UpdateVolumeText(_masterVolumeValueText, VolumeSetting.Master);
+            UpdateVolumeText(_musicVolumeValueText, VolumeSetting.Music);
+            UpdateVolumeText(_soundVolumeValueText, VolumeSetting.Sound);
+        }
+
+        private void OnMasterVolumeChanged(float value)
+        {
+            VolumeSetting.Master = value;
+            UpdateVolumeText(_masterVolumeValueText, value);
+        }
+
+        private void OnMusicVolumeChanged(float value)
+        {
+            VolumeSetting.Music = value;
+            UpdateVolumeText(_musicVolumeValueText, value);
+        }
+
+        private void OnSoundVolumeChanged(float value)
+        {
+            VolumeSetting.Sound = value;
+            UpdateVolumeText(_soundVolumeValueText, value);
+        }
+
+        private void UpdateVolumeText(TextMeshProUGUI text, float value)
+        {
+            if (text != null)
+            {
+                // 行首标签已说明含义，数值文本只显示数字
+                text.text = value.ToString("F2");
+            }
+        }
+
+        // ---- Graphics 页签：画质 ----
+
+        /// <summary>
+        /// 左右箭头循环切换画质档位（越过边界时回绕）。
+        /// </summary>
+        private void CycleQuality(int delta)
+        {
+            int count = QualitySetting.LevelCount;
+            if (count <= 0) return;
+            int next = (QualitySetting.Level + delta + count) % count;
+            QualitySetting.Level = next;
+            UpdateQualityView();
+        }
+
+        private void UpdateQualityView()
+        {
+            if (_qualityValueText != null)
+            {
+                _qualityValueText.text = QualitySetting.GetLevelName(QualitySetting.Level);
             }
         }
 
@@ -306,6 +475,8 @@ namespace GameLogic
         {
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_text_Title"), "ui.settings.title");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabGeneral/m_text_Label"), "ui.settings.tab.general");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabAudio/m_text_Label"), "ui.settings.tab.audio");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabGraphics/m_text_Label"), "ui.settings.tab.graphics");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabInput/m_text_Label"), "ui.settings.tab.input");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_LanguageLabel"), "ui.settings.language");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_SensitivityLabel"), "ui.settings.crosshair_sensitivity");
@@ -316,6 +487,10 @@ namespace GameLogic
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_Close/m_text_Close"), "ui.common.close");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_ReturnMainMenu/m_text_Close"), "ui.common.main_menu");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Input/m_btn_ResetBindings/m_text_Label"), "ui.settings.reset_defaults");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MasterVolumeLabel"), "ui.settings.master_volume");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeLabel"), "ui.settings.music_volume");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeLabel"), "ui.settings.sound_volume");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Graphics/m_text_QualityLabel"), "ui.settings.quality");
         }
 
         /// <summary>

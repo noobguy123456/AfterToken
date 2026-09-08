@@ -90,6 +90,7 @@ namespace GameLogic
             if (TryCloseUI<BuildingSelectionUI>()) return;
             if (TryCloseUI<WarehouseUI>()) return;
             if (TryCloseUI<QuestLogUI>()) return;
+            if (TryCloseUI<QuestBoardUI>()) return;
             if (TryCloseManagementPanel()) return;
 
             // 没有可关闭 UI 时打开设置面板

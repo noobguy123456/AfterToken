@@ -4,3 +4,5 @@
 ,10011,1001,kill,9001,5,Eliminate 5 Training Dummies
 ,10021,1002,collect,10004,3,Have 3 Wood in the warehouse
 ,10031,1003,extract,101,1,Extract from Stage 101
+,10041,1004,kill,9002,3,Eliminate 3 Assault Bots
+,10051,1005,collect,10005,5,Have 5 Stone in the warehouse

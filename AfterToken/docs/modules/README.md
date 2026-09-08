@@ -15,6 +15,7 @@ docs/modules/
 ├── shared/                # 共享系统 / 跨玩法
 ├── simulation/            # 模拟经营
 ├── narrative/             # 叙事（对话/任务）
+├── ai/                    # AI（LLM 队友）
 └── pipeline/              # 管线与工具
 ```
 
@@ -57,6 +58,12 @@ docs/modules/
 |---|---|---|
 | `dialogue-system` | [README](./narrative/dialogue-system/README.md) | [progress](./narrative/dialogue-system/progress.md) |
 | `quest-system` | （见 progress） | [progress](./narrative/quest-system/progress.md) |
+
+### AI 系统
+
+| 模块 | README | 进度 |
+|---|---|---|
+| `companion-system` | [README](./ai/companion-system/README.md) | [progress](./ai/companion-system/progress.md) |
 
 ### 场景系统
 

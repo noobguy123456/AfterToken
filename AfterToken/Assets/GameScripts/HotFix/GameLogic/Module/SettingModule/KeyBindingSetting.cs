@@ -19,6 +19,8 @@ namespace GameLogic
         Bag = 6,
         CrosshairStyle = 7,
         Map = 8,
+        Ping = 9,
+        CompanionFollow = 10,
     }
 
     /// <summary>
@@ -50,6 +52,8 @@ namespace GameLogic
                 case KeyBindAction.Bag: return KeyCode.B;
                 case KeyBindAction.CrosshairStyle: return KeyCode.C;
                 case KeyBindAction.Map: return KeyCode.M;
+                case KeyBindAction.Ping: return KeyCode.Mouse2;
+                case KeyBindAction.CompanionFollow: return KeyCode.G;
                 default: return KeyCode.None;
             }
         }
@@ -70,6 +74,8 @@ namespace GameLogic
                 case KeyBindAction.Bag: return "Bag";
                 case KeyBindAction.CrosshairStyle: return "Crosshair Style";
                 case KeyBindAction.Map: return "Map";
+                case KeyBindAction.Ping: return "Ping";
+                case KeyBindAction.CompanionFollow: return "Companion Follow";
                 default: return action.ToString();
             }
         }

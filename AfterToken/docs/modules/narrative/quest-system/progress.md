@@ -23,7 +23,6 @@
 - [x] **任务追踪 HUD**（QuestTrackerUI，2026-08-30）：屏幕左侧中部常驻列出进行中任务（Active/ReadyToTurnIn）的名称+目标 x/y 进度，Ready 任务名转绿并加 "(Ready)" 后缀；纯展示不挡射线（根 CanvasGroup blocksRaycasts=false）；基地与战斗场景均常驻（ProcedureSimulation/ProcedureBattle 打开），订阅 IQuestEvent 全量重建刷新
 
 ## Play 实测记录（2026-08-30）
-
 - accept(1001) → 5 次 OnEnemyDied(9001) → ReadyToTurnIn → TryTurnIn → Completed，+200G ✓
 - collect：仓库已有木料时 accept(1002) 立即 ReadyToTurnIn（持有数重算生效）✓
 - extract：Accept(1003) → CrossPlayLink.OnBattleExtracted(101) → ReadyToTurnIn → 交付 ✓
@@ -32,10 +31,19 @@
 - QuestLogUI：列表三任务标签正确（[Done]/[Available]x2），详情进度 5/5、奖励格式化 "200G + 50EXP" ✓
 - 坑位：新建 UI prefab 根节点必须挂 Canvas + GraphicRaycaster（否则 UIModule 报 "Not found Canvas in panel"）；改 AssetRaw 后需 SimulateBuild 才能在 Editor Simulate 模式加载
 
+## Play 实测记录（2026-09-06 任务板 + GM 命令）
+
+- 任务板摆放：SimulationScene (-5, 0, -3)，与出生点/传送门/NPC 触发区均错开 ✓
+- 走近出提示（词条 zh_cn "按 E 查看委托"）→ E 开 QuestBoardUI → 列表显示 1004/1005（giverNpc=0）→ 点击弹 QuestAcceptConfirmUI → Confirm 接取后状态 Active、列表刷新移除、QuestTrackerUI 出现追踪 ✓
+- 走出触发区自动关板收提示；Esc 关窗链（SimulationInputSystem.TryCloseUI<QuestBoardUI>）✓
+- GM：`quest list`（5 任务状态正确）/ `quest accept 1001` ✓ / `quest turnin 1001` 正确拒绝（非 ReadyToTurnIn）/ accept 1005 → 仓库已有石料立即 ReadyToTurnIn → `quest turnin 1005` Completed 发奖励 ✓ / `quest reset` 清空落盘 ✓
+- 坑位：克隆 QuestLogUI prefab 时 m_rect_QuestList 锚点是"左对齐纵向拉伸"（anchorMax.x=0），横向拉满必须连 anchorMax.x 一起改，否则 offsetMax 为负导致列表项零宽不可见
+- 全程 Console 0 error；截图 Assets/Screenshots/questboard_scene.png / questboard_ui.png
+
 ## 待完成
 
-- [ ] 任务板（giverNpc=0）实体
-- [ ] GM 命令挂接 quest reset/accept/turnin（现有 GM 只有 gold/exp/unlock/profile）
+- [x] **任务板实体 + QuestBoardUI**（2026-09-06）：giverNpc=0 即任务板任务（`QuestConfigMgr.EnsureIndex` 已改为 `< 0` 才跳过，0 进索引）；`Entity/QuestBoard/QuestBoardEntity.cs`（BoxCollider 2m 触发区，占位视觉=双支柱+横板立方体+头顶词条名字牌，淡金色呼吸光圈）+ `System/QuestBoardSystem.cs`（照 NoteSystem 模式，E 键开板，提示/标题/空列表文本走词条 ui.questboard.*）；QuestBoardUI（prefab 克隆 QuestLogUI 改造，列表项=任务名+简述，点击弹 QuestAcceptConfirmUI 复用确认窗，订阅 OnQuestAccepted 即时刷新移除已接任务）；Esc 关窗链已注册 SimulationInputSystem；基地已挂 GMController（ProcedureSimulation.SimulationRoot，EDITOR/DEVELOPMENT_BUILD）
+- [x] **GM 任务命令**（2026-09-06）：`quest list`（全任务 id/状态/发布者）/ `quest accept <id>` / `quest turnin <id>` / `quest reset`，help 文案同步
 - [ ] 对话编辑器对 quest 条件/动作的可视化提示
 
 ## 如何新增任务（策划流程）
@@ -44,4 +52,4 @@
 2. `questobjective.csv` 加目标行（type=kill/collect/extract/flag，kill/extract/collect 的 targetId 填数字 ID，flag 填标志键）
 3. 运行 `Configs/GameConfig/gen_code_bin_to_project.bat` 导表
 4. 在 `dialoguenode.csv` 给发布 NPC 加条件节点：`condition=quest:id:accept action=quest:accept:id`（到达节点即弹接取确认窗，玩家确认才接取）与 `condition=quest:id:ready action=quest:turnin:id`（交付），插入该 NPC 起始节点链前方
-5. 填了 `giverNpc` 后头顶任务标记自动生效，无需额外配置
+5. 填了 `giverNpc` 后头顶任务标记自动生效，无需额外配置；`giverNpc=0` 为任务板任务，自动出现在基地任务板（QuestBoardUI）列表

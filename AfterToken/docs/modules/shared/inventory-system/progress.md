@@ -2,7 +2,7 @@
 
 ## 已完成
 - [x] `RunInventory`（临时背包，槽位制，整批判定，OnInventoryFull 广播）
-- [x] `Warehouse`（仓库，内存态，AddAll 批量入库）
+- [x] `Warehouse`（仓库，AddAll 批量入库；已接入 SaveSystem 持久化，重启保留、槽位隔离）
 - [x] `IItemEvent` 事件接口
 - [x] 生命周期接线：死亡清空 / 回大厅清空 / 胜利转入仓库
 - [x] `BattleBagUI` 脚本（B 键开关 + 容量显示 + 关闭按钮 + 再按 B 键关闭 + 默认显示全部容量格子含空槽位 + 打开时隐藏准星并暂停时间）

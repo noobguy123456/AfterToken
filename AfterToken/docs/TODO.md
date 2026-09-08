@@ -60,7 +60,7 @@
 | 撤离点系统 | ✅ | - | - | `docs/modules/combat/extraction-system/` | 撤离圈+倒计时（`TbLevel.extractionTime`）+敌人进圈暂停+顶部 UI+撤离结算复用 `PortalSystem.ExtractToBase`，端到端 Play 实测通过；101 已摆 (18,0,18)；待美术替换占位圆盘、正式点位规则、Portal/撤离圈重叠仲裁 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P1 | 事件系统 | `docs/modules/combat/level-system/` | `TbLevel` 已接入；硬编码表已替换；待波次/胜负/配置化 |
-| 奖励系统 | ⏳ | P1 | 共享层 | `docs/modules/combat/reward-system/` | 战斗奖励分发 |
+| 奖励系统 | 🟡 | P1 | - | `docs/modules/combat/reward-system/` | `RewardSystem.Grant` 统一入口已落地，撤离/任务/订单三处已收口；待撤离结算画面汇总展示 |
 
 ### 场景系统
 
@@ -76,7 +76,7 @@
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
 | 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
 | 音频系统 | ⏳ | P1 | - | `docs/modules/infra/audio-system/` | BGM / SFX / 音量管理 |
-| 特效系统 | ⏳ | P1 | - | `docs/modules/infra/effect-system/` | 统一特效管理模块未立项；爆炸火球/冲击波 shader + 自驱动 Driver 已在 projectile-system 内落地（2026-08-30），可作为后续 EffectSystem 的参考实现 |
+| 特效系统 | 🟡 | P1 | - | `docs/modules/infra/effect-system/` | M1 已落地（2026-09-06），同日去配置表简化：TbEffect 拆除，元数据改挂 prefab EffectDriver 序列化字段，播放按 `EffectIds` 地址常量；EffectSystem+池化+IEffectEvent，爆炸在 Explosion.prefab（shader/材质落 AssetRaw 闭环引用链，消除 Shader.Find 手动维护点）；M2 已落地（2026-09-07）：枪口火焰/命中火花（敌/环境）/拾取光晕接入并实测，爆炸补齐三段式（预警压缩闪光+焦痕 decal）；剩 M3 编辑器预览工具 |
 
 ### 共享系统
 
@@ -84,12 +84,12 @@
 |------|------|--------|-----------|----------|------|
 | 玩家档案系统 | 🟡 | P1 | - | `docs/modules/shared/player-profile-system/`（新增） | 等级/经验已持久化；经验表已配置化（TbPlayerLevel）；通关记录已接入解锁系统 |
 | 货币系统 | 🟡 | P1 | - | `docs/modules/shared/currency-system/`（新增） | 金币/钻石/体力已持久化；CurrencyType 通用接口；撤离奖励与经营消耗已对接 |
-| 背包系统 | ✅ | - | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库（内存态）已完成；仓库持久化待 `save-system` |
+| 背包系统 | ✅ | - | - | `docs/modules/shared/inventory-system/` | 临时背包（槽位制+容量配置+B 键面板）与仓库均已完成；仓库已接入 SaveSystem 持久化（懒加载+变动即存+切槽失效） |
 | 道具系统 | ✅ | - | - | `docs/modules/shared/item-system/` | `cfg.Item` 扩展 + 4 档稀有度 + 稀有度框 prefab 已完成；使用效果后续接入 |
 | 解锁系统 | 🟡 | P2 | 玩家档案系统 | `docs/modules/shared/unlock-system/` | TbUnlock（等级/通关链/金币条件）+ UnlockSystem + LobbyUI 关卡锁已落地；武器解锁消费侧待接入 |
 | 跨玩法联动 | 🟡 | P2 | 共享系统、经营系统 | `docs/modules/shared/cross-play-link/` | 撤离→金币/经验/通关记录已落地（CrossPlayLink）；经营产出→战斗强化待强化系统立项 |
 | 存档系统 | ✅ | P1 | - | `docs/modules/shared/save-system/` | 单 JSON 文件 + 变动即存 + 版本迁移；货币/档案/仓库/设置四件套已接入并实测跨重启保留；GM `save` 命令可用 |
-| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度/开镜灵敏度/开镜模式/按键改绑/准星样式颜色均已迁入 SaveSystem；音量、画质待做 |
+| 设置系统 | ✅ | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度/开镜/按键改绑/准星/音量（主/音乐/音效）/画质档位均已迁入 SaveSystem 并实测读回；设置面板四页签 General/Audio/Graphics/Input |
 
 ### 模拟经营系统
 
@@ -109,8 +109,14 @@
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
 | 对话系统 | 🟡 | P1 | - | `docs/modules/narrative/dialogue-system/` | Luban 扁平节点表（已切 CSV 数据源）+ 解释器 + `DialogueUI` MVP 已落地实测；可视化编辑器已就绪（Tools/Dialogue/Dialogue Editor，节点树状图/纵向布局/可拖分栏）；quest:* 词汇已落地；NPC 有任务时对话出任务枢纽选项（Turn in/Accept/Just chatting） |
-| 任务系统 | ✅ | - | 对话系统 | `docs/modules/narrative/quest-system/` | MVP 已落地实测：TbQuest/TbQuestObjective + QuestSystem 四态状态机 + kill/collect/extract/flag 四类目标 + QuestLogUI（J 键）+ QuestTrackerUI（左侧常驻追踪 HUD）+ QuestAcceptConfirmUI（接取确认窗）+ NPC 头顶三态标记 + 示例任务链 1001-1003；待任务板实体、GM 命令 |
+| 任务系统 | ✅ | - | 对话系统 | `docs/modules/narrative/quest-system/` | MVP 已落地实测：TbQuest/TbQuestObjective + QuestSystem 四态状态机 + kill/collect/extract/flag 四类目标 + QuestLogUI（J 键）+ QuestTrackerUI（左侧常驻追踪 HUD）+ QuestAcceptConfirmUI（接取确认窗）+ NPC 头顶三态标记 + 示例任务链 1001-1003 + 任务板实体/QuestBoardUI（giverNpc=0，任务 1004-1005）+ GM quest 命令（list/accept/turnin/reset，基地场景已挂 GMController） |
 | 小纸条系统 | 🟡 | - | - | `docs/modules/combat/note-system/` | 已验收（见战斗系统区）；已读标记/收集计数待做 |
+
+### AI 系统
+
+| 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
+|------|------|--------|-----------|----------|------|
+| AI 队友系统 | 🟡 | P1 | 在线实测需真实 API key | `docs/modules/ai/companion-system/` | M1 队友本体 + M2 标点系统 + M3 LLM 链路（LlmClient/PromptBuilder/CompanionBrain 三态降级、TbCompanion/TbCompanionBark 配表、数值配置化）已落地，离线链路 Play 实测通过（2026-09-07/08）；待在线实测、M4 设置面板 API 配置 |
 
 ### 管线与工具
 
@@ -149,7 +155,7 @@ Luban 配置表数据补充
     └── 仍待更优生成逻辑与 `TbWave` 波次/掉落联动
 
 共享系统（Currency / Inventory / PlayerProfile / Save）
-    ├── 背包/道具已实现（内存态）
+    ├── 背包/道具已实现（仓库已持久化，临时背包按设计为一局内内存态）
     ├── 阻塞 → 奖励系统、跨玩法联动、经营系统消耗/产出
     └── 存档系统已落地（四件套持久化） → 货币/档案已接入；待实现 → 奖励系统、解锁系统
 ```
@@ -423,3 +429,124 @@ Luban 配置表数据补充
 - UI/系统组：①`SaveSlotSelectUI.LoadPreviewModel` async void 改 UniTaskVoid + CancellationToken + Forget，`CleanupPreview` 补 `Destroy(_previewRt)`（修 RenderTexture 泄漏）；②`BattleMainUI` 撤离倒计时文本 0.1s 量化缓存，不变不赋值（去每帧字符串分配与 TMP 重排）；③`BuildingEntity` UpdateLabel 缓存、进度 1% 量化、选中/建造染色从 sharedMaterial 写改 MaterialPropertyBlock 写 `_Color`（修共享材质污染同型建筑），CacheOriginalColors 改读 sharedMaterial；④`BallisticSystem.UpdateRocketLaser` 缓存 `_cachedMountView`；⑤三个 ConfigMgr 统一 `Instance?.Tables?` 判空 + `_fallbackWarned` 只告警一次（加载成功后重置）；⑥`EnemySpawnSystem` 模板 SetActive(false) 提出池分支外，吸附失败兜底改返回 spawnCenter。
 - Play 统一验证（101 关 + Simulation + 主菜单存档界面，god 模式）：动态障碍（NavObstacle 立方体）增删时多敌追击无串路径、Console 0 error；2 敌人进 Wander 状态持续 4s+ 无任何动画警告；玩家传送到 (100,100) unreachable 12 秒 Console 0 新增（stuck 节流生效）；撤离倒计时全链路正常（进圈 10s 倒计时→结算→切 Simulation）；存档界面 3 槽位 3D 预览正常、0 异常；建筑 SetSelected MPB 染色实测（选中变黄仅本栋、取消恢复原色，NPC/玩家不受影响）。截图 Assets/Screenshots/verify_selected_*.png / verify_deselected.png / verify_saveslot.png。
 - 审查遗留未修（登记备查）：Wander/Chase 调优常量未入 TbEnemy、经营三窗口代码拼装残留、Launcher 中文文本未走词条、敌人物理查询隔帧优化（规模项）。
+
+## 2026-09-03 修复敌人追击抽搐/往回抖
+- 现象：敌人追踪玩家时周期性往回抖一下，成群追击时偶有抽搐。
+- 复现测量：EditorApplication.update 挂载全员位置采样器（~250Hz 写 CSV），固定实例 ID 跟踪，风筝玩家制造持续追击。修复前：单个追击敌人 14 次硬方向反转（dot<-0.3），群体追击 3 敌共 23 次反转 + 瞬时位移跳变。
+- 根因一（往回抖）：`AStarNavigationSystem.ReconstructPath` 的路径 waypoint[0] 固定是吸附后的起点格中心（导航子格 0.5m），敌人往往已越过该点；而 `EnemyChaseState.RefreshPath` 每 0.3~0.9s 重寻路并把 `_currentWaypointIndex` 清零，敌人每次都回头走向身后的格中心（缓存路径另有 0.5m 量化误差加剧）。
+- 修复一：`EnemyChaseState` 新增 `SkipPassedWaypoints`——刷新路径后从敌人实际位置对后续路径点做带宽度 SphereCast 视线检查（半径 AgentRadius×0.9，与 A* 平滑同语义防穿角），跳过可直达的前置路径点。
+- 根因二（群体抽搐）：分离转向半径 0.6m 恰等于两胶囊接触距离（0.3+0.3），转向生效时已经接触，物理位置修正把敌人瞬间弹开。
+- 修复二：`SEPARATION_RADIUS` 0.6→0.9、`SEPARATION_WEIGHT` 0.6→0.8，接触前先转向避让。
+- Play 复测（101 关 god 模式，同口径采样）：单体追击反转 14→0；10 敌弧形包围群体追击反转 23→3、瞬时跳变 32→16（其中碰撞弹开 20→6）；10 敌正常合围玩家全部进入攻击状态，阵型均匀不堆叠；Console 0 error。残余瞬时跳变为编辑器卡顿物理追帧+采样 I/O 自身造成的测量噪音，非逻辑问题。截图 Assets/Screenshots/jitter_fix_pack.png。
+
+## 2026-09-03 修复追击偶发 ArgumentOutOfRangeException + 敌人血条居中
+- 引擎报错：`EnemyChaseState.OnUpdateState` 偶发 `ArgumentOutOfRangeException`（Waypoints 索引越界）。根因：敌人走完最后一个路径点进"直接朝玩家移动"分支时 `_currentWaypointIndex` 已 `++` 到越界值且不回退；下一帧若玩家仍 >1.5m 无直线冲刺、路径刷新又未到点，就直接用越界索引取 waypoint。修复：跟随路径点前加 `_currentWaypointIndex >= Count` 守卫（路径已消费完则直接朝玩家移动，等下次刷新）。
+- 血条偏移：占位白色 Sprite 枢轴在左边缘 `(0, 0.5)`（设计如此，Fill 缩放时左缘固定向右缩减），Background/Fill 挂在 root 原点导致整条血条向右侧伸出 1m。修复：`Enemy.prefab` 的 Background/Fill `m_LocalPosition.x` 改 -0.5（条宽 1m 的半宽），`EnemyEntity.EnsureHealthBar` 运行时创建分支同步 -HEALTH_BAR_WIDTH/2。
+- 附带发现：血条高度 y=0.6 在敌人胶囊（顶 1.0m）内部，居中后会被胶囊挡住——`HEALTH_BAR_OFFSET_Y` 0.6→1.2，prefab `HealthBarRoot` 同步。
+- Play 实测：WorldToScreenPoint 数值校验血条中心与敌人中心完全重合（(1420.7, 361.5) 一致），血条位于头顶上方；20 秒群体追击风筝测试 Console 0 异常。截图 Assets/Screenshots/healthbar_centered2.png。
+
+## 2026-09-03 小纸条交互物加乳白色光圈
+- `PlaceholderSpriteProvider` 新增 `GetRingSprite64()`：64×64 程序化软边圆环（环带 0.30~0.46 归一化半径，内外缘平方衰减柔边），中心枢轴 1 单位世界尺寸，运行时缓存。
+- `NoteEntity` 新增 `EnsureGlowRing()`：地面平躺（X+90°）乳白色 (1,0.97,0.87) 光圈子节点，直径 1.2m，y=0.03（纸块 0.05 之下、地面之上，避免共面闪烁），sortingOrder 0 压纸块（1）之下；`Update` 驱动呼吸脉动（周期 2.2s，缩放 ±7%、透明度 0.55~0.95），相位按 InstanceID 随机避免多纸条同步闪烁。
+- Play 实测（101 关 Note_1）：光圈环绕纸块显示正常、软边柔和，走进触发区交互不受影响，Console 0 error。截图 Assets/Screenshots/note_glow_ring.png。
+
+## 2026-09-06 清理 YooAsset 编辑器告警
+- Console 里 15 条 warning 全部为 `Packages/YooAsset/Editor` 的 CS0618（Unity 新版 UI Toolkit 废弃 `UxmlTraits`/`UxmlFactory`，包内编辑器代码存量用法，功能不受影响）。第三方嵌入式包不改其源码，在 `Packages/YooAsset/Editor/csc.rsp` 加 `-nowarn:0618` 仅抑制该程序集；强制重导 asmdef 复编后 Console 0 warning。上游包升级后此文件可随包更新移除。
+
+## 2026-09-06 修复 csc.rsp 注释导致的 CS2001
+- 前一日加入的 `Packages/YooAsset/Editor/csc.rsp` 里写了 `#` 中文注释——rsp 是编译器参数响应文件，不支持注释，每个词被当成源文件路径，产生一串 CS2001 "Source file could not be found"。修复：文件内容只保留 `-nowarn:0618` 一行，注释移到文档。复编验证 0 error 0 warning（CS0618 抑制仍生效）。
+- 残留 `[RelayService] Bus validation failed: TaskCanceledException` 为 MCP 中继连接的断连噪音（上一会话后台任务中断所致），一次性不刷屏，与项目代码无关。
+
+
+## 2026-09-06 清理无关日志打印
+- 删除 15 条开发期噪音日志，涉及 4 个文件：`ProcedureSimulation`（step1~7 步骤日志、CameraSystem 销毁/移除、SimCam 添加、玩家生成位置、SimInput 添加）、`SimulationCameraController`（Awake 诊断、初始化完成、键鼠取消跟随×2、设置跟随目标）、`CameraSystem3D`（设置跟随目标）、`LobbyUI`（ScriptGenerator 组件检查 dump）。
+- 保留策略：一次性初始化摘要（生成点/战斗边界/网格构建/EnemySpawn）、游戏事件（撤离开始/完成、跨场景结算、测试物资注入）、真实告警/错误一律保留；TEngine 框架日志（Unload unused assets / GC.Collect）不动。
+- 实测（Play → 101 关 → god → 撤离 → SimulationScene 全流程）：Console 27 条 → 11 条，全为有意义的一次性日志，0 error 0 warning。
+
+## 2026-09-06 设置系统补全音量/画质页签
+- 新增 `VolumeSetting`（主/音乐/音效，0..1）与 `QualitySetting`（QualitySettings 档位索引），沿用设置项统一模式（读穿透缓存 + SaveSystem 变动即存 + initialized 标记 + 切槽 InvalidateCache）；音量旧框架层 PlayerPrefs（`Setting.MusicVolume`/`Setting.SoundVolume`）首次读取一次性导入。
+- 音量链路验证：`AudioMixer.mixer` 已暴露 MusicVolume/SoundVolume/UISoundVolume 参数（`GetFloat` 成功），`GameModule.Audio` 写入即时生效——故做齐 Master/Music/SFX 三条滑块（Master 控 AudioListener.volume，其余走 mixer dB 参数）。
+- `SettingsUI` 由二值 ShowTab(bool) 改为 `SettingsTab` 枚举四页签（General/Audio/Graphics/Input）；prefab 经 MCP 编辑器代码加 `m_btn_TabAudio`/`m_btn_TabGraphics` 与 `m_panel_Audio`（Label+Slider+ValueText×3）/`m_panel_Graphics`（左右箭头+当前档位文本循环切换，6 档 Very Low...Ultra）。
+- 启动读回在 `GameApp.EntranceAsync`（LocalizationSystem 初始化后）调 `VolumeSetting.ApplyAll()`+`QualitySetting.Apply()`；`ProcedureLaunch.InitSoundSettings()` 保留作热更加载前兜底。
+- Play 实测：切 Audio 页签拖三滑条（0.8/0.4/0.6）→ AudioModule 与 AudioListener 实际值同步；Graphics 页签箭头循环 Ultra→Very Low→Ultra；save_1.json 写入 masterVolume/musicVolume/soundVolume/qualityLevel 及 initialized 标记；退出重进 Play 后全部读回应用，Console 0 error。
+
+## 2026-09-06 任务板实体 + GM 任务命令
+- 任务板：`QuestBoardEntity`（BoxCollider 2m 触发区 + 占位视觉：双支柱+横板立方体、头顶词条名字牌、淡金色呼吸光圈）+ `QuestBoardSystem`（照 NoteSystem 模式订阅 OnInteractPressed，E 开板/再按 E 关板，走出触发区自动关板收提示，提示/标题/空列表走词条 ui.questboard.*）；摆放 SimulationScene (-5, 0, -3)，与出生点/传送门/NPC 触发区错开。
+- `QuestConfigMgr.EnsureIndex` 修复：`giverNpc <= 0` 跳过改为 `< 0` 才跳过——giverNpc=0 的任务板任务此前从不进索引，`GetQuestsByGiver(0)` 恒空。
+- `QuestBoardUI`（prefab 克隆 QuestLogUI 改造：去详情面板、列表横向拉满、模板项加高两行显示任务名+简述、加空列表提示）：列出 `GetQuestsByGiver(0)` 过滤 `CanAccept` 的可接任务，点击复用 `QuestAcceptConfirmUI` 确认接取，订阅 OnQuestAccepted 即时刷新；Esc 关窗链注册进 SimulationInputSystem。
+- 坑位：克隆 QuestLogUI prefab 时 m_rect_QuestList 锚点为"左对齐纵向拉伸"（anchorMax.x=0），横向拉满必须连 anchorMax.x 一起改，否则 offsetMax 为负、列表项零宽不可见。
+- GM：`quest list / accept <id> / turnin <id> / reset` 注册进 GMController（help 同步）；GMController 挂载从仅战斗场景扩展到基地（ProcedureSimulation.SimulationRoot，仍限 EDITOR/DEVELOPMENT_BUILD）。
+- 测试数据：quest.csv +1004 Bot Cull（杀 3 个 9002 Assault Bot）、+1005 Stockpile Stone（仓库 5 石料），giverNpc=0 不进任何 NPC 链；词条 +ui.questboard.title/prompt/empty（en+zh_cn）。
+- Play 实测：走近出提示（zh_cn "按 E 查看委托"）→ E 开板 → 列表两项 → 点 1004 弹确认窗 → Confirm 后 Active、列表刷新、追踪 HUD 出现 → 走出触发区自动关板 → Esc 链关窗 ✓；GM 四命令全过（turnin 非 Ready 正确拒绝；1005 接取即 Ready、turnin 发奖励）✓；全程 Console 0 error。截图 Assets/Screenshots/questboard_scene.png / questboard_ui.png。
+
+
+## 2026-09-06 仓库持久化跨重启实测
+- 背景：TODO 背包系统行"仓库（内存态）待持久化"为陈旧记录——`Warehouse` 早已照 `CurrencySystem` 模式接入 SaveSystem（`EnsureLoaded` 懒读 `WarehouseSaveData`、`Persist` 变动即存、`InvalidateCache` 切槽失效、`ItemStack.AcquireSeq` 水位随档恢复）。本次修文档并补实测。
+- 实测：Play 中反射调 `Warehouse.TryAdd(10007, 3)` + Flush → save_1.json 出现 `(10007, 3)` → 停 Play 再进（静态域重置）→ `GetItemCount(10007)=3` 读回成功 → `TryConsume` 清理还原存档。全链路通过。
+- 同步修正：`docs/TODO.md` 背包系统行与阻塞链描述、`docs/modules/shared/inventory-system/README.md`（2 处）、`progress.md`。
+
+
+## 2026-09-06 奖励系统收口（RewardSystem 统一入口）
+- 新增 `GameLogic/Shared/RewardSystem.cs`：`RewardData`（金币/经验/物品，链式构建）+ `RewardResult`（发放结果汇总，含 ItemsGranted/ItemsLost，预留给结算 UI）+ `RewardSystem.Grant(RewardData, source)` 唯一 meta 奖励分发入口 + `Parse` 配置奖励串解析（"gold:200|exp:50|item:10001:2"，非法段告警跳过）。
+- 边界明确：局内奖励（开箱/掉落/拾取→临时背包→撤离入库）不经过本系统，保持搜打撤玩法链路不变；本系统只管"直接到账"的 meta 奖励。
+- 三处调用方收口：`CrossPlayLink.OnBattleExtracted`（撤离结算 gold/exp）、`QuestSystem.TryTurnIn`（删除私有 GrantRewards，改 Grant+Parse）、`OrderSystem.TryDeliverOrder`（gold/exp/items 改 Grant）。物品溢出统一策略：入仓库失败计 ItemsLost 并告警。
+- Play 实测：反射调 Grant(+111G +Wheat×2) 金币/仓库到账正确、结果文本 "+111G +Wheatx2"、Parse 合法/非法段行为正确；测试后 TryConsume 还原存档；编译 0 error。
+- 文档：`docs/modules/combat/reward-system/` README 重写 + progress.md 更新；TODO 奖励系统行 ⏳→🟡。
+
+
+## 2026-09-06 撤离结算画面
+- 拦截点设计：`PortalSystem.ExtractToBase()`（撤离唯一收口，RETURN_BASE 传送门与撤离点 `ExtractionSystem.Extract()` 共用）不再立即切流程，改为 `SettlementSystem.CaptureAndSettle(BattleContext.CurrentLevelId)` → `ShowUIAsync<SettlementUI>(data)`；`GameApp.ChangeProcedure<ProcedureSimulation>()` 挪到结算画面确认按钮（ChangeProcedure 内部 CloseAll + GamePauseManager.Reset，时序与原先一致，`ProcedureSimulation.EnterAsync` 的 `RunInventory.Clear()` 不受影响）。
+- 数据流：`SettlementSystem.CaptureAndSettle` = 快照 `RunInventory.Items`（值类型深拷贝）→ `Warehouse.AddAll` 入库 → `CrossPlayLink.OnBattleExtracted`（改为返回 `RewardResult`，找 cfg 失败返回空结果）→ `ItemConfigMgr.GetPrice` 求和估值 → 组装 `SettlementData`（LevelId/LootItems/MetaReward/LootValueTotal）经 UserDatas 传给 UI。
+- UI：prefab 克隆 WarehouseUI 经 MCP 编辑器代码改造（深色全屏底 + 标题/关卡/奖励/估值/战利品 GridLayoutGroup 网格（复用 ItemSlot 模板）/确认按钮）；`SettlementUI` `[Window(UILayer.Top, fullScreen:true)]`，`TimeScaleWhenVisible => 0f`（GamePauseManager 暂停），全部文本走词条 `ui.settlement.*`（en+zh_cn，已导表）；**未注册进任何 ESC 关窗链**（InputSystem/SimulationInputSystem 均未动），必须点"返回基地"按钮切流程，死亡链路（PlayerDeathHandler）与转场死亡中止判定（PortalTransitionMgr IsPlayerDead）均未改动。
+- Play 实测：101 关塞入 10004×3 + 10007×2 → 反射触发 `ExtractToBase` → 结算画面出现（timeScale=0，标题"撤离成功"/奖励"+100G +50EXP"/估值 70G/2 个格子含数量角标）→ 点确认 → ProcedureSimulation + SimulationScene + 金币 2150→2250、仓库战利品到账、经验 100→150；边界：空背包 + 无关卡配置（999）→ "无额外奖励"/"没有带回任何物资"、估值行隐藏、关窗 timeScale 复位；全程 Console 0 error。截图 Assets/Screenshots/settlement_ui.png。
+- 存档还原：测试前快照 `SaveSystem.Data` JSON，测后 `FromJsonOverwrite` 覆盖 + 三系统 `InvalidateCache` + `Flush`，磁盘 save_1.json 已核对回到 gold=2150/exp=100/10004=101/10007=0。
+  - 补充（同日）：修复结算画面打开期间按 Esc 叠开 SettingsUI 的问题——`InputSystem.HandleEscapeInput` 加 `HasWindow<SettlementUI>` 早退（结算必须由确认按钮推进流程），`IsWindowMenuOpen` 同步纳入 SettlementUI。
+
+## 2026-09-06 特效系统 M1
+- 落地 `EffectSystem`（`GameLogic/System/EffectSystem.cs`，MonoBehaviour 挂 BattleRoot + 静态门面 Play/PlayAttached/Preload/ClearAll/GetPoolStats）+ `EffectContext` struct（零分配）+ `EffectInstance` 句柄（Stop 提前结束，对象池化）+ `EffectDriver`（prefab 根驱动，爆炸时间轴整体迁入：膨胀曲线/冲击波 1.5 倍领先外扩/_Progress 走 MaterialPropertyBlock）+ `IEffectEvent.OnPlayEffect`（EffectSystem Awake 订阅）。
+- 池：内嵌 `EffectPool` 按特效 ID 隔离，poolCapacity 上限、池满强制回收最老（通用池 GameObjectPool 无容量/在播追踪语义，未复用）；Preload 对 preload=true 特效异步加载 + 分帧实例化一半容量；`ProcedureBattle` 进战斗调 Preload、退出调 ClearAll（+OnDestroy 双保险），0 跨场景泄漏。
+- 配表：`cfg.TbEffect`（effect.csv，id/prefabPath/duration/poolCapacity/attachMode/scaleByRadius/preload + 枚举 EEffectAttachMode），首行爆炸 9001（Explosion, 0.5s, 8, World, true, true）；`_tableFiles` 白名单源头在 `Configs/GameConfig/CustomTemplate/ConfigSystem.cs`（导表 bat 覆盖 GameProto 副本，改 Assets 副本会被冲掉）。
+- 资产闭环（§7.3 硬步骤）：爆炸两个 shader `AssetDatabase.MoveAsset` 从 AssetArt/Shaders 移到 AssetRaw/Shaders（GUID 不变）；新建 `AssetRaw/Materials/ExplosionFireball.mat`/`ExplosionShockwave.mat`；`AssetRaw/Effects/Explosion.prefab`（根挂热更 EffectDriver，序列化方式同 Enemy.prefab，Fireball=Sphere+Fireball.mat、Shockwave=Quad+X90°+y0.05+Shockwave.mat）。`ExplosionEffectDriver` 删除，Shader.Find/new Material/CreatePrimitive/Always Included 维护点全部消除。
+- 玩法接线：`ProjectileSystem.SpawnExplosionVisual` 改发 `IEffectEvent`（注释注明事件链路在战斗流程内由 EffectSystem 保证就绪）+ 同点发 `ICameraEvent.OnCameraShake`（幅度随半径 Clamp 0.1~0.3）。
+- 附带修复：`CameraSystem3D` 此前不订阅 ICameraEvent.OnCameraShake（3D 战斗抖动是死代码，2D CameraSystem 不在场），已补订阅 + Perlin 水平面抖动（damping 2.5）。
+- Play 实测：编译 0 error；进 101 预热 idle=4/8；火箭筒（1005，槽 3）开火爆炸视觉与迁移前一致（火球噪声侵蚀半球+冲击波圆环，时间轴 0.5s），爆炸与开火抖动均生效；同帧连播 12 个压到 active=8（强制回收最老），0.5s 后全部回池 idle=8 无多余实例化；撤离回基地 EffectSystem 销毁、场景 0 残留，重进 101 重预热正常；全程 Console 0 error。截图 `Assets/Screenshots/effect_m1_explosion.png`。未动存档。
+- 遗留：方案 §7.2 三段式的预警段/焦痕段未做（M1 只保视觉等价）；非预热特效首次 Play 丢弃告警（新特效应配 preload=true）；真机 AOT 验证在 M5。
+
+## 2026-09-06 特效系统去配置表简化
+- 决策（用户拍板）：特效与武器/触发器一一对应，TbEffect 是过度设计——"不改代码热更"在本项目不成立（GameLogic 本身就是热更程序集），时长/池容量等是美术程序属性不是策划数据。砍掉 TbEffect，元数据移到 prefab 序列化字段。
+- `EffectDriver` 加 `[SerializeField]` 元数据：`_duration`(0.5) / `_poolCapacity`(8) / `_attachMode`（内嵌枚举 World/Follow）/ `_scaleByRadius` / `_preload`；`Init(ctx)` 不再收外部 duration，用序列化值。Explosion.prefab 字段经 MCP 编辑器代码刷为 0.5/8/World/true/true（与原 9001 行一致）。
+- `EffectSystem` 改按地址播放：`Play(string address, ...)` / `PlayAttached(string, Transform)`，池按 address 隔离，加载 prefab 后直接对资产 `GetComponent<EffectDriver>()` 读元数据缓存（无需实例化）；Preload 改走内置静态注册列表 `PreloadEffects = { EffectIds.Explosion }`。新建 `GameLogic/Effect/EffectIds.cs` 常量类（`Explosion = "Explosion"`，YooAsset 文件名寻址）。
+- `IEffectEvent.OnPlayEffect` 的 effectId int 改 string address；`ProjectileSystem.SpawnExplosionVisual` 调用点改用 `EffectIds.Explosion`。
+- 拆除：`Config/EffectConfigMgr.cs`、`Datas/effect.csv`、`cfg/TbEffect.cs`/`cfg/Effect.cs`/`cfg/EEffectAttachMode.cs`（生成代码）、`AssetRaw/Configs/json/cfg_tbeffect.json`、CustomTemplate/ConfigSystem.cs 白名单 `cfg_tbeffect`；`__tables__`/`__beans__`/`__enums__` 三个 xlsx 的 TbEffect/Effect/EEffectAttachMode 登记行用 openpyxl 删除（改前留 `.pre_effect_removal.bak` 备份），导表 bat 跑通无残留。
+- Play 实测：编译 0 error；101 关预热 idle=4/8（容量从 prefab 读到 8）；火箭筒（1005）开火爆炸视觉正常+相机抖动在；同帧连发 10 个压到 active=8/idle=0、池节点=8（强制回收最老）；撤离主菜单 EffectSystem 销毁、场景 0 残留，重进 101 重预热正常；全程 Console 0 error。截图 `Assets/Screenshots/effect_m1_explosion_v2.png`。未动存档。
+
+## 2026-09-07 特效系统 M2
+- 落地 4 个新特效 prefab（`AssetRaw/Effects/`，根挂 EffectDriver）：MuzzleFlash（0.06s/池24/World，星形定向闪光）、HitSpark 与 HitSparkEnv（0.25s/池32/World，共用 HitSpark.shader 靠材质 _Tint 区分橙红/灰白）、PickupGlow（duration=0 持久/池8/Follow，呼吸圆环，目标销毁自动回收）；配套 shader（MuzzleFlash/HitSpark/PickupGlow/ScorchDecal）与材质全部落 AssetRaw 闭环引用链。
+- 爆炸补齐方案 §7.2 三段式：EffectDriver 新增 `_warningDuration`(0.08s 预警压缩闪光，火球 10% 尺度 _Flash=1、冲击波不露头) / `_blastDuration`(0.6s 主体) / `_scorchDecal`+`_scorchFadeDuration`(4s 焦痕线性淡出)；通用面片路径（`_genericVisual` 缩放 ease-out + _Progress）承载枪口/命中/光晕。
+- 触发点：枪口 BallisticSystem.cs:235（OnFire 无条件播放，按弹道方向定向）；命中 BallisticSystem.cs:247 与 ProjectileSystem.cs:397（敌=HitSpark/场景=HitSparkEnv）；拾取 PickupEntity.cs:55（PlayAttached Follow）；爆炸仍 ProjectileSystem.cs:270 IEffectEvent。5 个特效全部登记 `EffectSystem.PreloadEffects` 预热。
+- Play 实测（101 关）：编译 0 error；预热 MuzzleFlash idle=12/24、HitSpark/Env idle=16/32、PickupGlow idle=4/8、Explosion idle=4/8；真实开火链路枪口闪光+命中火花均触发（截图 `muzzle_flash3.png`）；RPG 慢动作 timeScale=0.03 抓到预警段压缩闪光球（`explosion_phase.png`），恢复正常速度后焦痕清晰（5m 深色圆痕实测见过）；killall 后 7 个掉落物光晕 active 跟随正确，截图确认淡金呼吸环（`pickup_glow8.png`）；全程 Console 0 error。未动存档。
+- 验证踩坑备忘：`Camera.main` 是小地图相机，WorldToScreenPoint 验证主画面不可信；玩家传送会被刚体弹回，验证跟随特效用临时锚点 GameObject 更可靠；GMController.RunCommand 是 private（反射需 NonPublic）；ChangeProcedure 后至少等 10s 再操作系统。
+- 遗留：高频点 GC Profiler 抽查未做（代码路径零分配设计）；真机 AOT 验证在 M5；M3 编辑器预览工具未启动。
+
+
+## 2026-09-07 AI 队友 M1/M2（LLM 队友：本地行为层落地）
+- 背景：提案 `docs/Proposal/ai/llm-companion.md` 已定稿（用户确认 5 项决策：OpenAI 兼容端点可配置 / 底部字幕条 / 真实开火 / 双场景常驻+G 键跟随开关 / "信号干扰"式断联表达），拍板先做到 M2（不依赖网络）。
+- M1 队友本体：新增 `Entity/Companion/CompanionEntity.cs`（IDamageable，胶囊+右侧武器盒占位、血条钉头顶 billboard、枪口挂点 `GetMuzzleWorldPos`）+ `FSM/Companion/` 六态（Follow 2.2m 停 / Hold / PingMove / Engage / Retreat HP<30% / Dead）+ `CompanionStateMachineDriver` 优先级仲裁（死亡>撤退>标点>交战>姿态）+ `CompanionPathMover` 四态共用寻路（含 SkipPassedWaypoints 防回抖、无导航直走）。
+- M1 护主交战：`CompanionSystem`（双场景挂载 BattleRoot/SimulationRoot）订阅 `IEnemyEvent` 维护威胁集合（Chase/Attack 敌人），Engage 态真实开火复用武器/弹道链路（步枪 1003，ownerId 区分敌我）；Play 实测威胁感知→交战→击杀闭环，整局 10 敌全灭。
+- M2 标点系统：`System/PingSystem.cs`（仅战斗场景）中键标点分类（敌人 1.0m > 掉落物/容器 1.2m > 地面钳制可走点）、15s 过期、世界标记彩色 Quad 脉冲；`IEvent/IPingEvent.cs`（PingType Move/Loot/Attack）；队友按标点类型响应：Move/Loot 标点到位→消费→StanceHold 驻守实测通过（Attack 标点与 Loot 共用分类代码，未单独实测）；`MinimapUI` 加队友绿点+标点菱形。
+- M2 字幕 UI：`UI/CompanionSubtitleUI/`（prefab 落 `AssetRaw/UI/CompanionSubtitleUI/`）底部字幕条，4s 自动隐藏、新台词顶旧；本地 bark 走 `ICompanionEvent.OnCompanionSay`（同键 4s 冷却），M3 LLM 台词同链路接入。
+- 配套改动：`KeyBindingSetting` +Ping(中键)/CompanionFollow(G)（追加式不影响旧存档）；`IBattleInputEvent.OnPingPressed`；`ProcedureBattle`/`ProcedureSimulation` 挂载系统+显示字幕；`BallisticSystem.OnFire` 按 isPlayerFire 区分（枪口修正/枪口火焰/开镜曳光抑制只对玩家开火生效）。
+- Play 实测修掉 3 个 bug：① Engage 的 `MoveTowards` arriveThreshold 误传 weaponRange*0.7(17.5m) → 进射程判定即停死原地，改 0.8m 逼近阈值（终止条件由外层"有 LoS 且在射程内"每帧判）；② 贴脸（<0.85m）枪口在敌人碰撞体内 SphereCast 丢命中 → MIN_ENGAGE_DISTANCE=1.5f 边退边打；③ 字幕 4s 自动隐藏失效 → prefab 根缺 Canvas 组件，`UIWindow.Handle_Completed` 抛 "Not found Canvas" 导致 IsPrepare=false、OnUpdate 永不驱动（2026-09-08 修，补 Canvas 后战斗+经营双场景实测计时隐藏正常）。
+- 经营场景队友排查：玩家实例名是 `Player(Clone)`，`GameObject.Find("Player")` 找不到 → `CompanionSystem.PlayerTransform` 经营场景改按 `SimulationPlayerController` 组件定位；跟随（无导航直走）与 G 键开关在经营场景实测通过。
+- 验证踩坑备忘：刚体玩家传送必须写 `rb.position`（写 transform.position 会被物理弹回）；UI prefab 根节点必须带 Canvas（框架强校验）。
+- 文档：新建 `docs/modules/ai/companion-system/`（README+progress）；提案状态更新为"M1/M2 已落地"。
+- 遗留：M3 LLM 链路（需用户提供 API key）、M4 断联降级+设置面板 API 配置；Attack 标点单独实测；队友数值配置化（随 TbCompanion）。
+
+
+## 2026-09-08 AI 队友 M3（LLM 链路）
+- 配表：`companion.xlsx`（TbCompanion：人设卡 personaPrompt + HP/移速/武器 + 跟随/交战/撤退数值 + LLM 调参：闲聊间隔/请求间隔/单局限额/超时/意图 TTL/探测间隔，16 字段）+ `companionbark.xlsx`（TbCompanionBark：18 条本地台词，trigger/权重/冷却，覆盖 safe_idle/combat_start/kill/ping_*/follow_*/link_*/low_hp/dead）+ localization.csv 19 个 `companion.*` 词条（en+zh_cn）+ ConfigSystem 白名单 2 项；导表 bat 跑通（注意：`gen_code_bin_to_project_nobom.bat` 的 REPO_ROOT 拼接有问题，用主 bat `gen_code_bin_to_project.bat`）。
+- LLM 层（`GameLogic/AI/Llm/`，热更域）：`LlmConfig`（`UserSettings/llm_config.json`，UserSettings 已在 gitignore，根目录 `llm_config.example.json` 模板）+ `LlmClient`（OpenAI 兼容 POST /chat/completions，UnityWebRequest+UniTask+Newtonsoft，response_format=json_object，失败返回 LlmResult 不抛异常）+ `PromptBuilder`（system=人设+世界观+输出契约，user=状态/HP/威胁数/最近 3 条台词防复读）+ `CompanionBrain`（纯 C# 类由 CompanionSystem 每帧 Tick：LinkState 三态 Online/Degraded/Offline、闲聊 25~40s 随机、意图裁决白名单 follow/hold/retreat + TTL 3s + 写 Context.PendingRequest、5s 全局请求间隔 + 单局 60 次限额、Offline 后台 30s 探测恢复）。
+- 接线：`CompanionSystem.Say` 废弃硬编码英文改走 `Brain.SayLocal`（TbCompanionBark 权重抽取+冷却）；队友 HP/移速/武器/跟随距离/交战距离/撤退阈值全部 TbCompanion 配置化（`CompanionEntity.WeaponConfigId` const 改实例属性，FSM 三处读取人设卡数值带兜底）。
+- Play 实测：未配置→Offline 且闲聊走本地表（safe_idle 词条正确出词+自动隐藏）；错 endpoint（127.0.0.1:9）→ Degraded→3 连败→Offline，link_lost/link_degraded 台词正常；契约解析单测（合法 JSON 过/垃圾拒/缺 say 拒）；Console 0 业务 error；未动存档。
+- 修复：OnRequestFailure 台词顺序——本地兜底先播、link_lost 压最上层不被顶掉；Offline 闲聊继续走本地表（提案"离线全走本地 bark"补全）。
+- 遗留：在线实测需真实 API key（用户自备）；kill 触发词未接线（弹道链路无 killer 归属）；M4 设置面板 API 配置项未做。

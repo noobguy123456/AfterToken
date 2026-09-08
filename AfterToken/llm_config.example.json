@@ -1,0 +1,7 @@
+{
+    "endpoint": "https://api.moonshot.cn/v1",
+    "apiKey": "sk-your-key-here",
+    "model": "kimi-k2-0905-preview",
+    "timeoutSeconds": 8.0,
+    "_comment": "复制本文件为 UserSettings/llm_config.json 并填入真实 key。endpoint 为 OpenAI 兼容服务根地址（不含 /chat/completions）。UserSettings/ 已在 gitignore 中，真实配置不会入库。"
+}

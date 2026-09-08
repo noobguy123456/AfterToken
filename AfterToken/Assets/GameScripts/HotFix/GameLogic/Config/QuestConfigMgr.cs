@@ -70,7 +70,8 @@ namespace GameLogic
             }
             foreach (var quest in ConfigSystem.Instance.Tables.TbQuest.DataList)
             {
-                if (quest.GiverNpc <= 0) continue;
+                // giverNpc=0 是任务板（quest.csv 表头约定），同样需要进索引
+                if (quest.GiverNpc < 0) continue;
                 if (!_questsByGiver.TryGetValue(quest.GiverNpc, out var list))
                 {
                     list = new List<Quest>();

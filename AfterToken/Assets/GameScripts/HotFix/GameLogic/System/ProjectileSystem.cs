@@ -260,11 +260,16 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 爆炸特效：火球（噪声侵蚀半球）+ 冲击波（地面圆环），由 <see cref="ExplosionEffectDriver"/> 自驱动自毁。
+        /// 爆炸特效：发 IEffectEvent 由 EffectSystem 播放（火球+冲击波，EffectIds.Explosion），并联动相机抖动。
+        /// 注：事件订阅链路在战斗流程内由 EffectSystem（挂在 BattleRoot）保证就绪；流程外发事件会被安全丢弃。
         /// </summary>
         private void SpawnExplosionVisual(Vector2 center, float radius)
         {
-            ExplosionEffectDriver.Create(center.ToWorld(), radius, _projectileRoot);
+            var pos = center.ToWorld();
+            pos.y = 0f;
+            GameEvent.Get<IEffectEvent>()?.OnPlayEffect(EffectIds.Explosion, pos, Quaternion.identity, new EffectContext(radius));
+            // 方案 §7.2 联动三件套之"震"：小幅度抖动，magnitude 随半径放大
+            GameEvent.Get<ICameraEvent>()?.OnCameraShake(Mathf.Clamp(radius * 0.08f, 0.1f, 0.3f), 0.15f);
         }
 
         private void Tick(ProjectileData data, float deltaTime)
@@ -355,6 +360,9 @@ namespace GameLogic
             }
             else
             {
+                // 非爆炸飞行物命中：命中特效（命中敌人橙红火花 / 命中障碍灰白碎屑）
+                SpawnHitSpark(hit);
+
                 var damageInfo = MemoryPool.Acquire<DamageInfo>();
                 damageInfo.AttackerId = data.OwnerId;
                 damageInfo.WeaponConfigId = data.ConfigId;
@@ -375,6 +383,18 @@ namespace GameLogic
             {
                 DestroyProjectile(data);
             }
+        }
+
+        /// <summary>
+        /// 飞行物命中特效：命中敌人播橙红火花（HitSpark），命中场景/障碍播灰白碎屑（HitSparkEnv）。
+        /// </summary>
+        private static void SpawnHitSpark(RaycastHit hit)
+        {
+            bool isEnemy = hit.collider != null && hit.collider.gameObject.layer == LayerMask.NameToLayer("Enemy");
+            var pos = hit.point;
+            pos.y = PROJECTILE_HEIGHT;
+            GameEvent.Get<IEffectEvent>()?.OnPlayEffect(
+                isEnemy ? EffectIds.HitSpark : EffectIds.HitSparkEnv, pos, Quaternion.identity, EffectContext.Default);
         }
 
         private void ApplyExplosionDamage(ProjectileData data, Vector2 center, WeaponConfig weaponConfig)
@@ -401,9 +421,6 @@ namespace GameLogic
 
                 GameEvent.Get<IBattleEvent>().OnEntityDamaged(damageInfo);
             }
-
-            // 爆炸特效占位
-            // SpawnExplosionEffect(center, weaponConfig);
         }
 
         private void OnProjectileHit(int projectileId, GameObject target)

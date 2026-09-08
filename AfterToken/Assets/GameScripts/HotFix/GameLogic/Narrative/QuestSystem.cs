@@ -168,39 +168,11 @@ namespace GameLogic
             if (cfg == null) return false;
 
             _states[questId] = QuestState.Completed;
-            GrantRewards(cfg.Rewards);
+            RewardSystem.Grant(RewardSystem.Parse(cfg.Rewards), $"quest:{questId}");
             Persist();
             GameEvent.Get<IQuestEvent>()?.OnQuestCompleted(questId);
-            Log.Info($"[QuestSystem] 任务完成 id={questId} rewards={cfg.Rewards}");
+            Log.Info($"[QuestSystem] 任务完成 id={questId}");
             return true;
-        }
-
-        /// <summary>
-        /// 奖励串发放：gold:200|exp:50|item:3001:2。
-        /// 复用窄口：CurrencySystem / PlayerProfileSystem / InventorySystem，不碰内部结构。
-        /// </summary>
-        private static void GrantRewards(string rewards)
-        {
-            if (string.IsNullOrWhiteSpace(rewards)) return;
-            foreach (var term in rewards.Split('|'))
-            {
-                var parts = term.Split(':');
-                switch (parts[0].Trim())
-                {
-                    case "gold" when parts.Length == 2 && int.TryParse(parts[1], out int gold):
-                        CurrencySystem.AddGold(gold);
-                        break;
-                    case "exp" when parts.Length == 2 && int.TryParse(parts[1], out int exp):
-                        PlayerProfileSystem.AddExp(exp);
-                        break;
-                    case "item" when parts.Length == 3 && int.TryParse(parts[1], out int itemId) && int.TryParse(parts[2], out int count):
-                        InventorySystem.AddItem(itemId, count);
-                        break;
-                    default:
-                        Log.Warning($"[QuestSystem] 无法解析奖励: {term}");
-                        break;
-                }
-            }
         }
 
         // ---- 事件推进 ----

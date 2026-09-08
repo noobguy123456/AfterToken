@@ -79,6 +79,7 @@ namespace GameLogic
                 HandleAimInput();
                 HandleFireInput();
                 HandleAimButtonInput();
+                HandlePingInput();
             }
 
             HandleReloadInput();
@@ -199,6 +200,18 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 标点输入（APEX 式单击标点）：按键按下时对当前准星指向发标点请求，
+        /// 上下文分类（敌人/掉落物/地面）由 PingSystem 完成。
+        /// </summary>
+        private void HandlePingInput()
+        {
+            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Ping)))
+            {
+                BattleInputEvent?.OnPingPressed();
+            }
+        }
+
         private void HandleWeaponSwitchInput()
         {
             if (_isWheelOpen) return;
@@ -301,6 +314,12 @@ namespace GameLogic
                 return;
             }
 
+            // 结算画面必须由确认按钮推进流程，Esc 不在其上叠开设置面板
+            if (GameModule.UI.HasWindow<SettlementUI>())
+            {
+                return;
+            }
+
             // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
             // 顺序：SettingsUI > BattleBagUI > LootContainerUI > NoteUI（后续可扩展 WeaponWheelUI 等）
             if (TryCloseUI<SettingsUI>()) return;
@@ -333,7 +352,7 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 是否有菜单类窗口打开（仅背包/开箱/纸条/设置，不含大地图）。
+        /// 是否有菜单类窗口打开（仅背包/开箱/纸条/结算/设置，不含大地图）。
         /// 供 MinimapUI 自身判断"被其它菜单压盖时应隐藏/退出大地图"，避免与大地图状态循环依赖。
         /// </summary>
         public static bool IsWindowMenuOpen()
@@ -341,6 +360,7 @@ namespace GameLogic
             return GameModule.UI.HasWindow<BattleBagUI>()
                 || GameModule.UI.HasWindow<LootContainerUI>()
                 || GameModule.UI.HasWindow<NoteUI>()
+                || GameModule.UI.HasWindow<SettlementUI>()
                 || GameModule.UI.HasWindow<SettingsUI>();
         }
 

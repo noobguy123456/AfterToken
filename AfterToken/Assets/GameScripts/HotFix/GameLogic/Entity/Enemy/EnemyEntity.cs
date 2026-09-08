@@ -23,7 +23,7 @@ namespace GameLogic
         private const float HEALTH_BAR_WIDTH = 1.0f;
         private const float HEALTH_BAR_HEIGHT = 0.12f;
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
-        private const float HEALTH_BAR_OFFSET_Y = 0.6f;
+        private const float HEALTH_BAR_OFFSET_Y = 1.2f;
 
         // 血条的固定世界偏移（EnsureHealthBar 时捕获）：敌人刚体不锁 Y 旋转，
         // 物理推挤会让根节点打转，血条挂在根节点下会跟着转，因此每帧钉住。
@@ -319,6 +319,8 @@ namespace GameLogic
             {
                 var bgGo = new GameObject("Background");
                 bgGo.transform.SetParent(_healthBarRoot, false);
+                // 白色 Sprite 枢轴在左边缘（(0,0.5)，保证 Fill 缩放时左缘不动），左移半宽让整条血条居中于头顶
+                bgGo.transform.localPosition = new Vector3(-HEALTH_BAR_WIDTH / 2f, 0f, 0f);
                 _healthBarBackground = bgGo.AddComponent<SpriteRenderer>();
                 _healthBarBackground.sprite = whiteSprite;
                 _healthBarBackground.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
@@ -330,6 +332,7 @@ namespace GameLogic
             {
                 var fillGo = new GameObject("Fill");
                 fillGo.transform.SetParent(_healthBarRoot, false);
+                fillGo.transform.localPosition = new Vector3(-HEALTH_BAR_WIDTH / 2f, 0f, 0f);
                 _healthBarFill = fillGo.AddComponent<SpriteRenderer>();
                 _healthBarFill.sprite = whiteSprite;
                 _healthBarFill.sortingOrder = 11;

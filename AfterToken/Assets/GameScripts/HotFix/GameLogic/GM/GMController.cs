@@ -204,6 +204,10 @@ namespace GameLogic.GM
                 LogToConsole("  exp <n>           增加经验（可触发升级）");
                 LogToConsole("  unlock <id>       付费解锁 TbUnlock 记录");
                 LogToConsole("  profile           显示等级/经验/通关记录");
+                LogToConsole("  quest list        列出全部任务（id/状态/发布者）");
+                LogToConsole("  quest accept <id> 接取任务");
+                LogToConsole("  quest turnin <id> 交付任务（需 ReadyToTurnIn）");
+                LogToConsole("  quest reset       清空任务记录");
                 LogToConsole("  clear             清空控制台");
             };
 
@@ -340,6 +344,60 @@ namespace GameLogic.GM
             _commands["clear"] = args =>
             {
                 _logs.Clear();
+            };
+
+            _commands["quest"] = args =>
+            {
+                if (args.Length == 0)
+                {
+                    LogToConsole("用法: quest list / accept <id> / turnin <id> / reset");
+                    return;
+                }
+
+                switch (args[0])
+                {
+                    case "list":
+                    {
+                        var all = QuestConfigMgr.Instance.GetAll();
+                        if (all.Count == 0)
+                        {
+                            LogToConsole("（无任务定义）");
+                            return;
+                        }
+                        foreach (var cfg in all)
+                        {
+                            LogToConsole($"  #{cfg.Id} [{QuestSystem.GetState(cfg.Id)}] {cfg.Name} (giverNpc={cfg.GiverNpc})");
+                        }
+                        break;
+                    }
+
+                    case "accept":
+                    {
+                        if (!TryParseInt(args, 1, out var id)) return;
+                        LogToConsole(QuestSystem.Accept(id)
+                            ? $"已接取任务 {id}"
+                            : $"[Error] 接取失败 {id}（不存在/条件不满足/已接取）");
+                        break;
+                    }
+
+                    case "turnin":
+                    {
+                        if (!TryParseInt(args, 1, out var id)) return;
+                        LogToConsole(QuestSystem.TryTurnIn(id)
+                            ? $"已交付任务 {id}"
+                            : $"[Error] 交付失败 {id}（状态不是 ReadyToTurnIn）");
+                        break;
+                    }
+
+                    case "reset":
+                        QuestSystem.Reset();
+                        LogToConsole("任务记录已清空（立即落盘）");
+                        break;
+
+                    default:
+                        LogToConsole($"未知子命令: {args[0]}（可用: list / accept / turnin / reset）");
+                        break;
+                }
             };
 
             _commands["save"] = args =>

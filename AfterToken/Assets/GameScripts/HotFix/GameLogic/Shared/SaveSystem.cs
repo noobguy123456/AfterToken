@@ -135,6 +135,8 @@ namespace GameLogic
             Warehouse.InvalidateCache();
             QuestSystem.InvalidateCache();
             SensitivitySetting.InvalidateCache();
+            VolumeSetting.InvalidateCache();
+            QualitySetting.InvalidateCache();
 
             // 新槽位立即落盘：空槽位被选中后即在存档界面显示为有效新档（Lv.1/默认货币）
             Flush();
@@ -402,5 +404,25 @@ namespace GameLogic
         /// 玩家自定义按键绑定；空列表 = 全部使用默认键位。
         /// </summary>
         public List<KeyBindingEntry> keyBindings = new List<KeyBindingEntry>();
+        /// <summary>
+        /// 主音量（0..1，控 AudioListener.volume）。
+        /// </summary>
+        public bool masterVolumeInitialized;
+        public float masterVolume;
+        /// <summary>
+        /// 音乐音量（0..1，走 AudioMixer 的 MusicVolume 参数）。
+        /// </summary>
+        public bool musicVolumeInitialized;
+        public float musicVolume;
+        /// <summary>
+        /// 音效音量（0..1，走 AudioMixer 的 SoundVolume 参数）。
+        /// </summary>
+        public bool soundVolumeInitialized;
+        public float soundVolume;
+        /// <summary>
+        /// 画质档位（QualitySettings 档位索引）。
+        /// </summary>
+        public bool qualityLevelInitialized;
+        public int qualityLevel;
     }
 }

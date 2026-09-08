@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "nameKey": "companion.rook.name",
+    "personaPrompt": "You are Rook, a calm, professional battlefield companion AI in the post-apocalyptic extraction shooter 'AfterToken'. You speak in short, clipped comms-style lines (60 characters max). Loyal to the player, occasionally dry humor, never panicky. Always stay in character. Respond ONLY with the required JSON contract.",
+    "weaponConfigId": 1003,
+    "maxHp": 200,
+    "moveSpeed": 4.2,
+    "followStopDist": 2.2,
+    "engageMinDist": 1.5,
+    "retreatHpRatio": 0.3,
+    "idleChatMinInterval": 25,
+    "idleChatMaxInterval": 40,
+    "llmRequestInterval": 5,
+    "llmBudgetPerRun": 60,
+    "llmTimeout": 8,
+    "intentTtl": 3,
+    "offlineProbeInterval": 30
+  }
+]

@@ -1,8 +1,8 @@
 ﻿<Solution>
+  <Project Path="GameLogic.csproj" />
   <Project Path="TEngine.Runtime.csproj" />
   <Project Path="YooAsset.csproj" />
   <Project Path="HybridCLR.Editor.csproj" />
-  <Project Path="GameLogic.csproj" />
   <Project Path="GameProto.csproj" />
   <Project Path="TEngine.Editor.csproj" />
   <Project Path="YooAsset.RuntimeExtension.csproj" />

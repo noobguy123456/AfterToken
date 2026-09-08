@@ -13,7 +13,7 @@
 | 类/文件 | 说明 |
 |---|---|
 | `GameLogic/Item/RunInventory.cs` | 关卡临时背包（静态）。`TryAdd / Clear / Items / UsedSlots / MaxSlots` |
-| `GameLogic/Item/Warehouse.cs` | 玩家仓库（静态，本期内存态）。`TryAdd / AddAll / Items / UsedSlots / MaxSlots` |
+| `GameLogic/Item/Warehouse.cs` | 玩家仓库（静态，已接入 SaveSystem 持久化：懒加载+变动即存+切槽失效）。`TryAdd / AddAll / Items / UsedSlots / MaxSlots` |
 | `GameLogic/IEvent/IItemEvent.cs` | 事件接口：`OnItemPickedUp / OnTempInventoryChanged / OnWarehouseChanged / OnInventoryFull` |
 | `GameLogic/UI/BattleBagUI/` | 战斗内临时背包面板（B 键开关），显示 `当前容量/最大容量` 与全部容量格子（空槽位以深灰框占位）；打开时隐藏准星、暂停时间，含关闭按钮，再按 B 键可关闭 |
 | `GameLogic/UI/WarehouseUI/` | 仓库面板（基地内打开），含关闭按钮；按 ESC 可关闭 |
@@ -29,4 +29,4 @@
 
 - `TryAdd` 为**整批判定**：优先填充已有堆叠，剩余需要新槽位时若容量不足则整批失败（掉落物留在地上可稍后拾取），并发 `OnInventoryFull`。
 - 仓库满时放入失败仅记警告日志（容量 200，设计上很难触达）。
-- 仓库为内存态（重启清空），持久化由 save-system 模块统一实现。
+- 仓库已接入 `SaveSystem` 持久化（`EnsureLoaded` 懒读 `WarehouseSaveData` + `Persist` 变动即存 + `InvalidateCache` 切槽失效，`ItemStack.AcquireSeq` 水位随档恢复），重启后保留。

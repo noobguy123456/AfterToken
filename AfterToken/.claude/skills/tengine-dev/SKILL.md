@@ -19,7 +19,7 @@ TEngine 是基于 HybridCLR + YooAsset + UniTask + Luban 的 Unity 游戏框架�
 7. **UI Prefab 统一放 AssetRaw**：所有热更域 UI Prefab 必须放在 `Assets/AssetRaw/UI/` 下，通过 `WindowAttribute` 的 `location` 走 YooAsset 加载，禁止放在 `Assets/Resources/` 下
 8. **模块文档与 TodoList 同步**：每次开始一个模块的设计/搭建前，必须在 `docs/modules/<module-name>/` 下新建目录，并写入 `README.md`（功能与代码介绍）和 `progress.md`（进度总结）；同时同步更新 `docs/TODO.md` 项目整体待办清单
 9. **文档改动不主动提交**：AI 只负责生成/修改 `docs/` 下的文档（如模块 README、progress.md、TODO.md、DailyRecord 等），不执行 `git add` / `git commit` / `git push`，所有文档改动由人类审阅后统一提交
-10. **游戏内容操作边界**：涉及实际游戏运行状态的操作（如 Play Mode 验证、场景切换、模拟输入、触发战斗/死亡/闪避/换弹等实时行为）受 MCP 工具限制，AI 不应强行执行。若任务需要此类验证，应明确告知用户由其在编辑器或真机中完成，并提供验证清单与预期结果
+10. **游戏内容操作边界**：以 [CLAUDE.md](../../../CLAUDE.md)「🎮 MCP 操作边界」（2026-09-06 修订）为准——Play Mode 自动化验证（读 Console、反射读写运行时状态、切换流程、GM 命令、截图核对）允许由 AI 执行；禁止模拟玩家实时输入替代手玩（手感类验证留给用户）；禁止打开/关闭 Unity 编辑器本体；验证动了存档数据必须还原并 Flush
 11. **规范优先，禁止绕过**：解决问题时必须先查阅本 skill 的 references 文档与项目规范，严格按照规范执行，不得贪图省事使用 `FromResources = true`、`Resources.Load`、临时目录等绕过方式。若规范与实际代码冲突，按 [CLAUDE.md](../../../CLAUDE.md) 第 2 步处理：用 Grep/Read 验证实际 API，优先信任代码实现，并在输出中标注冲突点。
 12. **AssetDatabase 刷新防卡策略**：`refresh_unity` 工具在编译域重载或资源导入量大时容易超时。替代方案：
     - 优先使用 `execute_code` 调用 `AssetDatabase.Refresh()` 并指定具体作用域；

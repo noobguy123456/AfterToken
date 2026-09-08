@@ -206,9 +206,35 @@ namespace GameLogic
             var config = WeaponConfigMgr.Instance?.Get(weaponConfigId);
             if (config == null) return;
 
+            // 弹道起点修正：WeaponSystem 传来的 origin 是角色中心（WeaponSystem 不感知视图层枪口），
+            // 玩家开火时改从 WeaponMountView 枪口（武器模型前端）起算，与枪口火焰/瞄准激光同源。
+            // 起点平移后必须让方向重新指向瞄准点，否则子弹不经过准星；
+            // 上游辅助瞄准/扩散对角向的修正量（direction 与 rawDirection 的夹角）原样保留叠加。
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            bool isPlayerFire = player != null && ownerId == ((IWeaponOwner)player).OwnerId;
+            if (isPlayerFire)
+            {
+                Vector2 muzzle = GetMuzzleWorldPos(player).ToXZ();
+                Vector2 aimPos = player.AimPosition;
+                Vector2 toAim = aimPos - muzzle;
+                if (toAim.sqrMagnitude > 1e-6f)
+                {
+                    Vector2 rawFromCenter = (aimPos - origin);
+                    if (rawFromCenter.sqrMagnitude > 1e-6f)
+                    {
+                        float aimDelta = Vector2.SignedAngle(rawFromCenter.normalized, direction);
+                        direction = Quaternion.Euler(0f, 0f, aimDelta) * toAim.normalized;
+                    }
+                    origin = muzzle;
+                }
+
+                // 枪口火焰只挂玩家武器（SpawnMuzzleFlash 内部取玩家枪口，队友开火不能闪在玩家枪口上）
+                SpawnMuzzleFlash(direction);
+            }
+
             if (config.ballisticType == BallisticType.Raycast)
             {
-                FireRaycast(origin, direction, config, ownerId);
+                FireRaycast(origin, direction, config, ownerId, isPlayerFire);
             }
             else if (config.ballisticType == BallisticType.Projectile)
             {
@@ -216,7 +242,36 @@ namespace GameLogic
             }
         }
 
-        private void FireRaycast(Vector2 origin, Vector2 direction, WeaponConfig config, int ownerId)
+        /// <summary>
+        /// 枪口火焰：从武器枪口（WeaponMountView 模型前端，复用火箭激光的缓存）沿射击方向播放。
+        /// World 挂载——开火瞬间定死，移动中开火不拖尾。
+        /// </summary>
+        private void SpawnMuzzleFlash(Vector2 direction)
+        {
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            if (player == null) return;
+
+            Vector3 muzzle = GetMuzzleWorldPos(player);
+            var dir3 = new Vector3(direction.x, 0f, direction.y);
+            if (dir3.sqrMagnitude < 1e-6f) return;
+
+            GameEvent.Get<IEffectEvent>()?.OnPlayEffect(
+                EffectIds.MuzzleFlash, muzzle, Quaternion.LookRotation(dir3), EffectContext.Default);
+        }
+
+        /// <summary>
+        /// 命中特效：命中敌人播橙红火花（HitSpark），命中场景/障碍播灰白碎屑（HitSparkEnv）。
+        /// </summary>
+        private static void SpawnHitSpark(Vector3 hitPoint, GameObject hitTarget)
+        {
+            bool isEnemy = hitTarget != null && hitTarget.layer == LayerMask.NameToLayer("Enemy");
+            var pos = hitPoint;
+            pos.y = BALLISTIC_HEIGHT;
+            GameEvent.Get<IEffectEvent>()?.OnPlayEffect(
+                isEnemy ? EffectIds.HitSpark : EffectIds.HitSparkEnv, pos, Quaternion.identity, EffectContext.Default);
+        }
+
+        private void FireRaycast(Vector2 origin, Vector2 direction, WeaponConfig config, int ownerId, bool isPlayerFire)
         {
             float maxDistance = config.maxRange;
             float radius = config.raycastRadius >= 0 ? config.raycastRadius : _tracerRadius;
@@ -233,6 +288,7 @@ namespace GameLogic
             {
                 hitPoint = hit.point.ToXZ();
                 hitTarget = hit.collider.gameObject;
+                SpawnHitSpark(hit.point, hitTarget);
 
                 // 立即伤害（命中反馈统一由 BattleSystem 触发，避免重复）
                 var damageInfo = MemoryPool.Acquire<DamageInfo>();
@@ -251,14 +307,11 @@ namespace GameLogic
                 DrawDebugRaycast(origin, direction, hitPoint, maxDistance, hasHit, config);
             }
 
-            // 延迟 tracer 视觉（开镜狙击直接命中镜窗中心，不播放子弹飞行动画）
-            if (WeaponSystem.Instance == null || !WeaponSystem.Instance.IsScopedSniping)
+            // 延迟 tracer 视觉（开镜狙击直接命中镜窗中心，不播放子弹飞行动画；仅玩家狙击适用）
+            if (!isPlayerFire || WeaponSystem.Instance == null || !WeaponSystem.Instance.IsScopedSniping)
             {
                 SpawnTracer(origin, hitPoint, direction, config);
             }
-
-            // 枪口特效（占位）
-            // SpawnMuzzleEffect(origin, config);
         }
 
         private void DrawDebugRaycast(Vector2 origin, Vector2 direction, Vector2 hitPoint, float maxDistance, bool hasHit, WeaponConfig config)
@@ -374,15 +427,7 @@ namespace GameLogic
 
             // 激光常态展示（RPG 无锁定）：从武器枪口沿瞄准方向延伸的直线瞄准指示。
             _rocketLaser.enabled = true;
-            // 玩家实体不变时复用缓存的枪口组件，仅玩家切换/重建时懒获取一次
-            if (_mountViewOwner != player)
-            {
-                _mountViewOwner = player;
-                _cachedMountView = player.GetComponent<WeaponMountView>();
-            }
-            Vector3 origin = _cachedMountView != null
-                ? _cachedMountView.GetMuzzleWorldPos()
-                : player.transform.position + Vector3.up * BALLISTIC_HEIGHT;
+            Vector3 origin = GetMuzzleWorldPos(player);
 
             Vector2 aimOffset = player.AimPosition - player.transform.position.ToXZ();
             Vector2 dir = aimOffset.sqrMagnitude > 1e-6f ? aimOffset.normalized : Vector2.up;
@@ -391,6 +436,22 @@ namespace GameLogic
             _rocketLaser.SetPosition(0, origin);
             // 末端保持与枪口同高，激光呈水平直线
             _rocketLaser.SetPosition(1, origin + new Vector3(dir.x, 0f, dir.y) * range);
+        }
+
+        /// <summary>
+        /// 取当前枪口世界坐标（WeaponMountView 模型前端）。
+        /// 玩家实体不变时复用缓存的枪口组件，仅玩家切换/重建时懒获取一次。
+        /// </summary>
+        private Vector3 GetMuzzleWorldPos(PlayerEntity player)
+        {
+            if (_mountViewOwner != player)
+            {
+                _mountViewOwner = player;
+                _cachedMountView = player.GetComponent<WeaponMountView>();
+            }
+            return _cachedMountView != null
+                ? _cachedMountView.GetMuzzleWorldPos()
+                : player.transform.position + Vector3.up * BALLISTIC_HEIGHT;
         }
 
         private class TracerVisual

@@ -49,6 +49,10 @@ namespace GameLogic
             renderer.sprite = PlaceholderSpriteProvider.GetWhiteSprite16();
             renderer.color = RarityColors.Get(ItemConfigMgr.Instance.GetQuality(itemId));
             renderer.sortingOrder = sortingOrder;
+
+            // 常驻拾取光晕（淡金呼吸光圈，Follow 挂载；拾取销毁本实体时由 EffectSystem 跟随回收）。
+            // 战斗外（EffectSystem 不在场）安全返回 null；稀有度染色在上方 Visual，不冲突。
+            EffectSystem.PlayAttached(EffectIds.PickupGlow, transform);
         }
 
         private void OnTriggerEnter(Collider other)

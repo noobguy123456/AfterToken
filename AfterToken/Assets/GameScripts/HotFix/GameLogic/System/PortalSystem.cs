@@ -184,15 +184,15 @@ namespace GameLogic.Portal
         }
 
         /// <summary>
-        /// 撤离结算并返回据点（经营场景）：临时背包整体转入仓库（回基地后统一清空），
-        /// 跨玩法联动结算撤离奖励（金币/经验）与通关记录（驱动关卡链解锁）。
+        /// 撤离结算并弹出结算画面：快照临时背包 → 转仓库 → 发放 meta 奖励（SettlementSystem），
+        /// 然后打开 SettlementUI 展示战利品与奖励；切回经营流程挪到结算画面确认按钮，
+        /// 避免玩家还没看清收获就被切场景（回基地后 ProcedureSimulation.EnterAsync 才清空临时背包）。
         /// 供 RETURN_BASE 传送门与撤离点（ExtractionSystem）共用。
         /// </summary>
         public static void ExtractToBase()
         {
-            Warehouse.AddAll(RunInventory.Items);
-            CrossPlayLink.OnBattleExtracted(BattleContext.CurrentLevelId);
-            GameApp.ChangeProcedure<ProcedureSimulation>();
+            var data = SettlementSystem.CaptureAndSettle(BattleContext.CurrentLevelId);
+            GameModule.UI.ShowUIAsync<SettlementUI>(data);
         }
 
         private void OnEnemySpawned(int enemyId, int configId)
