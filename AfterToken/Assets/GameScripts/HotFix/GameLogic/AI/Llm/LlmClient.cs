@@ -13,12 +13,15 @@ namespace GameLogic.AI.Llm
         public readonly bool Ok;
         public readonly string Text;
         public readonly string Error;
+        /// <summary>本次请求 token 用量（端点上报告 usage 时填充，否则 0）。</summary>
+        public readonly int TokensUsed;
 
-        public LlmResult(bool ok, string text, string error)
+        public LlmResult(bool ok, string text, string error, int tokensUsed = 0)
         {
             Ok = ok;
             Text = text;
             Error = error;
+            TokensUsed = tokensUsed;
         }
 
         public static LlmResult Fail(string error) => new LlmResult(false, null, error);
@@ -57,7 +60,7 @@ namespace GameLogic.AI.Llm
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("Authorization", "Bearer " + _config.apiKey);
+            req.SetRequestHeader("Authorization", "Bearer " + _config.GetApiKey());
             req.timeout = (int)Math.Ceiling(_config.EffectiveTimeout);
 
             try
@@ -93,7 +96,7 @@ namespace GameLogic.AI.Llm
             var root = new JObject
             {
                 ["model"] = _config.model,
-                ["temperature"] = 0.8,
+                ["temperature"] = _config.EffectiveTemperature,
                 ["max_tokens"] = 120,
                 ["messages"] = new JArray
                 {
@@ -120,7 +123,8 @@ namespace GameLogic.AI.Llm
                 {
                     return LlmResult.Fail("empty_content");
                 }
-                return new LlmResult(true, content, null);
+                int tokens = root["usage"]?["total_tokens"]?.Value<int>() ?? 0;
+                return new LlmResult(true, content, null, tokens);
             }
             catch (Exception e)
             {

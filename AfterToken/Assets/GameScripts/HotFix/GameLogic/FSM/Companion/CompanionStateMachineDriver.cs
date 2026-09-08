@@ -66,6 +66,27 @@ namespace GameLogic
             }
 
             context.NearestThreat = FindNearestThreat(owner.transform.position.ToXZ(), threats);
+
+            // 主动开火感知：警戒半径内 + 视线通畅的最近敌人（敌人未追击也算）
+            context.NearestVisibleEnemy = FindNearestVisibleEnemy(owner.transform.position.ToXZ());
+
+            // LLM 指令（M5）：过期清理 + engage 目标解析（目标死亡/失效则指令作废）
+            if (!context.HasLlmDirective)
+            {
+                if (context.LlmAction != null)
+                {
+                    context.ClearLlmDirective();
+                }
+            }
+            else if (context.LlmAction == "engage")
+            {
+                context.LlmTarget = null;
+                if (EnemyRegistry.TryGet(context.LlmTargetId, out var llmTarget)
+                    && llmTarget != null && !llmTarget.IsDead)
+                {
+                    context.LlmTarget = llmTarget;
+                }
+            }
         }
 
         /// <summary>
@@ -117,7 +138,8 @@ namespace GameLogic
                 }
             }
 
-            // 4. 交战（护主）：有威胁则交战；威胁清空后回到姿态
+            // 4. 交战（护主）：有威胁或警戒半径内有可见敌人则交战；清空后回到姿态
+            // （交战压过 LLM 指令：护主是硬行为，LLM 只能在非战斗时调度姿态/移动）
             if (context.WantsEngage)
             {
                 return typeof(CompanionEngageState);
@@ -127,7 +149,32 @@ namespace GameLogic
                 return GetStanceState(context);
             }
 
-            // 5. 姿态
+            // 5. LLM 操控指令（M5）：仅 llm 操控模式且链路未断时生效；
+            // 死亡/低血撤退/玩家标点/交战护主（上方硬规矩）永远压过它
+            if (CompanionSystem.IsLlmControlActive && context.HasLlmDirective)
+            {
+                switch (context.LlmAction)
+                {
+                    case "follow":
+                        return typeof(CompanionFollowState);
+                    case "hold":
+                    case "retreat": // LLM 撤退建议映射驻守（生存撤退由上方硬规则管）
+                        return typeof(CompanionHoldState);
+                    case "move_to":
+                    case "loot":
+                    case "extract":
+                        return typeof(CompanionPingMoveState);
+                    case "engage":
+                        if (context.LlmTarget != null && !context.LlmTarget.IsDead)
+                        {
+                            return typeof(CompanionEngageState);
+                        }
+                        context.ClearLlmDirective(); // 目标已死/失效，指令作废
+                        break;
+                }
+            }
+
+            // 6. 姿态
             return GetStanceState(context);
         }
 
@@ -156,6 +203,48 @@ namespace GameLogic
                     nearestSqr = sqr;
                     nearest = enemy;
                 }
+            }
+            return nearest;
+        }
+
+        /// <summary>主动开火警戒半径兜底值（TbCompanion.proactiveEngageDist 缺失时用）。</summary>
+        public const float ProactiveEngageDistFallback = 12f;
+
+        /// <summary>主动开火警戒半径。</summary>
+        public static float ProactiveEngageDist
+        {
+            get
+            {
+                var persona = CompanionConfigMgr.Instance.Get();
+                return persona != null && persona.ProactiveEngageDist > 0.1f
+                    ? persona.ProactiveEngageDist : ProactiveEngageDistFallback;
+            }
+        }
+
+        private static readonly int ObstacleMask = LayerMask.GetMask("Obstacle");
+
+        /// <summary>
+        /// 主动开火感知：警戒半径内离队友最近、且视线通畅（不被 Obstacle 遮挡）的敌人。
+        /// 敌人处于 Idle/巡逻也算——队友先发制人，而不是等被追击才还手。
+        /// </summary>
+        private static EnemyEntity FindNearestVisibleEnemy(Vector2 ownerPos)
+        {
+            var all = EnemyRegistry.All;
+            if (all == null || all.Count == 0) return null;
+
+            float maxSqr = ProactiveEngageDist * ProactiveEngageDist;
+            EnemyEntity nearest = null;
+            float nearestSqr = float.MaxValue;
+            foreach (var enemy in all)
+            {
+                if (enemy == null || enemy.IsDead) continue;
+                Vector2 enemyPos = enemy.transform.position.ToXZ();
+                float sqr = (enemyPos - ownerPos).sqrMagnitude;
+                if (sqr > maxSqr || sqr >= nearestSqr) continue;
+                // 视线被挡不算（与交战开火同一语义，隔着墙不主动招惹）
+                if (Physics.Linecast(ownerPos.ToWorld(0.5f), enemyPos.ToWorld(0.5f), ObstacleMask)) continue;
+                nearestSqr = sqr;
+                nearest = enemy;
             }
             return nearest;
         }

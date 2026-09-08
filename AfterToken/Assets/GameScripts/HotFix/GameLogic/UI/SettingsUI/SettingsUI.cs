@@ -42,16 +42,31 @@ namespace GameLogic
             Audio,
             Graphics,
             Input,
+            AI,
         }
+
+        /// <summary>页签常态/选中色（重构后的左侧页签栏高亮）。</summary>
+        private static readonly Color TabNormalColor = new Color(0.14f, 0.16f, 0.19f, 1f);
+        private static readonly Color TabSelectedColor = new Color(0.16f, 0.55f, 0.38f, 1f);
 
         private Button _tabGeneralButton;
         private Button _tabAudioButton;
         private Button _tabGraphicsButton;
         private Button _tabInputButton;
+        private Button _tabAIButton;
         private GameObject _panelGeneral;
         private GameObject _panelAudio;
         private GameObject _panelGraphics;
         private GameObject _panelInput;
+        private GameObject _panelAI;
+
+        // ---- AI 页签：LLM 配置 ----
+        private TMP_InputField _llmEndpointInput;
+        private TMP_InputField _llmApiKeyInput;
+        private TMP_InputField _llmModelInput;
+        private Toggle _llmControlModeToggle;
+        private Button _llmSaveButton;
+        private TextMeshProUGUI _llmStatusText;
 
         // ---- Audio 页签：音量 ----
         private Slider _masterVolumeSlider;
@@ -93,8 +108,8 @@ namespace GameLogic
         private KeyBindAction _capturingAction;
         private TextMeshProUGUI _capturingKeyText;
 
-        private const float BindingRowHeight = 50f;
-        private const float BindingRowSpacing = 6f;
+        private const float BindingRowHeight = 44f;
+        private const float BindingRowSpacing = 4f;
 
         #region 脚本工具生成的代码
 
@@ -106,8 +121,8 @@ namespace GameLogic
             _scopeSensitivitySlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_General/m_slider_ScopeSensitivity");
             _scopeSensitivityValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_ScopeSensitivityValue");
             _sniperAimModeToggle = FindChildComponent<Toggle>("m_rect_ContentRoot/m_panel_General/m_toggle_SniperAimMode");
-            _closeButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_Close");
-            _returnMainMenuButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_ReturnMainMenu");
+            _closeButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_Close");
+            _returnMainMenuButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_ReturnMainMenu");
 
             _crosshairStyleButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_CrosshairStyle");
             _crosshairStyleText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_CrosshairStyle/m_text_Label");
@@ -121,6 +136,7 @@ namespace GameLogic
             _tabAudioButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabAudio");
             _tabGraphicsButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabGraphics");
             _tabInputButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabInput");
+            _tabAIButton = FindChildComponent<Button>("m_rect_ContentRoot/m_btn_TabAI");
             _languageButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_General/m_btn_Language");
             if (_languageButton != null)
             {
@@ -134,6 +150,15 @@ namespace GameLogic
             _panelGraphics = panelGraphics != null ? panelGraphics.gameObject : null;
             var panelInput = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_Input");
             _panelInput = panelInput != null ? panelInput.gameObject : null;
+            var panelAI = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_AI");
+            _panelAI = panelAI != null ? panelAI.gameObject : null;
+
+            _llmEndpointInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmEndpoint");
+            _llmApiKeyInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmApiKey");
+            _llmModelInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmModel");
+            _llmControlModeToggle = FindChildComponent<Toggle>("m_rect_ContentRoot/m_panel_AI/m_toggle_LlmControlMode");
+            _llmSaveButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_AI/m_btn_LlmSave");
+            _llmStatusText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmStatus");
 
             _masterVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_MasterVolume");
             _masterVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MasterVolumeValue");
@@ -178,6 +203,7 @@ namespace GameLogic
             UpdateCrosshairViews();
             InitializeVolume();
             UpdateQualityView();
+            InitializeLlmPanel();
             ShowTab(SettingsTab.General);
         }
 
@@ -232,6 +258,21 @@ namespace GameLogic
             {
                 _tabInputButton.onClick.RemoveAllListeners();
                 _tabInputButton.onClick.AddListener(() => ShowTab(SettingsTab.Input));
+            }
+            if (_tabAIButton != null)
+            {
+                _tabAIButton.onClick.RemoveAllListeners();
+                _tabAIButton.onClick.AddListener(() => ShowTab(SettingsTab.AI));
+            }
+            if (_llmSaveButton != null)
+            {
+                _llmSaveButton.onClick.RemoveAllListeners();
+                _llmSaveButton.onClick.AddListener(OnLlmSaveClicked);
+            }
+            if (_llmControlModeToggle != null)
+            {
+                _llmControlModeToggle.onValueChanged.RemoveAllListeners();
+                _llmControlModeToggle.onValueChanged.AddListener(_ => UpdateLlmControlModeText());
             }
             if (_masterVolumeSlider != null)
             {
@@ -332,6 +373,137 @@ namespace GameLogic
             {
                 _panelInput.SetActive(tab == SettingsTab.Input);
             }
+            if (_panelAI != null)
+            {
+                _panelAI.SetActive(tab == SettingsTab.AI);
+            }
+            if (tab == SettingsTab.AI)
+            {
+                UpdateLlmStatusView();
+            }
+            UpdateTabHighlight(tab);
+        }
+
+        /// <summary>页签选中高亮：选中页签按钮染主题绿，其余回常态色。</summary>
+        private void UpdateTabHighlight(SettingsTab tab)
+        {
+            SetTabColor(_tabGeneralButton, tab == SettingsTab.General);
+            SetTabColor(_tabAudioButton, tab == SettingsTab.Audio);
+            SetTabColor(_tabGraphicsButton, tab == SettingsTab.Graphics);
+            SetTabColor(_tabInputButton, tab == SettingsTab.Input);
+            SetTabColor(_tabAIButton, tab == SettingsTab.AI);
+        }
+
+        private static void SetTabColor(Button button, bool selected)
+        {
+            var image = button != null ? button.GetComponent<Image>() : null;
+            if (image != null)
+            {
+                image.color = selected ? TabSelectedColor : TabNormalColor;
+            }
+        }
+
+        // ---- AI 页签：LLM 配置 ----
+
+        /// <summary>打开面板时回填当前配置；apiKey 输入框留空表示"不改动已有 key"。</summary>
+        private void InitializeLlmPanel()
+        {
+            var config = AI.Llm.LlmConfig.Load();
+            if (_llmEndpointInput != null)
+            {
+                _llmEndpointInput.text = config.endpoint ?? string.Empty;
+            }
+            if (_llmApiKeyInput != null)
+            {
+                _llmApiKeyInput.text = string.Empty;
+                _llmApiKeyInput.contentType = TMP_InputField.ContentType.Password;
+                // 已有 key 时用占位符提示"已保存，输入则覆盖"
+                if (_llmApiKeyInput.placeholder is TextMeshProUGUI placeholder)
+                {
+                    placeholder.text = !string.IsNullOrEmpty(config.GetApiKey()) ? "********" : "sk-...";
+                }
+            }
+            if (_llmModelInput != null)
+            {
+                _llmModelInput.text = config.model ?? string.Empty;
+            }
+            if (_llmControlModeToggle != null)
+            {
+                _llmControlModeToggle.isOn = config.IsLlmControl;
+                UpdateLlmControlModeText();
+            }
+            UpdateLlmStatusView();
+        }
+
+        /// <summary>操控开关右侧文本显示当前模式（LLM/FSM），与狙击开镜开关同模式。</summary>
+        private void UpdateLlmControlModeText()
+        {
+            if (_llmControlModeToggle == null) return;
+            var label = _llmControlModeToggle.transform.Find("m_text_Label")?.GetComponent<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.text = _llmControlModeToggle.isOn ? "LLM" : "FSM";
+            }
+        }
+
+        private void OnLlmSaveClicked()
+        {
+            var old = AI.Llm.LlmConfig.Load();
+            var config = new AI.Llm.LlmConfig
+            {
+                endpoint = _llmEndpointInput != null ? _llmEndpointInput.text.Trim() : old.endpoint,
+                // 输入框留空 = 保留旧 key
+                apiKey = _llmApiKeyInput != null && !string.IsNullOrEmpty(_llmApiKeyInput.text)
+                    ? _llmApiKeyInput.text.Trim()
+                    : old.GetApiKey(),
+                model = _llmModelInput != null ? _llmModelInput.text.Trim() : old.model,
+                timeoutSeconds = old.timeoutSeconds,
+                temperature = old.temperature,
+                controlMode = _llmControlModeToggle != null && _llmControlModeToggle.isOn ? "llm" : "fsm",
+            };
+
+            bool saved = AI.Llm.LlmConfig.Save(config);
+            if (saved && _llmApiKeyInput != null)
+            {
+                _llmApiKeyInput.text = string.Empty;
+            }
+            // 局内队友立即套用新配置
+            CompanionSystem.Instance?.Brain?.ReloadConfig();
+            UpdateLlmStatusView(saved
+                ? Loc.Get("ui.settings.llm.saved")
+                : Loc.Get("ui.settings.llm.save_failed"));
+        }
+
+        /// <summary>刷新链路状态行；message 非空时优先显示（保存反馈）。</summary>
+        private void UpdateLlmStatusView(string message = null)
+        {
+            if (_llmStatusText == null)
+            {
+                return;
+            }
+            if (message != null)
+            {
+                _llmStatusText.text = message;
+                return;
+            }
+
+            var config = AI.Llm.LlmConfig.Load();
+            string configured = Loc.Get(config.IsValid ? "ui.settings.llm.configured" : "ui.settings.llm.not_configured");
+            var brain = CompanionSystem.Instance?.Brain;
+            if (brain == null)
+            {
+                // 不在局内没有链路状态，只显示是否已配置
+                _llmStatusText.text = configured;
+                return;
+            }
+
+            string linkKey = brain.LinkState switch
+            {
+                AI.Llm.CompanionLinkState.Online => "ui.settings.llm.status.online",
+                AI.Llm.CompanionLinkState.Degraded => "ui.settings.llm.status.degraded",
+                _ => "ui.settings.llm.status.offline",
+            };
+            _llmStatusText.text = $"{configured} | {Loc.Get(linkKey)}";
         }
 
         // ---- Audio 页签：音量 ----
@@ -478,19 +650,26 @@ namespace GameLogic
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabAudio/m_text_Label"), "ui.settings.tab.audio");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabGraphics/m_text_Label"), "ui.settings.tab.graphics");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabInput/m_text_Label"), "ui.settings.tab.input");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_TabAI/m_text_Label"), "ui.settings.tab.ai");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_LanguageLabel"), "ui.settings.language");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_SensitivityLabel"), "ui.settings.crosshair_sensitivity");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_ScopeSensitivityLabel"), "ui.settings.scope_sensitivity");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_SniperAimLabel"), "ui.settings.sniper_aim_mode");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_CrosshairStyleLabel"), "ui.settings.crosshair_style");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_text_CrosshairColorLabel"), "ui.settings.crosshair_color");
-            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_Close/m_text_Close"), "ui.common.close");
-            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_General/m_btn_ReturnMainMenu/m_text_Close"), "ui.common.main_menu");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_btn_ReturnMainMenu/m_text_Close"), "ui.common.main_menu");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Input/m_btn_ResetBindings/m_text_Label"), "ui.settings.reset_defaults");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MasterVolumeLabel"), "ui.settings.master_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeLabel"), "ui.settings.music_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeLabel"), "ui.settings.sound_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Graphics/m_text_QualityLabel"), "ui.settings.quality");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmEndpointLabel"), "ui.settings.llm.endpoint");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmApiKeyLabel"), "ui.settings.llm.apikey");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmModelLabel"), "ui.settings.llm.model");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmControlModeLabel"), "ui.settings.llm.control_mode");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmStatusLabel"), "ui.settings.llm.status");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_btn_LlmSave/m_text_Label"), "ui.settings.llm.save");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmHint"), "ui.settings.llm.hint");
         }
 
         /// <summary>

@@ -21,6 +21,7 @@ namespace GameLogic
         Map = 8,
         Ping = 9,
         CompanionFollow = 10,
+        CompanionChat = 11,
     }
 
     /// <summary>
@@ -54,6 +55,7 @@ namespace GameLogic
                 case KeyBindAction.Map: return KeyCode.M;
                 case KeyBindAction.Ping: return KeyCode.Mouse2;
                 case KeyBindAction.CompanionFollow: return KeyCode.G;
+                case KeyBindAction.CompanionChat: return KeyCode.T;
                 default: return KeyCode.None;
             }
         }
@@ -76,6 +78,7 @@ namespace GameLogic
                 case KeyBindAction.Map: return "Map";
                 case KeyBindAction.Ping: return "Ping";
                 case KeyBindAction.CompanionFollow: return "Companion Follow";
+                case KeyBindAction.CompanionChat: return "Companion Chat";
                 default: return action.ToString();
             }
         }

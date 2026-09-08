@@ -47,6 +47,12 @@ namespace GameLogic
 
         private void Update()
         {
+            // 聊天输入框打开时键盘/鼠标归输入框，不响应摆放旋转与场景点击
+            if (CompanionChatUI.IsOpen)
+            {
+                return;
+            }
+
             if (!_isPlacing)
             {
                 // 非摆放模式：左键点击场景建筑打开信息面板

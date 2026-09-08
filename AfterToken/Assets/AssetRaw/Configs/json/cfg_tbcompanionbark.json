@@ -124,5 +124,19 @@
     "textKey": "companion.bark.dead",
     "weight": 1,
     "cooldown": 0
+  },
+  {
+    "id": 70,
+    "trigger": "chat_busy",
+    "textKey": "companion.bark.chat_busy.1",
+    "weight": 1,
+    "cooldown": 3
+  },
+  {
+    "id": 71,
+    "trigger": "chat_busy",
+    "textKey": "companion.bark.chat_busy.2",
+    "weight": 1,
+    "cooldown": 3
   }
 ]

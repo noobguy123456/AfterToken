@@ -208,6 +208,7 @@ namespace GameLogic.GM
                 LogToConsole("  quest accept <id> 接取任务");
                 LogToConsole("  quest turnin <id> 交付任务（需 ReadyToTurnIn）");
                 LogToConsole("  quest reset       清空任务记录");
+                LogToConsole("  companion stats   AI 队友链路状态 + LLM 操控遥测汇总");
                 LogToConsole("  clear             清空控制台");
             };
 
@@ -398,6 +399,23 @@ namespace GameLogic.GM
                         LogToConsole($"未知子命令: {args[0]}（可用: list / accept / turnin / reset）");
                         break;
                 }
+            };
+
+            _commands["companion"] = args =>
+            {
+                if (args.Length == 0 || args[0] == "stats")
+                {
+                    var brain = CompanionSystem.Instance?.Brain;
+                    if (brain == null)
+                    {
+                        LogToConsole("[Error] 队友系统不在场（需进入战斗/经营场景）");
+                        return;
+                    }
+                    LogToConsole($"链路: {brain.LinkState}");
+                    LogToConsole(brain.DecisionDriver?.GetStatsSummary() ?? "DecisionDriver 未初始化");
+                    return;
+                }
+                LogToConsole($"未知子命令: {args[0]}（可用: stats）");
             };
 
             _commands["save"] = args =>

@@ -518,5 +518,157 @@
     "zh_tw": "",
     "ja": "",
     "ko": ""
+  },
+  {
+    "key": "ui.settings.tab.ai",
+    "en": "AI",
+    "zh_cn": "AI",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.endpoint",
+    "en": "API Endpoint",
+    "zh_cn": "接口地址",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.apikey",
+    "en": "API Key",
+    "zh_cn": "API 密钥",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.model",
+    "en": "Model",
+    "zh_cn": "模型",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.save",
+    "en": "Save",
+    "zh_cn": "保存",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.saved",
+    "en": "Saved.",
+    "zh_cn": "已保存。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.save_failed",
+    "en": "Save failed (device encryption unavailable).",
+    "zh_cn": "保存失败（设备加密不可用）。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.control_mode",
+    "en": "AI Control (LLM drives companion)",
+    "zh_cn": "AI 操控（LLM 驾驶队友）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.status",
+    "en": "Link Status",
+    "zh_cn": "链路状态",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.status.online",
+    "en": "Online",
+    "zh_cn": "在线",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.status.degraded",
+    "en": "Degraded",
+    "zh_cn": "信号干扰",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.status.offline",
+    "en": "Offline",
+    "zh_cn": "离线",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.configured",
+    "en": "Configured",
+    "zh_cn": "已配置",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.not_configured",
+    "en": "Not configured",
+    "zh_cn": "未配置",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.hint",
+    "en": "Stored locally; API key is encrypted on this device.",
+    "zh_cn": "配置仅存本地；API 密钥本机加密存储。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.chat_busy.1",
+    "en": "Not now, boss. Contacts.",
+    "zh_cn": "现在没空，boss。有敌人。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.chat_busy.2",
+    "en": "Talk later. Busy.",
+    "zh_cn": "回头再聊。现在忙着。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.chat.hint",
+    "en": "Type a message... (Enter send / Esc close)",
+    "zh_cn": "输入消息……（Enter 发送 / Esc 关闭）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.chat.transmitting",
+    "en": "transmitting...",
+    "zh_cn": "发送中……",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
   }
 ]

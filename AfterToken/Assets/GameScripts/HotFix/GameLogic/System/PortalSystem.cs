@@ -193,6 +193,23 @@ namespace GameLogic.Portal
         {
             var data = SettlementSystem.CaptureAndSettle(BattleContext.CurrentLevelId);
             GameModule.UI.ShowUIAsync<SettlementUI>(data);
+            CloseTransitionAfterSettlement().Forget();
+        }
+
+        /// <summary>
+        /// PortalTransitionMgr 渐显 TransitionUI 后在成功路径不会关闭它（注释约定由"新流程"关，
+        /// 但撤离流程先弹结算窗、还没切流程），TransitionUI 是 System 层全屏窗，会压住
+        /// Top 层的 SettlementUI 使其被框架隐藏（根节点 layer 切到 Ignore Raycast）。
+        /// 等结算窗加载完成后再关掉转场窗：结算窗自带全屏暗底，关闭瞬间不会闪战斗场景。
+        /// </summary>
+        private static async UniTaskVoid CloseTransitionAfterSettlement()
+        {
+            var settlement = await GameModule.UI.GetUIAsyncAwait<SettlementUI>();
+            if (settlement == null)
+            {
+                return;
+            }
+            GameModule.UI.CloseUI<TransitionUI>();
         }
 
         private void OnEnemySpawned(int enemyId, int configId)

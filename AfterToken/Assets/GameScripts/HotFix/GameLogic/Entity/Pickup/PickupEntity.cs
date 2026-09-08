@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TEngine;
 using UnityEngine;
 
@@ -11,8 +12,24 @@ namespace GameLogic
     [RequireComponent(typeof(SphereCollider))]
     public class PickupEntity : MonoBehaviour
     {
+        /// <summary>当前场上所有掉落物（OnEnable/OnDisable 自动维护，与 EnemyRegistry 同模式）。</summary>
+        public static readonly List<PickupEntity> Instances = new List<PickupEntity>();
+
         private int _itemId;
         private int _count;
+
+        /// <summary>掉落物配置 Id（战场快报/调试显示用）。</summary>
+        public int ItemId => _itemId;
+
+        private void OnEnable()
+        {
+            Instances.Add(this);
+        }
+
+        private void OnDisable()
+        {
+            Instances.Remove(this);
+        }
 
         /// <summary>
         /// 在指定位置生成一个掉落物。

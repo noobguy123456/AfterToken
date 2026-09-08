@@ -32,6 +32,14 @@ namespace GameLogic
         /// <summary>威胁集合（追击/攻击状态敌人的 InstanceID），供驱动器聚合感知。</summary>
         public HashSet<int> Threats => _threats;
 
+        /// <summary>
+        /// LLM 操控通道（M5）是否生效：配置开启 llm 模式且链路未断（Offline 自动回退本地 FSM）。
+        /// </summary>
+        public static bool IsLlmControlActive =>
+            Instance != null && Instance._brain != null
+            && Instance._brain.LinkState != CompanionLinkState.Offline
+            && LlmConfig.Load().IsLlmControl;
+
         /// <summary>玩家 Transform：战斗场景走 PlayerSystem，经营场景找 Player 物体（PlayerEntity 已被移除）。</summary>
         public Transform PlayerTransform
         {
@@ -90,10 +98,16 @@ namespace GameLogic
                 SpawnCompanion(PlayerTransform.position + SpawnOffset);
             }
 
-            // 跟随开关（G）：两个场景通用，故不走战斗 InputSystem
-            if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.CompanionFollow)))
+            // 跟随开关（G）：两个场景通用，故不走战斗 InputSystem；聊天输入框打开时键盘归输入框
+            if (!CompanionChatUI.IsOpen && Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.CompanionFollow)))
             {
                 ToggleFollow();
+            }
+
+            // 自由对话（M6）：安全状态才开聊；战斗中按键播"没空" bark
+            if (!CompanionChatUI.IsOpen && Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.CompanionChat)))
+            {
+                TryOpenChat();
             }
 
             _brain?.Tick(Time.deltaTime);
@@ -111,6 +125,22 @@ namespace GameLogic
             _companion = go.AddComponent<CompanionEntity>();
             _companion.Initialize(maxHp, moveSpeed, weaponId);
             Log.Info("[CompanionSystem] 队友已生成");
+        }
+
+        /// <summary>
+        /// 打开自由对话（M6）：队友存活且不在交战（含主动开火警戒）时才开聊，
+        /// 战斗中按键播"没空" bark 作即时反馈。
+        /// </summary>
+        private void TryOpenChat()
+        {
+            if (_companion == null || _companion.IsDead || _companion.Context == null) return;
+
+            if (_companion.Context.WantsEngage)
+            {
+                Say("chat_busy");
+                return;
+            }
+            GameModule.UI.ShowUIAsync<CompanionChatUI>();
         }
 
         private void ToggleFollow()
@@ -180,6 +210,8 @@ namespace GameLogic
             ctx.PingType = type;
             ctx.PingPos = pos;
             ctx.PingTargetId = targetId;
+            // 玩家标点永远压过 LLM 指令（硬规矩）
+            ctx.ClearLlmDirective();
 
             switch (type)
             {

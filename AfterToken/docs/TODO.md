@@ -39,7 +39,7 @@
 | LoadingUI 与场景过渡 | ✅ | - | - | `docs/modules/ui/loading-system/` | `GameplayProcedureBase` 统一加载 |
 | 命中反馈 | ✅ | - | - | `docs/modules/ui/hit-feedback-system/` | 伤害飘字、受击指示、命中标记 |
 | 光标系统 | ✅ | - | - | `docs/modules/ui/cursor-system/` | 显示/隐藏、锁定模式、自定义光标纹理 |
-| 设置 UI | 🟡 | P2 | - | `docs/modules/ui/settings-ui/` | 四页签 General/Audio/Graphics/Input 已完成并入档（灵敏度/开镜/按键改绑/准星/音量/画质/语言切换）；待 M4 LLM API 配置项 |
+| 设置 UI | ✅ | P2 | - | `docs/modules/ui/settings-ui/` | 五页签 General/Audio/Graphics/Input/AI 完成并入档（灵敏度/开镜/按键改绑/准星/音量/画质/语言/LLM 配置+操控开关+链路状态，AI 页签 prefab 化并实测保存热生效） |
 | 经营 UI | 🟡 | P1 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | 渲染架构已统一 Overlay；三个经营窗口已正式 Prefab 化并集中到 `AssetRaw/UI/Simulation/`；待办：UI 特效（序列帧） |
 
 ### 战斗系统
@@ -116,7 +116,7 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| AI 队友系统 | 🟡 | P1 | 在线实测需真实 API key | `docs/modules/ai/companion-system/` | M1 队友本体 + M2 标点系统 + M3 LLM 链路（LlmClient/PromptBuilder/CompanionBrain 三态降级、TbCompanion/TbCompanionBark 配表、数值配置化）已落地，离线链路 Play 实测通过（2026-09-07/08）；待在线实测、M4 设置面板 API 配置 |
+| AI 队友系统 | ✅ | P1 | - | `docs/modules/ai/companion-system/` | M1 本体 + M2 标点 + M3 LLM 链路 + M4 加密存储/设置面板 AI 页签 + M5 实时操控通道 + M6 自由对话（T 键聊天）全部落地并在线实测通过（2026-09-08，DeepSeek）；另有主动开火（12m 警戒先发制人）与人设强化；待：Degraded 字幕样式、M5 loot 指令打磨 |
 
 ### 管线与工具
 
@@ -549,3 +549,37 @@ Luban 配置表数据补充
 - Play 实测：未配置→Offline 且闲聊走本地表（safe_idle 词条正确出词+自动隐藏）；错 endpoint（127.0.0.1:9）→ Degraded→3 连败→Offline，link_lost/link_degraded 台词正常；契约解析单测（合法 JSON 过/垃圾拒/缺 say 拒）；Console 0 业务 error；未动存档。
 - 修复：OnRequestFailure 台词顺序——本地兜底先播、link_lost 压最上层不被顶掉；Offline 闲聊继续走本地表（提案"离线全走本地 bark"补全）。
 - 遗留：在线实测需真实 API key（用户自备）；kill 触发词未接线（弹道链路无 killer 归属）；M4 设置面板 API 配置项未做。
+
+## 2026-09-08 AI 队友 M3 收尾 + M4 + M5（用户提供 DeepSeek key）
+- M3 收尾：LlmClient temperature 0.8→0.4（`LlmConfig.temperature` 可调，人格稳定优先）；`PromptBuilder` system prompt 加 8 条 few-shot 示例（快照格式↔契约 JSON 一一对应，固化 Rook 语气）。
+- M4 加密存储（用户明确要求兼容安卓）：新增 `AI/Llm/SecretStore.cs`——AES-256-CBC + PBKDF2(SystemInfo.deviceUniqueIdentifier + 应用盐 + productName) 派生密钥，单套代码跨 Windows/Android，弃 DPAPI；密文格式 `ATENC1:` + Base64(salt|iv|cipher)，salt 逐条混入密钥；deviceUniqueIdentifier 失效（刷机/换机）按未配置降级 Offline 不闪退。`LlmConfig` 双模读取（魔数判密文/明文）+ 旧明文加载即自动迁移密文 + `Save()`（加密不可用时拒绝明文落盘）。
+- M4 设置面板 AI 页签（代码侧完成，prefab 控件待 Unity MCP 建）：SettingsTab.AI + m_panel_AI 一套控件绑定（endpoint/apiKey 密码框/model 输入、LLM 操控开关、保存按钮、链路状态行，全部 null 容错）；保存→加密落盘→`CompanionBrain.ReloadConfig()` 局内热生效；apiKey 输入框留空=保留旧 key；16 个 `ui.settings.llm.*` 词条（en+zh_cn）。
+- M5a 技能表接线：`CompanionStateContext` 加 LLM 指令槽（LlmAction/LlmTargetPos/LlmTargetId/TTL 过期/解析后目标）；驱动器仲裁在"标点"与"交战"之间插 LLM 指令层（死亡/低血撤退/玩家标点硬规矩永远压过它，玩家标点落点即清 LLM 指令）；8 动作映射：follow/hold/retreat→Follow/Hold，move_to/loot/extract→PingMove（复用为执行体，到位清指令转驻守），engage→Engage（目标链：标点→LLM→最近威胁），none→不动；`PickupEntity` 加静态注册表（OnEnable/OnDisable 维护，EnemyRegistry 同模式）。
+- M5b 决策节拍器：新增 `AI/Llm/DecisionDriver.cs`——安全 8s/战斗 3s/响应超时 3s/单局限额 120 全部 TbCompanion 可配（companion.xlsx +4 字段：decisionIntervalSafe/decisionIntervalCombat/decisionTimeout/controlBudgetPerRun，__beans__.xlsx 同步加字段，导表通过）；战场快报 prompt（自身/玩家 HP+坐标、最近 5 敌人含 hunting 标记、最近 5 掉落物、撤离点、当前动作；不变区域格式保 target 可解析）+ 动作契约 + 3 条 few-shot；校验链：JSON 契约→动作白名单→目标存活/存在→超时作废（记遥测区分 parse_failed/stale/invalid）；开关 `LlmConfig.controlMode`（fsm 默认/llm），Offline 自动回退本地 FSM（`CompanionSystem.IsLlmControlActive` 统一判定）。
+- M5c 遥测：每次决策追加 `Logs/companion_control.csv`（timestamp/state/latency_ms/valid/action/tokens）；GM `companion stats` 看链路状态+决策汇总（合法率/平均延迟/token）；`LlmResult` 加 TokensUsed（解析 usage.total_tokens）。
+- 聊天频道与操控频道分开计时分开限额，共用 LlmClient 与链路成败计数（`NotifyExternalRequestResult` 静默迁移状态，不触发兜底台词）。
+- 验证：dotnet build GameLogic.csproj 0 error 0 warning；Play 在线实测通过（DeepSeek deepseek-chat）：明文 key 自动迁移密文→UI 开关 controlMode=llm 保存热生效；链路 Online；闲聊出 LLM 台词（"Clear sector, sticking with you."）；操控通道一局 47 决策 100% 合法、平均延迟 ~855ms；传送玩家触发战斗：combat→engage（有效目标）→击杀→safe→loot→到位驻守；玩家死亡 timeScale=0 时决策停摆（预期）；Console 0 业务 error。设置面板 AI 页签 prefab 建成（页签 5 均分，新建输入框锚点默认 (0.5,0.5) 与面板克隆控件 (0.5,1) 不一致导致偏移，已修）。
+- 遗留：Degraded 字幕干扰样式；M6 自由对话未开工；loot 动作到位后不会真拾取（拾取是玩家触发，MVP 接受）；决策延迟计时用 Time.time，暂停期间会失真（边缘情况）。
+
+## 2026-09-08 AI 队友：主动开火 + 人设强化 + M6 自由对话 + 设置面板重构
+- 设置面板全面重构（prefab）：全屏调光 + 居中卡片（1240×820 #191D24）+ 左侧竖排页签栏（选中绿色高亮 `UpdateTabHighlight`）+ 标题/分隔线/右上 X 关闭/右下主菜单；三页签截图验收，遮挡问题解决。坑：MCP 新建 RectTransform 默认锚点 (0.5,0.5) 与面板克隆控件 (0.5,1) 不一致会整体偏移，必须显式设锚点。
+- 主动开火：`CompanionStateContext` 加 `NearestVisibleEnemy`（警戒半径 `TbCompanion.proactiveEngageDist`=12m + Obstacle Linecast 视线，Idle/巡逻敌人也算，先发制人）；`WantsEngage` 纳入；仲裁顺序修正为 死亡>低血撤退>玩家标点>**交战>LLM 指令**>姿态（修 M5 回归：LLM 说 follow 时放弃护主）。实测：threats=0 全程下清光警戒圈内敌人（两局 10→6→4）。
+- 人设强化：personaPrompt 重写（退役军用安防 AI、"boss" 称呼、冷幽默、11 sector 背景、说话规则+示例）；闲聊/操控 few-shot 全部换新语气。
+- M6 自由对话：`KeyBindAction.CompanionChat`（默认 T，可改绑）；`CompanionChatUI`（prefab `Assets/AssetRaw/UI/CompanionChatUI/`，底部输入条字幕上方，Enter 发送/ESC 关闭/不暂停/transmitting 等待态）；`CompanionBrain.RequestChatReply` 独立对话通道（4 轮多轮记忆、独立计数+1s 防抖、战斗中/断联播 `chat_busy`/`link_lost` bark 拒聊）；`PromptBuilder.BuildChatSystem/User`（对话契约+4 条 few-shot+历史入 prompt）；bark 表 +2 行、词条 +4（`companion.bark.chat_busy.*`/`ui.chat.*`）。
+- 关键修正：**意图应用收窄**——只有玩家直接对话（player_chat）可带 follow/hold，安全闲聊不再应用意图（之前 LLM 闲聊随口 "hold" 把队友永久钉在原地，实测踩到）。
+- 输入抑制：聊天打开时（`CompanionChatUI.IsOpen` 静态标志）InputSystem 全战斗输入让位+清零移动、SimulationInputSystem 屏蔽 E/J、SimulationPlayerController 停 WASD、BuildingPlacementSystem 屏蔽摆放；ESC 链两场景均把 CompanionChatUI 排最前；CrosshairUpdater 光标兜底放行聊天窗。
+- 修复：经营场景无 PlayerSystem 时 player_hp 0/0 进 prompt 被 LLM 误读"boss 已倒下"（血量未知时不进 prompt，BuildUser/BuildChatUser 同步）。
+- 实测（Play + DeepSeek 在线）：经营场景 T 开聊→"status report"→LLM 回复上字幕；战斗场景安全开聊、"stay here"→stanceHold=True→"follow me"→False 意图全通；交战状态 T 拒聊播 chat_busy；Console 0 业务 error。
+- 遗留：聊天输入抑制为代码层 review 未经真实键鼠 e2e；M5 安全态 LLM 爱刷 loot 指令（有效但会离开玩家去捡）。
+
+## 2026-09-08 设置面板输入页签布局修正
+- 根因：`m_panel_Input` 是全屏拉伸锚点（其他页签是卡片内 1000×760 居中面板），导致绑定行通栏超出卡片、行标签贴到屏幕左缘；`m_rect_BindingList` 固定 470 高装不下 12 行；重置按钮锚在面板底部落在卡片中间与行重叠。
+- 修正（prefab）：面板改 (0.5,0.5) 居中 1000×760 与其他页签一致；绑定列表顶对齐拉伸、宽 -200 右移 40 避开页签栏、高 576 精确容纳 12 行；行高 50→44/间距 6→4（代码常量同步）；重置按钮锚面板内底部 (0,30)。截图验收：12 行完整在卡片内、无重叠。
+
+## 2026-09-08 撤离结算不可见 + 队友被撞飞 修复
+- bug①根因：`PortalTransitionMgr.PlayAsync` 成功路径不关闭 TransitionUI（注释约定"由新流程负责关闭"，但撤离流程是先弹结算窗、确认后才切流程），TransitionUI 是 System 层全屏窗，框架 `UIModule.OnSetWindowVisible` 会把全屏窗之下的窗口全部 `Visible=false`（根节点 layer 切到 Ignore Raycast）→ SettlementUI(Top 层) 开了但永远不渲染，玩家看不到结算窗也点不到"返回基地"，表现为"倒计时结束没回经营场景"。
+- 修复：`PortalSystem.ExtractToBase` 弹 SettlementUI 后新增 `CloseTransitionAfterSettlement()`（等结算窗加载完成再 `CloseUI<TransitionUI>`，结算窗自带全屏暗底不会闪战斗场景）。
+- 关键实验结论：UICamera 按 Canvas **根节点** layer 剔除（根=5 子=0 时整棵子树正常渲染），prefab 子节点 layer=0 无害。
+- bug②根因：队友动态刚体 `linearDamping=0` 且锁 Y（无地面摩擦），任何碰撞冲量不衰减→"碰一下撞飞很远"。修复：`CompanionEntity.EnsureRigidbody` 加 `linearDamping=8f`（移动由 linearVelocity 每帧赋值，不受阻尼影响）。
+- 实测：101 关撤离倒计时结束→SettlementUI 根 layer=5 渲染正常（截图确认"撤离成功/+100G +50EXP/返回基地"）→点确认回经营场景全链路通；经营场景对队友刚体施加 8.5m/s 冲量，1s 后速度归零、位移 ~0.9m 即停。
+- 附带发现（未修，非本次范围）：`GameApp` 在 Play 重启边缘态报过一次 "Procedure FSM not initialized"（MCP 反射时序问题，正常流程未复现）。

@@ -61,6 +61,17 @@ namespace GameLogic
 
         private void FixedUpdate()
         {
+            // 聊天输入框打开时键盘归输入框，WASD 不应驱动移动
+            if (CompanionChatUI.IsOpen)
+            {
+                _moveDir = Vector3.zero;
+                if (_rb != null)
+                {
+                    _rb.linearVelocity = Vector3.zero;
+                }
+                return;
+            }
+
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
             var dir = new Vector3(h, 0f, v);

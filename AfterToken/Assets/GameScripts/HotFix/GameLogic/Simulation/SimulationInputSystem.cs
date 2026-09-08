@@ -16,6 +16,13 @@ namespace GameLogic
         private void Update()
         {
             HandleEscapeInput();
+
+            // 队友聊天输入框打开时键盘归输入框，E/J 等字母键不触发玩法功能
+            if (CompanionChatUI.IsOpen)
+            {
+                return;
+            }
+
             HandleInteractInput();
             HandleQuestLogInput();
         }
@@ -84,6 +91,7 @@ namespace GameLogic
 
             // ESC 统一语义：优先关闭最上层菜单 UI，一次 ESC 只关闭一个；
             // 仅当画面中没有任何菜单 UI（HUD/血条/物品栏等常驻 UI 不算）时，ESC 才弹出设置面板。
+            if (TryCloseUI<CompanionChatUI>()) return;
             if (TryCloseUI<BuildingInfoUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<LobbyUI>()) return;

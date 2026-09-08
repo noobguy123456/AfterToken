@@ -48,10 +48,12 @@ namespace GameLogic
         {
             _fireCooldown -= elapse;
 
-            // 目标选择：Attack 标点目标优先，其次最近威胁
+            // 目标选择：Attack 标点 > LLM 指定 > 最近威胁 > 警戒半径内最近可见敌人（先发制人）
             var target = Context.PingTarget != null && !Context.PingTarget.IsDead
                 ? Context.PingTarget
-                : Context.NearestThreat;
+                : (Context.LlmTarget != null && !Context.LlmTarget.IsDead
+                    ? Context.LlmTarget
+                    : (Context.NearestThreat != null ? Context.NearestThreat : Context.NearestVisibleEnemy));
 
             Vector2 ownerPos = Owner.transform.position.ToXZ();
 

@@ -72,6 +72,7 @@ namespace GameLogic
                 // 兜底：没有任何菜单 UI 光标却可见（ShowCursor/HideCursor 未严格配对导致
                 // 引用计数泄漏，表现为关掉 UI 后 Windows 系统鼠标仍显示），强制恢复战斗光标状态。
                 bool menuOpen = InputSystem.IsMenuUIOpen()
+                    || CompanionChatUI.IsOpen
                     || GameModule.UI.HasWindow<WeaponWheelUI>()
                     || GameModule.UI.HasWindow<SettingsUI>();
                 if (!menuOpen && Time.timeScale > Mathf.Epsilon)

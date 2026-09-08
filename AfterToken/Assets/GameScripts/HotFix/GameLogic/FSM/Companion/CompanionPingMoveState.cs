@@ -5,6 +5,7 @@ namespace GameLogic
 {
     /// <summary>
     /// 队友前往标点状态（Move/Loot 标点）：寻路到标点，到位后清除标点并转入驻守。
+    /// M5 起复用为 LLM 移动类指令（move_to/loot/extract）的执行体：无玩家标点时读 LLM 目标。
     /// </summary>
     public class CompanionPingMoveState : CompanionStateBase
     {
@@ -21,18 +22,35 @@ namespace GameLogic
 
         protected override void OnUpdateState(IFsm<CompanionEntity> fsm, float elapse, float real)
         {
-            if (!Context.HasPing)
+            bool fromPing = Context.HasPing;
+            Vector2 targetPos;
+            if (fromPing)
             {
-                // 标点被外部清除（过期/覆盖）：回姿态，由驱动器下帧仲裁
+                targetPos = Context.PingPos;
+            }
+            else if (Context.HasLlmMoveDirective)
+            {
+                targetPos = Context.LlmTargetPos;
+            }
+            else
+            {
+                // 标点被外部清除（过期/覆盖）且无 LLM 指令：回姿态，由驱动器下帧仲裁
                 return;
             }
 
-            bool arrived = _mover.MoveTowards(Owner, Context.NavigationSystem, Context.PingPos, elapse, ARRIVE_DISTANCE);
+            bool arrived = _mover.MoveTowards(Owner, Context.NavigationSystem, targetPos, elapse, ARRIVE_DISTANCE);
             if (arrived)
             {
-                // 到位：消费标点，驻守在此（玩家可按 G 或新标点召回）
+                // 到位：消费指令，驻守在此（玩家可按 G 或新标点召回）
                 Context.StanceHold = true;
-                PingSystem.Instance?.ClearPing();
+                if (fromPing)
+                {
+                    PingSystem.Instance?.ClearPing();
+                }
+                else
+                {
+                    Context.ClearLlmDirective();
+                }
             }
         }
 

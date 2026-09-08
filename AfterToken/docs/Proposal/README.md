@@ -28,7 +28,8 @@ docs/Proposal/
 
 | 提案 | 路径 | 状态 | 关联模块 |
 |---|---|---|---|
-| 基于 LLM 的 AI 队友系统 | [`ai/llm-companion.md`](./ai/llm-companion.md) | 待评审 | `ai/llm-companion`（待建）、`combat/enemy-system`（FSM 复用） |
+| 基于 LLM 的 AI 队友系统 | [`ai/llm-companion.md`](./ai/llm-companion.md) | M1/M2/M3 已落地（2026-09-07/08）；M4 待启动 | `ai/companion-system` |
+| AI 队友 M5：LLM 实时操控通道 | [`ai/llm-companion-m5-control.md`](./ai/llm-companion-m5-control.md) | 待评审 | `ai/companion-system` |
 
 ### 模拟经营系统
 

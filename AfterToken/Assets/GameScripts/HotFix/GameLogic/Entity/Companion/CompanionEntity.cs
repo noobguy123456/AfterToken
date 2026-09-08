@@ -112,6 +112,9 @@ namespace GameLogic
             _rb.useGravity = false;
             _rb.isKinematic = false;
             _rb.interpolation = RigidbodyInterpolation.Interpolate;
+            // 高阻尼：被玩家/爆炸等物理推挤时冲量快速衰减，避免"碰一下就滑飞很远"
+            // （移动由 linearVelocity 每帧直接赋值，不受阻尼影响）
+            _rb.linearDamping = 8f;
             // 锁全部旋转：朝向由 SetFacing 代码驱动，物理推挤不转身（血条/武器盒不晃）
             _rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
         }

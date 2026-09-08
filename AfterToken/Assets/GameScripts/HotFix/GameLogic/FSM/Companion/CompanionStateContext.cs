@@ -27,6 +27,8 @@ namespace GameLogic
         public EnemyEntity PingTarget;
         /// <summary>最近威胁（无标点目标时的交战对象）。</summary>
         public EnemyEntity NearestThreat;
+        /// <summary>主动开火目标：警戒半径内视线通畅的最近敌人（即使它还没进入追击状态）。</summary>
+        public EnemyEntity NearestVisibleEnemy;
         /// <summary>队友自身最近是否受击（预留：敌人索敌队友后升级为威胁源）。</summary>
         public bool UnderAttack;
 
@@ -36,10 +38,40 @@ namespace GameLogic
         public Vector2 PingPos;
         public int PingTargetId;
 
+        // ── LLM 操控指令（M5）：DecisionDriver 写入，驱动器仲裁读取 ──
+        // 优先级低于死亡/低血撤退/玩家标点（硬规矩），高于交战与姿态。
+        /// <summary>当前 LLM 指令动作（null/empty/none = 无指令）。</summary>
+        public string LlmAction;
+        /// <summary>move_to/loot/extract 的目标位置。</summary>
+        public Vector2 LlmTargetPos;
+        /// <summary>engage 目标敌人 InstanceID / loot 目标掉落物 InstanceID。</summary>
+        public int LlmTargetId;
+        /// <summary>指令过期点（Time.time），过期自动作废，防止陈旧指令卡死状态机。</summary>
+        public float LlmDirectiveExpire;
+        /// <summary>engage 指令解析后的目标（驱动器每帧解析，死亡自动失效）。</summary>
+        public EnemyEntity LlmTarget;
+
         public INavigationSystem NavigationSystem;
         public StateTransitionRequest PendingRequest;
 
-        public bool WantsEngage => ThreatCount > 0 || (PingTarget != null && !PingTarget.IsDead);
+        public bool WantsEngage => ThreatCount > 0 || (PingTarget != null && !PingTarget.IsDead)
+                                   || (NearestVisibleEnemy != null && !NearestVisibleEnemy.IsDead);
+
+        /// <summary>是否有未过期的 LLM 指令。</summary>
+        public bool HasLlmDirective =>
+            !string.IsNullOrEmpty(LlmAction) && LlmAction != "none" && Time.time < LlmDirectiveExpire;
+
+        /// <summary>是否为移动类 LLM 指令（PingMove 状态复用为执行体）。</summary>
+        public bool HasLlmMoveDirective =>
+            HasLlmDirective && (LlmAction == "move_to" || LlmAction == "loot" || LlmAction == "extract");
+
+        public void ClearLlmDirective()
+        {
+            LlmAction = null;
+            LlmTargetId = 0;
+            LlmTarget = null;
+            LlmDirectiveExpire = 0f;
+        }
 
         public void ClearPing()
         {

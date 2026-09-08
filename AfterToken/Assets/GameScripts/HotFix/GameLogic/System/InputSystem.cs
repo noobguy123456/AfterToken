@@ -23,6 +23,7 @@ namespace GameLogic
         private bool _isAimPressed;
         private bool _isWheelOpen;
         private bool _menuUIOpenLast;
+        private bool _chatOpenLast;
         private WeaponWheelUI _weaponWheelUI;
         private IBattleInputEvent _battleInputEvent;
         private CancellationTokenSource _weaponWheelCts;
@@ -55,6 +56,26 @@ namespace GameLogic
             {
                 return;
             }
+
+            // 队友聊天输入框打开时（时间不停），键盘/鼠标全部归输入框：
+            // 屏蔽全部战斗输入并清零移动，防止打字 WASD 走动、按 G/R 触发跟随/换弹
+            bool chatOpen = CompanionChatUI.IsOpen;
+            if (chatOpen)
+            {
+                if (!_chatOpenLast)
+                {
+                    BattleInputEvent?.OnFireReleased();
+                    if (_isAimPressed)
+                    {
+                        _isAimPressed = false;
+                        BattleInputEvent?.OnAimReleased();
+                    }
+                }
+                _chatOpenLast = true;
+                BattleInputEvent?.OnMoveInput(Vector2.zero);
+                return;
+            }
+            _chatOpenLast = false;
 
             HandleMoveInput();
 
@@ -321,7 +342,8 @@ namespace GameLogic
             }
 
             // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
-            // 顺序：SettingsUI > BattleBagUI > LootContainerUI > NoteUI（后续可扩展 WeaponWheelUI 等）
+            // 顺序：CompanionChatUI > SettingsUI > BattleBagUI > LootContainerUI > NoteUI（后续可扩展 WeaponWheelUI 等）
+            if (TryCloseUI<CompanionChatUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<BattleBagUI>()) return;
             if (TryCloseUI<LootContainerUI>()) return;

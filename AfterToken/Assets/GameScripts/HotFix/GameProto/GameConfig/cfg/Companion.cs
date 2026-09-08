@@ -39,6 +39,11 @@ public sealed partial class Companion : Luban.BeanBase
         LlmTimeout = (float)_obj.GetValue("llmTimeout");
         IntentTtl = (float)_obj.GetValue("intentTtl");
         OfflineProbeInterval = (float)_obj.GetValue("offlineProbeInterval");
+        DecisionIntervalSafe = (float)_obj.GetValue("decisionIntervalSafe");
+        DecisionIntervalCombat = (float)_obj.GetValue("decisionIntervalCombat");
+        DecisionTimeout = (float)_obj.GetValue("decisionTimeout");
+        ControlBudgetPerRun = (int)_obj.GetValue("controlBudgetPerRun");
+        ProactiveEngageDist = (float)_obj.GetValue("proactiveEngageDist");
     }
 
     public static Companion DeserializeCompanion(JToken _buf)
@@ -110,6 +115,26 @@ public sealed partial class Companion : Luban.BeanBase
     /// 离线恢复探测间隔s
     /// </summary>
     public readonly float OfflineProbeInterval;
+    /// <summary>
+    /// 安全决策间隔s(M5)
+    /// </summary>
+    public readonly float DecisionIntervalSafe;
+    /// <summary>
+    /// 战斗决策间隔s(M5)
+    /// </summary>
+    public readonly float DecisionIntervalCombat;
+    /// <summary>
+    /// 决策响应超时s(M5)
+    /// </summary>
+    public readonly float DecisionTimeout;
+    /// <summary>
+    /// 单局操控决策限额(M5)
+    /// </summary>
+    public readonly int ControlBudgetPerRun;
+    /// <summary>
+    /// 主动开火警戒半径m
+    /// </summary>
+    public readonly float ProactiveEngageDist;
 
 
     public const int __ID__ = 1038461410;
@@ -138,6 +163,11 @@ public sealed partial class Companion : Luban.BeanBase
         + "llmTimeout:" + LlmTimeout + ","
         + "intentTtl:" + IntentTtl + ","
         + "offlineProbeInterval:" + OfflineProbeInterval + ","
+        + "decisionIntervalSafe:" + DecisionIntervalSafe + ","
+        + "decisionIntervalCombat:" + DecisionIntervalCombat + ","
+        + "decisionTimeout:" + DecisionTimeout + ","
+        + "controlBudgetPerRun:" + ControlBudgetPerRun + ","
+        + "proactiveEngageDist:" + ProactiveEngageDist + ","
         + "}";
     }
 }
