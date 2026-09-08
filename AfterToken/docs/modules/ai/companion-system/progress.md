@@ -23,6 +23,7 @@
 ## 待办
 
 - [ ] M4 断联降级补全 + 设置：设置面板 API 配置项（endpoint/apiKey/model 输入 + LlmConfig.Reload 热生效）；Degraded 态字幕干扰样式
+- [ ] M4 本地 API key 加密存储（用户明确要求，**需兼容 Windows + Android 双平台**）：方案 = AES-256 + 设备派生密钥（PBKDF2(deviceUniqueIdentifier + 应用盐 + bundleId)），同一套代码两端通用、无平台分支；密文绑定设备，文件拷到别的设备解不开；读取兼容旧明文自动迁移。放弃 DPAPI（Windows 专属）。边界：本地加密防"文件泄露/误同步"，不防本机逆向——双平台同一威胁模型，文档写清
 - [ ] kill 触发台词未接线（当前无法识别队友击杀归属，需弹道链路带 killer 信息）
 - [ ] 队友占位视觉换正式模型；枪口改模型 Muzzle socket
 - [ ] LLM 流式 SSE（MVP 非流式，扩展位已留）

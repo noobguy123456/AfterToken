@@ -39,7 +39,7 @@
 | LoadingUI 与场景过渡 | ✅ | - | - | `docs/modules/ui/loading-system/` | `GameplayProcedureBase` 统一加载 |
 | 命中反馈 | ✅ | - | - | `docs/modules/ui/hit-feedback-system/` | 伤害飘字、受击指示、命中标记 |
 | 光标系统 | ✅ | - | - | `docs/modules/ui/cursor-system/` | 显示/隐藏、锁定模式、自定义光标纹理 |
-| 设置 UI | 🟡 | P2 | - | `docs/modules/ui/settings-ui/` | 灵敏度/开镜灵敏度/开镜模式/按键改绑/准星样式颜色（含可视化预览）已完成并全部入档；待音量、画质页签 |
+| 设置 UI | 🟡 | P2 | - | `docs/modules/ui/settings-ui/` | 四页签 General/Audio/Graphics/Input 已完成并入档（灵敏度/开镜/按键改绑/准星/音量/画质/语言切换）；待 M4 LLM API 配置项 |
 | 经营 UI | 🟡 | P1 | M4 经营系统 | `docs/modules/ui/simulation-ui/` | 渲染架构已统一 Overlay；三个经营窗口已正式 Prefab 化并集中到 `AssetRaw/UI/Simulation/`；待办：UI 特效（序列帧） |
 
 ### 战斗系统
@@ -60,7 +60,7 @@
 | 撤离点系统 | ✅ | - | - | `docs/modules/combat/extraction-system/` | 撤离圈+倒计时（`TbLevel.extractionTime`）+敌人进圈暂停+顶部 UI+撤离结算复用 `PortalSystem.ExtractToBase`，端到端 Play 实测通过；101 已摆 (18,0,18)；待美术替换占位圆盘、正式点位规则、Portal/撤离圈重叠仲裁 |
 | 战斗系统 | 🟡 | P0 | 事件系统完善 | `docs/modules/combat/battle-system/` | 伤害、死亡，待暴击/Buff/结果事件 |
 | 关卡系统 | 🟡 | P1 | 事件系统 | `docs/modules/combat/level-system/` | `TbLevel` 已接入；硬编码表已替换；待波次/胜负/配置化 |
-| 奖励系统 | 🟡 | P1 | - | `docs/modules/combat/reward-system/` | `RewardSystem.Grant` 统一入口已落地，撤离/任务/订单三处已收口；待撤离结算画面汇总展示 |
+| 奖励系统 | ✅ | - | - | `docs/modules/combat/reward-system/` | `RewardSystem.Grant` 统一入口已落地，撤离/任务/订单三处已收口；撤离结算画面（SettlementUI 汇总展示）已完成（2026-09-06） |
 
 ### 场景系统
 
@@ -124,14 +124,13 @@
 |------|------|--------|-----------|----------|------|
 | 资源管线 | ✅ | - | - | `docs/modules/pipeline/asset-pipeline/` | YooAsset 收集器、SimulateBuild |
 | 热更管线 | 🟡 | P1 | - | `docs/modules/pipeline/hotfix-pipeline/` | HybridCLR 环境、DLL 加载，待 AOT 元数据补充验证 |
-| **Luban 配置表系统** | ✅ | - | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON；`weapon`/`level`/`player`/`enemy`/`drop`/`item`/`inventory`/`portal` 已定义并接入业务；`buff`/`wave` 数据已存在但尚未接入业务系统 |
+| **Luban 配置表系统** | ✅ | - | - | `docs/modules/pipeline/config-system/`（总览）<br>`docs/modules/pipeline/luban-config-system/`（详细） | 配置工程已搭建，输出格式已切 JSON；31 张表已接入业务（含 companion/companionbark，2026-09-08）；`buff`/`wave` 数据已存在但尚未接入业务系统 |
 | 编辑器工具 | ✅ | - | - | `docs/modules/pipeline/editor-tools/` | BattleSceneSetup、Force Recompile、TMP Migration |
 
 ### 全局与支撑系统
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| 设置系统 | 🟡 | P2 | - | `docs/modules/shared/settings-system/`（新增） | 灵敏度/开镜模式已持久化；音量、画质、操作设置待补充 |
 | 性能优化 | 🟡 | P3 | - | `docs/modules/pipeline/performance-optimization/`（新增） | A* 分配、敌人对象池、爆炸非分配查询已落地；画质/血条 Draw Call/构建加速待继续 |
 | GM / 调试工具 | 🟡 | P3 | - | `docs/modules/pipeline/gm-tools/`（新增） | 编辑器/Development Build 中已提供 `GMController` 控制台与面板（无敌、刷怪、跳关、改时间、重载配置）；显示碰撞盒等工具待补充 |
 

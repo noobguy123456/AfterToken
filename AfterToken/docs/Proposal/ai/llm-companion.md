@@ -255,7 +255,7 @@ Assets/GameScripts/HotFix/GameLogic/
 |---|---|---|
 | LLM 延迟破坏战斗节奏 | 1~5s 延迟做不了实时反应 | **硬决策**：战斗台词与战斗行为永远走本地；LLM 只负责安全期闲聊与低频率意图 |
 | 项目无 HTTP 先例 | UnityWebRequest 在热更程序集可用（UnityEngine 模块）；AOT/裁剪需在 link.xml 留意 Networking 模块 | M3 先做真机验证项进 M5 清单惯例 |
-| API Key 安全 | 严禁入库 | 本地 json 配置 + gitignore + 设置界面输入；仓库只放 `llm_config.example.json` |
+| API Key 安全 | 严禁入库 | 本地 json 配置 + gitignore + 设置界面输入；仓库只放 `llm_config.example.json`；**M4 起本地加密存储，需兼容 Windows + Android**（用户 2026-09-08 明确要求）：AES-256 + 设备派生密钥（PBKDF2(deviceUniqueIdentifier+应用盐+bundleId)），单套代码跨平台，弃用 Windows 专属 DPAPI；读取兼容旧明文自动迁移 |
 | LLM 输出失控（越权指令/出戏文本） | 契约 JSON + 白名单 + TTL + 长度截断 + 敏感 fallback | §6.3 裁决器 |
 | 费用/频率失控 | 闲聊定时器 + 全局请求冷却（最小间隔 5s）+ 单局限额（可配，默认 60 次/局） | PromptBuilder 内计数 |
 | 队友挡子弹/卡位 | 队友 collider 加入玩家弹道排除层；与玩家保持最小间距的避让 | 弹道 hitLayers 配置 |
