@@ -536,6 +536,30 @@
     "ko": ""
   },
   {
+    "key": "ui.settings.llm.provider",
+    "en": "Provider",
+    "zh_cn": "模型厂商",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.show_key",
+    "en": "Show",
+    "zh_cn": "显示",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.llm.hide_key",
+    "en": "Hide",
+    "zh_cn": "隐藏",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
     "key": "ui.settings.llm.apikey",
     "en": "API Key",
     "zh_cn": "API 密钥",
@@ -568,9 +592,17 @@
     "ko": ""
   },
   {
+    "key": "ui.settings.llm.invalid_input",
+    "en": "Endpoint / API Key / Model are required.",
+    "zh_cn": "接口地址、API 密钥、模型均为必填。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
     "key": "ui.settings.llm.save_failed",
-    "en": "Save failed (device encryption unavailable).",
-    "zh_cn": "保存失败（设备加密不可用）。",
+    "en": "Save failed: {0}",
+    "zh_cn": "保存失败：{0}",
     "zh_tw": "",
     "ja": "",
     "ko": ""
@@ -667,6 +699,110 @@
     "key": "ui.chat.transmitting",
     "en": "transmitting...",
     "zh_cn": "发送中……",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.quiet_ack",
+    "en": "Copy. Radio silence.",
+    "zh_cn": "收到。保持静默。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.danger_alert.1",
+    "en": "Movement. We are spotted.",
+    "zh_cn": "有动静。我们被发现了。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.danger_alert.2",
+    "en": "Eyes on us. Weapons ready.",
+    "zh_cn": "我们被盯上了。准备战斗。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_end.1",
+    "en": "Area clear. Good work, boss.",
+    "zh_cn": "区域清空。干得漂亮，boss。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_end.2",
+    "en": "That is the last of them. For now.",
+    "zh_cn": "应该是最后一个了。暂时。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.front",
+    "en": "Contact! Ahead of you!",
+    "zh_cn": "接敌！在你前方！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.back",
+    "en": "Contact! Behind you!",
+    "zh_cn": "接敌！在你身后！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.left",
+    "en": "Contact! On your left!",
+    "zh_cn": "接敌！在你左侧！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.right",
+    "en": "Contact! On your right!",
+    "zh_cn": "接敌！在你右侧！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.front_left",
+    "en": "Contact! Front-left!",
+    "zh_cn": "接敌！左前方！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.front_right",
+    "en": "Contact! Front-right!",
+    "zh_cn": "接敌！右前方！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.back_left",
+    "en": "Contact! Back-left!",
+    "zh_cn": "接敌！左后方！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.combat_dir.back_right",
+    "en": "Contact! Back-right!",
+    "zh_cn": "接敌！右后方！",
     "zh_tw": "",
     "ja": "",
     "ko": ""

@@ -7,7 +7,8 @@ namespace GameLogic.AI.Llm
 {
     /// <summary>
     /// LLM 本地配置（OpenAI 兼容端点）。
-    /// 存于 UserSettings/llm_config.json（UserSettings/ 已 gitignore，不会入库）：
+    /// 存于 Application.persistentDataPath/llm_config.json（全平台可写，编辑器下也在系统用户目录，不入库）；
+    /// 旧位置 UserSettings/llm_config.json 仅做读取迁移。
     /// apiKey 以 <see cref="SecretStore"/> 加密落盘（密文含魔数前缀），
     /// 其余字段明文 JSON。读取兼容旧全明文文件，保存时自动升级为密文。
     /// 模板见项目根 llm_config.example.json。
@@ -15,7 +16,9 @@ namespace GameLogic.AI.Llm
     [Serializable]
     public class LlmConfig
     {
-        /// <summary>OpenAI 兼容服务根地址（不含 /chat/completions）。</summary>
+        /// <summary>厂商预设 id（见 <see cref="LlmProviders"/>），空/custom 表示自填端点。</summary>
+        public string provider;
+        /// <summary>OpenAI 兼容服务根地址（不含 /chat/completions；Anthropic 为 API 根）。</summary>
         public string endpoint;
         /// <summary>明文文件里的 key 字段；密文模式下此字段留空，key 存 apiKeyEncrypted。</summary>
         public string apiKey;
@@ -32,6 +35,9 @@ namespace GameLogic.AI.Llm
         public const float DefaultTimeout = 8f;
         public const float DefaultTemperature = 0.4f;
 
+        /// <summary>最近一次保存失败的原因（UI 反馈用）；成功时清空。</summary>
+        public static string LastError { get; private set; }
+
         /// <summary>三个必填项齐全才视为已配置。</summary>
         public bool IsValid =>
             !string.IsNullOrEmpty(endpoint) && !string.IsNullOrEmpty(GetApiKey()) && !string.IsNullOrEmpty(model);
@@ -41,6 +47,13 @@ namespace GameLogic.AI.Llm
 
         /// <summary>是否使用 LLM 操控通道（M5）。</summary>
         public bool IsLlmControl => string.Equals(controlMode, "llm", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>生效的厂商 id（旧配置无 provider 字段时按 endpoint 推断）。</summary>
+        public string EffectiveProviderId =>
+            !string.IsNullOrEmpty(provider) ? provider : LlmProviders.InferProviderId(endpoint, model);
+
+        /// <summary>生效的协议风格（OpenAI 兼容 / Anthropic 原生）。</summary>
+        public LlmApiStyle ApiStyle => LlmProviders.ResolveStyle(provider, endpoint);
 
         /// <summary>取明文 key：优先解密 apiKeyEncrypted，失败/为空回退明文 apiKey 字段。</summary>
         public string GetApiKey()
@@ -61,7 +74,12 @@ namespace GameLogic.AI.Llm
             return apiKey;
         }
 
+        // persistentDataPath 是全平台唯一保证可写的位置（编辑器/Windows 包/安卓 APK 内 dataPath 均不可写）。
+        // 旧路径（工程 UserSettings）只做读取迁移，不再写入。
         private static string ConfigPath =>
+            Path.Combine(Application.persistentDataPath, "llm_config.json");
+
+        private static string LegacyConfigPath =>
             Path.Combine(Application.dataPath, "../UserSettings/llm_config.json");
 
         private static LlmConfig _cache;
@@ -75,11 +93,18 @@ namespace GameLogic.AI.Llm
             }
 
             _cache = new LlmConfig();
+            bool migratedFromLegacy = false;
             try
             {
                 if (File.Exists(ConfigPath))
                 {
                     JsonUtility.FromJsonOverwrite(File.ReadAllText(ConfigPath), _cache);
+                }
+                else if (File.Exists(LegacyConfigPath))
+                {
+                    // 旧位置（工程 UserSettings）读取后迁移到 persistentDataPath
+                    JsonUtility.FromJsonOverwrite(File.ReadAllText(LegacyConfigPath), _cache);
+                    migratedFromLegacy = true;
                 }
             }
             catch (Exception e)
@@ -88,9 +113,9 @@ namespace GameLogic.AI.Llm
                 _cache = new LlmConfig();
             }
 
-            // 旧明文 key 自动迁移为密文（下次 Load 即走加密路径）
-            if (!string.IsNullOrEmpty(_cache.apiKey) && string.IsNullOrEmpty(_cache.apiKeyEncrypted)
-                && SecretStore.IsAvailable)
+            // 旧明文 key 自动迁移为密文（下次 Load 即走加密路径）；旧位置文件同步迁移
+            if ((!string.IsNullOrEmpty(_cache.apiKey) && string.IsNullOrEmpty(_cache.apiKeyEncrypted)
+                && SecretStore.IsAvailable) || migratedFromLegacy)
             {
                 Save(_cache);
             }
@@ -103,8 +128,10 @@ namespace GameLogic.AI.Llm
         /// </summary>
         public static bool Save(LlmConfig config)
         {
+            LastError = null;
             if (config == null)
             {
+                LastError = "config is null";
                 return false;
             }
 
@@ -114,6 +141,7 @@ namespace GameLogic.AI.Llm
                 string encrypted = SecretStore.Encrypt(plainKey);
                 if (encrypted == null)
                 {
+                    LastError = "device encryption unavailable";
                     Log.Error("[LlmConfig] 设备不支持密钥派生，拒绝明文落盘，配置未保存。");
                     return false;
                 }
@@ -123,12 +151,15 @@ namespace GameLogic.AI.Llm
 
             try
             {
+                // persistentDataPath 目录在打包/Android 上可能不存在，必须先建
+                Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath));
                 File.WriteAllText(ConfigPath, JsonUtility.ToJson(config, prettyPrint: true));
                 _cache = config;
                 return true;
             }
             catch (Exception e)
             {
+                LastError = e.Message;
                 Log.Error($"[LlmConfig] 写入 llm_config.json 失败: {e.Message}");
                 return false;
             }

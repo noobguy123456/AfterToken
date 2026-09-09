@@ -583,3 +583,39 @@ Luban 配置表数据补充
 - bug②根因：队友动态刚体 `linearDamping=0` 且锁 Y（无地面摩擦），任何碰撞冲量不衰减→"碰一下撞飞很远"。修复：`CompanionEntity.EnsureRigidbody` 加 `linearDamping=8f`（移动由 linearVelocity 每帧赋值，不受阻尼影响）。
 - 实测：101 关撤离倒计时结束→SettlementUI 根 layer=5 渲染正常（截图确认"撤离成功/+100G +50EXP/返回基地"）→点确认回经营场景全链路通；经营场景对队友刚体施加 8.5m/s 冲量，1s 后速度归零、位移 ~0.9m 即停。
 - 附带发现（未修，非本次范围）：`GameApp` 在 Play 重启边缘态报过一次 "Procedure FSM not initialized"（MCP 反射时序问题，正常流程未复现）。
+
+## 2026-09-09 LLM 配置保存修复 + 对话闲聊抑制 + 经营场景移动手感
+- bug①（API 保存繁琐/其他设备不生效/无报错）根因：配置文件写 `Application.dataPath/../UserSettings/llm_config.json`——打包后该目录往往不存在（Android 上 dataPath 更是 APK 内只读），`File.WriteAllText` 抛 DirectoryNotFoundException 被 catch 掉静默失败。
+- 修复：`LlmConfig` 改存 `Application.persistentDataPath/llm_config.json`（全平台保证可写），旧路径仅做读取迁移；Save 前 `Directory.CreateDirectory`；新增 `LastError` 记录失败原因（加密不可用/IO 异常）；新增 `DefaultEndpoint`(https://api.deepseek.com)/`DefaultModel`(deepseek-chat)，设置面板 endpoint/model 为空时自动预填（玩家只需粘 key）；保存前必填校验（缺一项即提示 `ui.settings.llm.invalid_input`），失败提示带具体原因。词条 save_failed 改为带 `{0}` 原因参数，新增 invalid_input（en+zh_cn，已导表）。
+- bug②（对话时随机闲聊插队）修复：`CompanionBrain` 新增对话会话概念 `IsInConversation`（聊天窗打开 或 最后一条对话未满 30s），会话中闲聊定时器停走（LLM 与本地兜底都停）；对话前发出的在途闲聊请求落地时直接丢弃不播；对话活动时间在发话/收回复时刷新。
+- bug③（反向键同按移动变慢）根因：经营场景 `SimulationPlayerController` 用 `Input.GetAxis`（带重力/灵敏度平滑），按住反向键时轴向 0 缓降约 0.33s，角色滑行渐慢而非即停（战斗场景用 GetAxisRaw 无此问题）。修复：改 `GetAxisRaw`，与战斗手感一致。
+- 验证：dotnet build 0 error；MCP 实测 LlmConfig 新路径 Save/Reload/Load 密钥加解密往返正确、原配置无损还原；Console 0 编译错误。旧位置 UserSettings/llm_config.json 保留未删（含旧密文，如需清理可手动删）。
+
+## 2026-09-09 LLM 厂商预设 + API Key 可视化
+- 需求：设置面板选厂商即带出调用配置，玩家只粘 API Key；key 输入可切明文核对。
+- 新增 `AI/Llm/LlmProviders.cs`：4 家内置预设（DeepSeek https://api.deepseek.com/deepseek-chat、Kimi https://api.moonshot.cn/v1/moonshot-v1-8k、Claude https://api.anthropic.com/claude-3-5-sonnet-latest、ChatGPT https://api.openai.com/v1/gpt-4o-mini）+ Custom 自填；`InferProviderId`（旧配置无 provider 字段按 endpoint 前缀推断）+ `ResolveStyle`（协议风格解析，anthropic.com 兜底识别）。
+- `LlmConfig` +`provider` 字段（落盘持久化）+ `EffectiveProviderId`/`ApiStyle`。
+- `LlmClient` 双协议：OpenAI 兼容路径不变；Anthropic 原生 POST {endpoint}/v1/messages（x-api-key + anthropic-version: 2023-06-01 头，system 顶层字段，max_tokens 256，解析 content[0].text，usage=input+output_tokens）。**Claude 无 response_format**，契约解析（CompanionBrain/DecisionDriver 两处）加"截取首个 { 到末个 } 再解析"兜底，防散文/markdown 包装。
+- 设置面板 AI 页签（prefab）：顶部插入"模型厂商"循环按钮行（与准星样式循环同模式，现有行整体下移 80px）；预设厂商时 endpoint/model 只读，Custom 可编辑；API 密钥行右侧加"显示/隐藏"按钮切 contentType。词条 +3（provider/show_key/hide_key，en+zh_cn，已导表）。
+- 实测（MCP）：厂商循环 DeepSeek→Kimi→Claude→ChatGPT→Custom 端点联动正确、预设只读/Custom 可编辑正确；eye 按钮 Standard↔Password 切换正确；旧配置（无 provider）正确推断为 deepseek/OpenAI；截图验收布局无重叠；dotnet build 0 error。Claude 链路无 key 未在线实测。
+
+## 2026-09-09 厂商预设调整：模型改玩家自填
+- 用户反馈预设默认型号容易过时。调整：厂商预设只带出 endpoint；模型框始终可编辑、不再预填，占位符显示该厂商示例型号作提示（`LlmProviderPreset.DefaultModel` 降为占位提示用途）；保存校验模型必填不变。删除 `LlmConfig.DefaultEndpoint/DefaultModel` 死常量。编译 0 error。
+
+## 2026-09-09 厂商选择改下拉菜单 + API Key 显示回填真实 key
+- 需求①（点"显示"看不到已存 key）：`SettingsUI.ToggleApiKeyVisibility` 切明文时若输入框为空且本地有已存 key，自动解密回填真实 key 再切 Standard；隐藏时清回掩码态。实测：点"显示"输入框出现 sk- 开头真实 key，按钮变"隐藏"。
+- 需求②（模型厂商改下拉菜单）：prefab 删循环按钮 `m_btn_LlmProvider`，自建完整 TMP_Dropdown 结构 `m_dropdown_LlmProvider`（Caption + Template/Viewport/Content/Item(Toggle+Item Background+Item Label)）；`SettingsUI` 代码改绑 `m_dropdown_LlmProvider`，`SetupProviderDropdown`/`OnProviderDropdownChanged`/`ApplyProviderView`（预设 endpoint 只读、Custom 可编辑、模型始终玩家自填）。
+- 排坑（下拉弹层整体不渲染）：现象为弹层背景可见但 5 个选项完全不显示。逐项排除遮罩/裁剪/layer/嵌套 Canvas 参数/shader 通道后定位真因——**测试脚本在页签激活同一帧调 `dd.Show()`，`m_AlphaTweenRunner` 在 `TMP_Dropdown.Start()` 才初始化 → `AlphaFadeList` NRE 中断 Show() 流程，停在"原 Template 已激活、克隆列表已建"的中间态，原 Template 的 Canvas(order=30000) 不透明底把列表项整个盖住**。正常用户点击（跨帧）不会触发；prefab 侧 Template 按 TMP 惯例设为 inactive、保持无 Canvas（运行时 SetupTemplate 自处理）。
+- 实测：Hide→Show 后 5 项正常渲染；切换 ChatGPT 后 endpoint 自动变 https://api.openai.com/v1、模型框保持玩家所填；截图验收通过（注意截图前已切回掩码态，无 key 泄漏）。
+
+## 2026-09-09 队友轮播台词六规则重构
+- 背景：玩家反馈"说闭嘴后 AI 还在说话、轮播语言没得到妥善处理"。重构 `CompanionBrain` 的台词调度为明确的六条规则。
+- 规则实现（`CompanionBrain.Tick` 重构 + 聊天入口改造）：
+  ① 安全+默认：原有 `_idleChatTimer` 轮播不变；
+  ② 安静模式 `_quietMode`：`RequestChatReply` 最优先识别"闭嘴/安静/别说话/shut up/quiet"等中英关键词（Contains 匹配），命中则本地播 `quiet_ack` 确认、不进 LLM；安静期间停轮播、在途 safe_idle 回复落地即丢弃、`SayFromLlm`（DecisionDriver 决策台词）同步抑制；玩家任何非安静指令的主动沟通自动解除。战术播报（预警/方位/脱战）不受安静模式影响；
+  ③ 对话保持期：复用 `IsInConversation`（聊天窗开或最后对话 30s 内）暂停轮播，超时恢复；
+  ④ 危险沿：`ThreatCount` 0→>0（敌人进入追击=发现玩家）播 `danger_alert`；
+  ⑤ 战斗中：不轮播，按 8s 全局节流报最近威胁（`NearestThreat` 兜底 `NearestVisibleEnemy`）相对玩家的 8 方位 bark（世界方向系，+Z=屏幕上方=前方，不随玩家面朝变化）；
+  ⑥ 脱战沿：播 `combat_end`，之后 20s 冷静期（`PostCombatCalmSeconds`）内无战斗才恢复安全轮播。
+- 配置：TbCompanionBark +13 行（quiet_ack×1 / danger_alert×2 / combat_end×2 / combat_dir 8 方位×1，冷却 0/8/6/10s）；localization +13 词条（en+zh_cn）；均已导表（已备份 .pre_chatter.bak）。
+- 验证：dotnet build 0 error；Luban 导表成功且 json 数据落地；Unity 重编译 console 无报错。实机轮播节奏由玩家验收。

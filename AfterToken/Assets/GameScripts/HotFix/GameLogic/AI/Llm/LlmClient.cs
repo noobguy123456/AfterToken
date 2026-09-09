@@ -28,7 +28,9 @@ namespace GameLogic.AI.Llm
     }
 
     /// <summary>
-    /// LLM HTTP 客户端：OpenAI 兼容 POST {endpoint}/chat/completions（非流式）。
+    /// LLM HTTP 客户端（非流式）。按 <see cref="LlmConfig.ApiStyle"/> 走两套协议：
+    /// OpenAI 兼容 POST {endpoint}/chat/completions（DeepSeek/Kimi/ChatGPT/自托管），
+    /// Anthropic 原生 POST {endpoint}/v1/messages（Claude）。
     /// 纯网络封装，不知道任何玩法概念；配置见 <see cref="LlmConfig"/>。
     /// 流式 SSE 留扩展位（MVP 不需要）。
     /// </summary>
@@ -53,14 +55,27 @@ namespace GameLogic.AI.Llm
                 return LlmResult.Fail("not_configured");
             }
 
-            string url = _config.endpoint.TrimEnd('/') + "/chat/completions";
-            string body = BuildRequestBody(systemPrompt, userPrompt);
+            bool anthropic = _config.ApiStyle == LlmApiStyle.Anthropic;
+            string url = anthropic
+                ? _config.endpoint.TrimEnd('/') + "/v1/messages"
+                : _config.endpoint.TrimEnd('/') + "/chat/completions";
+            string body = anthropic
+                ? BuildAnthropicBody(systemPrompt, userPrompt)
+                : BuildRequestBody(systemPrompt, userPrompt);
 
             using var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("Authorization", "Bearer " + _config.GetApiKey());
+            if (anthropic)
+            {
+                req.SetRequestHeader("x-api-key", _config.GetApiKey());
+                req.SetRequestHeader("anthropic-version", "2023-06-01");
+            }
+            else
+            {
+                req.SetRequestHeader("Authorization", "Bearer " + _config.GetApiKey());
+            }
             req.timeout = (int)Math.Ceiling(_config.EffectiveTimeout);
 
             try
@@ -86,7 +101,8 @@ namespace GameLogic.AI.Llm
                 return LlmResult.Fail($"http_{req.responseCode}");
             }
 
-            return ParseResponse(req.downloadHandler.text);
+            return anthropic ? ParseAnthropicResponse(req.downloadHandler.text)
+                             : ParseResponse(req.downloadHandler.text);
         }
 
         private string BuildRequestBody(string systemPrompt, string userPrompt)
@@ -106,6 +122,49 @@ namespace GameLogic.AI.Llm
                 ["response_format"] = new JObject { ["type"] = "json_object" },
             };
             return root.ToString(Newtonsoft.Json.Formatting.None);
+        }
+
+        /// <summary>Anthropic /v1/messages 请求体：system 是顶层字段，不支持 response_format（契约靠 prompt 约束）。</summary>
+        private string BuildAnthropicBody(string systemPrompt, string userPrompt)
+        {
+            var root = new JObject
+            {
+                ["model"] = _config.model,
+                ["temperature"] = _config.EffectiveTemperature,
+                ["max_tokens"] = 256,
+                ["system"] = systemPrompt,
+                ["messages"] = new JArray
+                {
+                    new JObject { ["role"] = "user", ["content"] = userPrompt },
+                },
+            };
+            return root.ToString(Newtonsoft.Json.Formatting.None);
+        }
+
+        /// <summary>Anthropic 响应：content 是块数组，取第一个 text 块；usage 拆 input/output。</summary>
+        private static LlmResult ParseAnthropicResponse(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                return LlmResult.Fail("empty_response");
+            }
+
+            try
+            {
+                var root = JObject.Parse(json);
+                var content = root["content"]?[0]?["text"]?.ToString();
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    return LlmResult.Fail("empty_content");
+                }
+                int tokens = (root["usage"]?["input_tokens"]?.Value<int>() ?? 0)
+                           + (root["usage"]?["output_tokens"]?.Value<int>() ?? 0);
+                return new LlmResult(true, content, null, tokens);
+            }
+            catch (Exception e)
+            {
+                return LlmResult.Fail("parse:" + e.Message);
+            }
         }
 
         private static LlmResult ParseResponse(string json)

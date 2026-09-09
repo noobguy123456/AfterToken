@@ -22,7 +22,9 @@ namespace GameLogic.AI.Llm
 
     /// <summary>
     /// 队友大脑：LLM 链路的调度中枢（纯 C# 类，由 CompanionSystem 每帧 Tick）。
-    /// - 台词调度：安全闲聊定时器触发 → Online 问 LLM / 否则本地 bark 兜底 → 统一发 ICompanionEvent.OnCompanionSay。
+    /// - 轮播六规则：①安全默认轮播设定语言 ②玩家"闭嘴"类指令进入安静模式（自主台词全停，再次主动沟通自动解除）
+    ///   ③对话后 30s 保持期暂停轮播 ④敌人发现玩家（ThreatCount 0→>0）播危险预警
+    ///   ⑤战斗中不轮播、按 8s 节奏报最近威胁方位 ⑥脱战播台词 + 20s 冷静期后才回安全轮播。
     /// - 意图裁决：LLM intent 白名单校验 + TTL 过期 → 写 Context.PendingRequest（FSM 不知道 LLM 存在）。
     /// - LinkState 三态断联降级，Offline 后台探测恢复。
     /// 战斗类台词（交战/标点/死亡等）不走 LLM，由 <see cref="SayLocal"/> 秒回。
@@ -39,6 +41,19 @@ namespace GameLogic.AI.Llm
         private const int CHAT_HISTORY_ROUNDS = 4;
         /// <summary>自由对话最小发送间隔（秒）：玩家主动对话不套用闲聊的长节奏，只做防抖。</summary>
         private const float ChatMinInterval = 1f;
+        /// <summary>对话会话保持时长（秒）：最后一条对话后该时长内仍视为"对话中"，暂停随机闲聊。</summary>
+        private const float ConversationHoldSeconds = 30f;
+        /// <summary>脱离战斗后的冷静期（秒）：期间无战斗才恢复安全轮播。</summary>
+        private const float PostCombatCalmSeconds = 20f;
+        /// <summary>战斗中方位提示的全局最小间隔（秒），单方向词条冷却由 bark 表另管。</summary>
+        private const float DirHintInterval = 8f;
+
+        /// <summary>安静指令关键词（中英文，Contains 匹配）。</summary>
+        private static readonly string[] QuietKeywords =
+        {
+            "闭嘴", "安静", "别说话", "别说了", "住口",
+            "shut up", "shutup", "be quiet", "quiet", "silence", "stop talking",
+        };
 
         private readonly CompanionSystem _system;
         private readonly Companion _persona;
@@ -61,6 +76,25 @@ namespace GameLogic.AI.Llm
         private int _chatRequestCount;
         private float _lastChatRequestTime = -999f;
         private bool _chatInFlight;
+        /// <summary>最近一次对话活动（玩家发话或收到回复）的时间，用于对话期间暂停随机闲聊。</summary>
+        private float _lastChatActivityTime = -999f;
+
+        // ── 轮播调度状态（六条轮播规则）──
+        /// <summary>安静模式：玩家明确下达"闭嘴/安静"类指令后置位，停止一切自主台词（轮播+LLM 决策台词），玩家再次主动沟通时自动解除。战术播报（危险预警/方位提示/脱战）不受影响。</summary>
+        private bool _quietMode;
+        /// <summary>上一帧是否处于战斗（ThreatCount>0），用于危险/脱战沿检测。</summary>
+        private bool _wasInCombat;
+        /// <summary>最近一次处于战斗的时间，脱战后冷静期由此计时。</summary>
+        private float _lastCombatTime = -999f;
+        /// <summary>上一次方位提示时间（全局节流）。</summary>
+        private float _lastDirHintTime = -999f;
+
+        /// <summary>
+        /// 是否处于对话会话中（聊天窗打开，或最后一条对话未满 <see cref="ConversationHoldSeconds"/>）。
+        /// 对话中暂停安全闲聊（LLM 与本地兜底都停），避免自言自语插进玩家对话。
+        /// </summary>
+        public bool IsInConversation =>
+            CompanionChatUI.IsOpen || Time.time - _lastChatActivityTime < ConversationHoldSeconds;
 
         /// <summary>玩家发起的对话请求是否正在等 LLM 回复（聊天 UI 显示等待态用）。</summary>
         public bool ChatInFlight => _chatInFlight;
@@ -90,9 +124,13 @@ namespace GameLogic.AI.Llm
         /// <summary>M5 决策节拍器（GM stats 用）。</summary>
         public DecisionDriver DecisionDriver => _decisionDriver;
 
-        /// <summary>LLM 台词出口（聊天/操控频道共用：记防复读 + 发字幕事件）。</summary>
+        /// <summary>LLM 台词出口（聊天/操控频道共用：记防复读 + 发字幕事件）。安静模式下抑制自主台词（玩家对话的回复不走这里，不受影响）。</summary>
         public void SayFromLlm(string text)
         {
+            if (_quietMode)
+            {
+                return;
+            }
             EmitSay(text);
         }
 
@@ -192,16 +230,61 @@ namespace GameLogic.AI.Llm
             // M5 操控频道：自检开关与链路状态，非 llm 模式零开销
             _decisionDriver?.Tick(dt);
 
-            // 安全闲聊：仅安全状态（无威胁、队友存活、玩家在场）触发
+            // ── 轮播调度（六条规则）──
             var companion = _system.Companion;
-            bool safe = companion != null && !companion.IsDead
-                        && companion.Context != null && companion.Context.ThreatCount <= 0
-                        && _system.PlayerTransform != null;
-            if (!safe)
+            if (companion == null || companion.IsDead || companion.Context == null
+                || _system.PlayerTransform == null)
             {
                 return;
             }
 
+            var ctx = companion.Context;
+            bool inCombat = ctx.ThreatCount > 0;
+
+            // 规则4：安全→危险沿（敌人进入追击=发现玩家）播报预警
+            if (inCombat && !_wasInCombat)
+            {
+                SayLocal("danger_alert");
+            }
+            // 规则6：危险→安全沿播放脱战台词，冷静期由此开始
+            if (!inCombat && _wasInCombat)
+            {
+                SayLocal("combat_end", bypassCooldown: true);
+                _lastCombatTime = Time.time;
+            }
+            _wasInCombat = inCombat;
+
+            // 规则5：战斗中不轮播，只按节奏提示最近威胁方位
+            if (inCombat)
+            {
+                _lastCombatTime = Time.time;
+                if (Time.time - _lastDirHintTime >= DirHintInterval)
+                {
+                    _lastDirHintTime = Time.time;
+                    SayDirectionHint(ctx);
+                }
+                return;
+            }
+
+            // 规则6：脱战冷静期内不进入安全轮播
+            if (Time.time - _lastCombatTime < PostCombatCalmSeconds)
+            {
+                return;
+            }
+
+            // 规则2：安静模式（玩家明确指令，直到玩家再次主动沟通）
+            if (_quietMode)
+            {
+                return;
+            }
+
+            // 规则3：对话会话保持期暂停轮播（定时器不走字）
+            if (IsInConversation)
+            {
+                return;
+            }
+
+            // 规则1：安全且默认状态 → 轮播设定语言
             _idleChatTimer -= dt;
             if (_idleChatTimer <= 0f)
             {
@@ -216,6 +299,55 @@ namespace GameLogic.AI.Llm
                     RequestLlmLine("safe_idle", isProbe: false).Forget();
                 }
             }
+        }
+
+        /// <summary>
+        /// 战斗中方位提示：最近威胁（兜底警戒目标）相对玩家的世界方向，8 方位本地 bark 秒回。
+        /// 参照系为世界方向（俯视视角 +Z=屏幕上方=前方），不随玩家面朝变化，保证玩家读得懂。
+        /// </summary>
+        private void SayDirectionHint(CompanionStateContext ctx)
+        {
+            var threat = ctx.NearestThreat;
+            if (threat == null || threat.IsDead)
+            {
+                threat = ctx.NearestVisibleEnemy;
+            }
+            if (threat == null || threat.IsDead)
+            {
+                return;
+            }
+
+            Vector3 delta = threat.transform.position - _system.PlayerTransform.position;
+            float angle = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg; // 0=+Z(前) 90=+X(右)
+            if (angle < 0f)
+            {
+                angle += 360f;
+            }
+
+            string trigger;
+            if (angle < 22.5f || angle >= 337.5f) trigger = "combat_dir_front";
+            else if (angle < 67.5f) trigger = "combat_dir_front_right";
+            else if (angle < 112.5f) trigger = "combat_dir_right";
+            else if (angle < 157.5f) trigger = "combat_dir_back_right";
+            else if (angle < 202.5f) trigger = "combat_dir_back";
+            else if (angle < 247.5f) trigger = "combat_dir_back_left";
+            else if (angle < 292.5f) trigger = "combat_dir_left";
+            else trigger = "combat_dir_front_left";
+            SayLocal(trigger);
+        }
+
+        /// <summary>是否安静指令（"闭嘴/安静/shut up"等，中英文 Contains 匹配）。</summary>
+        private static bool IsQuietCommand(string text)
+        {
+            string t = text.Trim().ToLowerInvariant();
+            foreach (var k in QuietKeywords)
+            {
+                if (t.Contains(k))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -255,6 +387,17 @@ namespace GameLogic.AI.Llm
                 return;
             }
 
+            // 规则2：安静指令最优先识别（战斗中也可生效），本地确认即回，不进 LLM；
+            // 玩家之后任何非安静指令的主动沟通自动解除静默
+            if (IsQuietCommand(playerText))
+            {
+                _quietMode = true;
+                _lastChatActivityTime = Time.time;
+                SayLocal("quiet_ack", bypassCooldown: true);
+                return;
+            }
+            _quietMode = false;
+
             // 战斗中拒聊：CompanionSystem 的 T 键入口已挡，这里双保险
             var companion = _system.Companion;
             if (companion == null || companion.IsDead)
@@ -291,6 +434,7 @@ namespace GameLogic.AI.Llm
         private async UniTaskVoid RequestChatReplyAsync(string playerText)
         {
             _chatInFlight = true;
+            _lastChatActivityTime = Time.time;
             float sendTime = Time.time;
             try
             {
@@ -308,6 +452,7 @@ namespace GameLogic.AI.Llm
                 {
                     if (TryParseContract(result.Text, out string say, out string intent))
                     {
+                        _lastChatActivityTime = Time.time;
                         EmitSay(say);
                         TryApplyIntent(intent, sendTime);
                         RememberChat(playerText, say);
@@ -414,6 +559,12 @@ namespace GameLogic.AI.Llm
                 return;
             }
 
+            // 请求发出后玩家开聊了或下达了安静指令：这条在途的闲聊台词直接丢弃
+            if (trigger == "safe_idle" && (IsInConversation || _quietMode))
+            {
+                return;
+            }
+
             // 解析输出契约：say 提取失败整包丢弃转本地兜底；intent 校验白名单 + TTL
             if (TryParseContract(rawContent, out string say, out string intent))
             {
@@ -473,7 +624,13 @@ namespace GameLogic.AI.Llm
 
             try
             {
-                var json = JObject.Parse(raw);
+                // Anthropic 无 response_format，可能在 JSON 外包一层散文/markdown 代码块，
+                // 直解析失败时截取第一个 { 到最后一个 } 再试一次
+                var json = TryParseJObject(raw) ?? TryParseJObject(ExtractJsonSubstring(raw));
+                if (json == null)
+                {
+                    return false;
+                }
                 say = json["say"]?.ToString();
                 intent = json["intent"]?.ToString();
                 if (string.IsNullOrWhiteSpace(say))
@@ -490,6 +647,33 @@ namespace GameLogic.AI.Llm
             {
                 return false;
             }
+        }
+
+        private static JObject TryParseJObject(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+            try
+            {
+                return JObject.Parse(text);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static string ExtractJsonSubstring(string text)
+        {
+            int start = text.IndexOf('{');
+            int end = text.LastIndexOf('}');
+            if (start < 0 || end <= start)
+            {
+                return null;
+            }
+            return text.Substring(start, end - start + 1);
         }
 
         /// <summary>意图裁决：白名单 + TTL 过期作废。仅调整姿态（follow/hold），retreat 映射为驻守收缩。</summary>

@@ -61,12 +61,19 @@ namespace GameLogic
         private GameObject _panelAI;
 
         // ---- AI 页签：LLM 配置 ----
+        private TMP_Dropdown _llmProviderDropdown;
         private TMP_InputField _llmEndpointInput;
         private TMP_InputField _llmApiKeyInput;
+        private Button _llmKeyVisibleButton;
+        private TextMeshProUGUI _llmKeyVisibleText;
         private TMP_InputField _llmModelInput;
         private Toggle _llmControlModeToggle;
         private Button _llmSaveButton;
         private TextMeshProUGUI _llmStatusText;
+        /// <summary>当前选中的厂商预设 id（custom=自填端点）。</summary>
+        private string _currentProviderId = AI.Llm.LlmProviders.CustomId;
+        /// <summary>API Key 明文显示开关。</summary>
+        private bool _keyVisible;
 
         // ---- Audio 页签：音量 ----
         private Slider _masterVolumeSlider;
@@ -153,8 +160,11 @@ namespace GameLogic
             var panelAI = FindChildComponent<RectTransform>("m_rect_ContentRoot/m_panel_AI");
             _panelAI = panelAI != null ? panelAI.gameObject : null;
 
+            _llmProviderDropdown = FindChildComponent<TMP_Dropdown>("m_rect_ContentRoot/m_panel_AI/m_dropdown_LlmProvider");
             _llmEndpointInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmEndpoint");
             _llmApiKeyInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmApiKey");
+            _llmKeyVisibleButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_AI/m_btn_LlmKeyVisible");
+            _llmKeyVisibleText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_btn_LlmKeyVisible/m_text_Label");
             _llmModelInput = FindChildComponent<TMP_InputField>("m_rect_ContentRoot/m_panel_AI/m_input_LlmModel");
             _llmControlModeToggle = FindChildComponent<Toggle>("m_rect_ContentRoot/m_panel_AI/m_toggle_LlmControlMode");
             _llmSaveButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_AI/m_btn_LlmSave");
@@ -273,6 +283,16 @@ namespace GameLogic
             {
                 _llmControlModeToggle.onValueChanged.RemoveAllListeners();
                 _llmControlModeToggle.onValueChanged.AddListener(_ => UpdateLlmControlModeText());
+            }
+            if (_llmProviderDropdown != null)
+            {
+                _llmProviderDropdown.onValueChanged.RemoveAllListeners();
+                _llmProviderDropdown.onValueChanged.AddListener(OnProviderDropdownChanged);
+            }
+            if (_llmKeyVisibleButton != null)
+            {
+                _llmKeyVisibleButton.onClick.RemoveAllListeners();
+                _llmKeyVisibleButton.onClick.AddListener(ToggleApiKeyVisibility);
             }
             if (_masterVolumeSlider != null)
             {
@@ -405,34 +425,152 @@ namespace GameLogic
 
         // ---- AI 页签：LLM 配置 ----
 
-        /// <summary>打开面板时回填当前配置；apiKey 输入框留空表示"不改动已有 key"。</summary>
+        /// <summary>
+        /// 打开面板时回填当前配置；apiKey 输入框留空表示"不改动已有 key"。
+        /// 厂商预设驱动：选中预设时 endpoint 由预设带出且只读，Custom 才可手填；model 始终自填。
+        /// </summary>
         private void InitializeLlmPanel()
         {
             var config = AI.Llm.LlmConfig.Load();
+            // 从未配置过：默认落在第一个预设（DeepSeek），玩家只需粘 key
+            _currentProviderId = string.IsNullOrEmpty(config.endpoint) && string.IsNullOrEmpty(config.provider)
+                ? AI.Llm.LlmProviders.Presets[0].Id
+                : config.EffectiveProviderId;
+
+            SetupProviderDropdown();
+
+            var preset = AI.Llm.LlmProviders.Find(_currentProviderId);
             if (_llmEndpointInput != null)
             {
-                _llmEndpointInput.text = config.endpoint ?? string.Empty;
+                // 预设厂商优先展示已保存的值（玩家可能改过自定义端点），没有才用预设默认
+                _llmEndpointInput.text = !string.IsNullOrEmpty(config.endpoint)
+                    ? config.endpoint
+                    : preset?.Endpoint ?? string.Empty;
             }
             if (_llmApiKeyInput != null)
             {
                 _llmApiKeyInput.text = string.Empty;
-                _llmApiKeyInput.contentType = TMP_InputField.ContentType.Password;
-                // 已有 key 时用占位符提示"已保存，输入则覆盖"
+                // 已有 key 时用占位符提示"已保存，输入则覆盖；点右侧'显示'可查看已存 key"
                 if (_llmApiKeyInput.placeholder is TextMeshProUGUI placeholder)
                 {
                     placeholder.text = !string.IsNullOrEmpty(config.GetApiKey()) ? "********" : "sk-...";
                 }
             }
+            _keyVisible = false;
+            ApplyApiKeyVisibility();
             if (_llmModelInput != null)
             {
+                // 型号迭代快，不做默认值：只回填已保存值，占位符显示该厂商的示例型号
                 _llmModelInput.text = config.model ?? string.Empty;
             }
+            ApplyProviderView();
             if (_llmControlModeToggle != null)
             {
                 _llmControlModeToggle.isOn = config.IsLlmControl;
                 UpdateLlmControlModeText();
             }
             UpdateLlmStatusView();
+        }
+
+        /// <summary>重建厂商下拉选项（预设 + Custom）并选中当前厂商，不触发回调。</summary>
+        private void SetupProviderDropdown()
+        {
+            if (_llmProviderDropdown == null)
+            {
+                return;
+            }
+            var options = new List<TMP_Dropdown.OptionData>();
+            foreach (var p in AI.Llm.LlmProviders.Presets)
+            {
+                options.Add(new TMP_Dropdown.OptionData(p.DisplayName));
+            }
+            options.Add(new TMP_Dropdown.OptionData("Custom"));
+            _llmProviderDropdown.ClearOptions();
+            _llmProviderDropdown.AddOptions(options);
+            _llmProviderDropdown.SetValueWithoutNotify(ProviderIdToIndex(_currentProviderId));
+            _llmProviderDropdown.RefreshShownValue();
+        }
+
+        private static int ProviderIdToIndex(string providerId)
+        {
+            var presets = AI.Llm.LlmProviders.Presets;
+            for (int i = 0; i < presets.Length; i++)
+            {
+                if (presets[i].Id == providerId)
+                {
+                    return i;
+                }
+            }
+            return presets.Length; // 最后一项是 Custom
+        }
+
+        /// <summary>下拉切换厂商：预设带出端点且只读；模型不预填（占位符给示例），Custom 保留当前文本自填。</summary>
+        private void OnProviderDropdownChanged(int index)
+        {
+            var presets = AI.Llm.LlmProviders.Presets;
+            _currentProviderId = index >= 0 && index < presets.Length
+                ? presets[index].Id
+                : AI.Llm.LlmProviders.CustomId;
+
+            var preset = AI.Llm.LlmProviders.Find(_currentProviderId);
+            if (preset != null && _llmEndpointInput != null)
+            {
+                _llmEndpointInput.text = preset.Endpoint;
+            }
+            ApplyProviderView();
+        }
+
+        /// <summary>刷新 endpoint/model 输入框状态：endpoint 预设只读/Custom 可编辑；model 始终可编辑，占位符给示例型号。</summary>
+        private void ApplyProviderView()
+        {
+            var preset = AI.Llm.LlmProviders.Find(_currentProviderId);
+            if (_llmEndpointInput != null)
+            {
+                _llmEndpointInput.interactable = preset == null;
+            }
+            if (_llmModelInput != null)
+            {
+                _llmModelInput.interactable = true;
+                if (_llmModelInput.placeholder is TextMeshProUGUI placeholder)
+                {
+                    placeholder.text = preset != null ? preset.DefaultModel : "model name";
+                }
+            }
+        }
+
+        /// <summary>
+        /// API Key 明文/密文切换（默认密文）。
+        /// 切明文时若输入框为空且本地已存 key，回填真实 key 供核对（占位符的 ******** 不是真值）。
+        /// </summary>
+        private void ToggleApiKeyVisibility()
+        {
+            _keyVisible = !_keyVisible;
+            if (_keyVisible && _llmApiKeyInput != null && string.IsNullOrEmpty(_llmApiKeyInput.text))
+            {
+                string savedKey = AI.Llm.LlmConfig.Load().GetApiKey();
+                if (!string.IsNullOrEmpty(savedKey))
+                {
+                    _llmApiKeyInput.text = savedKey;
+                }
+            }
+            ApplyApiKeyVisibility();
+        }
+
+        private void ApplyApiKeyVisibility()
+        {
+            if (_llmApiKeyInput != null)
+            {
+                _llmApiKeyInput.contentType = _keyVisible
+                    ? TMP_InputField.ContentType.Standard
+                    : TMP_InputField.ContentType.Password;
+                _llmApiKeyInput.ForceLabelUpdate();
+            }
+            if (_llmKeyVisibleText != null)
+            {
+                _llmKeyVisibleText.text = Loc.Get(_keyVisible
+                    ? "ui.settings.llm.hide_key"
+                    : "ui.settings.llm.show_key");
+            }
         }
 
         /// <summary>操控开关右侧文本显示当前模式（LLM/FSM），与狙击开镜开关同模式。</summary>
@@ -449,18 +587,25 @@ namespace GameLogic
         private void OnLlmSaveClicked()
         {
             var old = AI.Llm.LlmConfig.Load();
+            string newKey = _llmApiKeyInput != null ? _llmApiKeyInput.text.Trim() : null;
             var config = new AI.Llm.LlmConfig
             {
+                provider = _currentProviderId,
                 endpoint = _llmEndpointInput != null ? _llmEndpointInput.text.Trim() : old.endpoint,
                 // 输入框留空 = 保留旧 key
-                apiKey = _llmApiKeyInput != null && !string.IsNullOrEmpty(_llmApiKeyInput.text)
-                    ? _llmApiKeyInput.text.Trim()
-                    : old.GetApiKey(),
+                apiKey = !string.IsNullOrEmpty(newKey) ? newKey : old.GetApiKey(),
                 model = _llmModelInput != null ? _llmModelInput.text.Trim() : old.model,
                 timeoutSeconds = old.timeoutSeconds,
                 temperature = old.temperature,
                 controlMode = _llmControlModeToggle != null && _llmControlModeToggle.isOn ? "llm" : "fsm",
             };
+
+            // 必填校验：三项缺一即视为未配置，直接提示而不是"保存成功但离线"
+            if (!config.IsValid)
+            {
+                UpdateLlmStatusView(Loc.Get("ui.settings.llm.invalid_input"));
+                return;
+            }
 
             bool saved = AI.Llm.LlmConfig.Save(config);
             if (saved && _llmApiKeyInput != null)
@@ -471,7 +616,7 @@ namespace GameLogic
             CompanionSystem.Instance?.Brain?.ReloadConfig();
             UpdateLlmStatusView(saved
                 ? Loc.Get("ui.settings.llm.saved")
-                : Loc.Get("ui.settings.llm.save_failed"));
+                : Loc.Get("ui.settings.llm.save_failed", AI.Llm.LlmConfig.LastError ?? "unknown"));
         }
 
         /// <summary>刷新链路状态行；message 非空时优先显示（保存反馈）。</summary>
@@ -663,6 +808,7 @@ namespace GameLogic
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeLabel"), "ui.settings.music_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeLabel"), "ui.settings.sound_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Graphics/m_text_QualityLabel"), "ui.settings.quality");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmProviderLabel"), "ui.settings.llm.provider");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmEndpointLabel"), "ui.settings.llm.endpoint");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmApiKeyLabel"), "ui.settings.llm.apikey");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmModelLabel"), "ui.settings.llm.model");

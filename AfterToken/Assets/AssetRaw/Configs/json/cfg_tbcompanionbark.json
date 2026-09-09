@@ -138,5 +138,96 @@
     "textKey": "companion.bark.chat_busy.2",
     "weight": 1,
     "cooldown": 3
+  },
+  {
+    "id": 80,
+    "trigger": "quiet_ack",
+    "textKey": "companion.bark.quiet_ack",
+    "weight": 1,
+    "cooldown": 0
+  },
+  {
+    "id": 90,
+    "trigger": "danger_alert",
+    "textKey": "companion.bark.danger_alert.1",
+    "weight": 3,
+    "cooldown": 8
+  },
+  {
+    "id": 91,
+    "trigger": "danger_alert",
+    "textKey": "companion.bark.danger_alert.2",
+    "weight": 2,
+    "cooldown": 8
+  },
+  {
+    "id": 100,
+    "trigger": "combat_end",
+    "textKey": "companion.bark.combat_end.1",
+    "weight": 3,
+    "cooldown": 6
+  },
+  {
+    "id": 101,
+    "trigger": "combat_end",
+    "textKey": "companion.bark.combat_end.2",
+    "weight": 2,
+    "cooldown": 6
+  },
+  {
+    "id": 110,
+    "trigger": "combat_dir_front",
+    "textKey": "companion.bark.combat_dir.front",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 111,
+    "trigger": "combat_dir_back",
+    "textKey": "companion.bark.combat_dir.back",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 112,
+    "trigger": "combat_dir_left",
+    "textKey": "companion.bark.combat_dir.left",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 113,
+    "trigger": "combat_dir_right",
+    "textKey": "companion.bark.combat_dir.right",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 114,
+    "trigger": "combat_dir_front_left",
+    "textKey": "companion.bark.combat_dir.front_left",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 115,
+    "trigger": "combat_dir_front_right",
+    "textKey": "companion.bark.combat_dir.front_right",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 116,
+    "trigger": "combat_dir_back_left",
+    "textKey": "companion.bark.combat_dir.back_left",
+    "weight": 1,
+    "cooldown": 10
+  },
+  {
+    "id": 117,
+    "trigger": "combat_dir_back_right",
+    "textKey": "companion.bark.combat_dir.back_right",
+    "weight": 1,
+    "cooldown": 10
   }
 ]

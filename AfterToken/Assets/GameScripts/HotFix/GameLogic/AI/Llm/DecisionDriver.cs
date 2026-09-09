@@ -169,7 +169,12 @@ namespace GameLogic.AI.Llm
 
             try
             {
-                var json = JObject.Parse(raw);
+                // Anthropic 无 response_format，可能外包散文/markdown，直解析失败截取首个 { 到末个 }
+                var json = TryParseJObject(raw) ?? TryParseJObject(ExtractJsonSubstring(raw));
+                if (json == null)
+                {
+                    return false;
+                }
                 action = json["action"]?.ToString()?.Trim().ToLowerInvariant();
                 target = json["target"]?.ToString()?.Trim();
                 say = json["say"]?.ToString();
@@ -183,6 +188,33 @@ namespace GameLogic.AI.Llm
             {
                 return false;
             }
+        }
+
+        private static JObject TryParseJObject(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+            try
+            {
+                return JObject.Parse(text);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static string ExtractJsonSubstring(string text)
+        {
+            int start = text.IndexOf('{');
+            int end = text.LastIndexOf('}');
+            if (start < 0 || end <= start)
+            {
+                return null;
+            }
+            return text.Substring(start, end - start + 1);
         }
 
         /// <summary>目标有效性检查 + 写指令槽。返回 false = 非法决策（丢弃）。</summary>

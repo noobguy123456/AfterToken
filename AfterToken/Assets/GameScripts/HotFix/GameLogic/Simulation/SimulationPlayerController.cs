@@ -72,8 +72,10 @@ namespace GameLogic
                 return;
             }
 
-            float h = Input.GetAxis("Horizontal");
-            float v = Input.GetAxis("Vertical");
+            // 与战斗场景一致用 GetAxisRaw：GetAxis 带平滑（按住反向键时轴向 0 缓降），
+            // 表现为"按相反方向键角色还会继续滑、越来越慢"，不符合俯视角射击的即时手感
+            float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
             var dir = new Vector3(h, 0f, v);
             if (dir.sqrMagnitude > 1f)
             {
