@@ -51,6 +51,13 @@ namespace GameLogic
         /// <summary>engage 指令解析后的目标（驱动器每帧解析，死亡自动失效）。</summary>
         public EnemyEntity LlmTarget;
 
+        /// <summary>
+        /// 玩家显式指令保护期（Time.time 截止点）：玩家聊天指令（follow/hold）与 G 键跟随开关置位。
+        /// 期间 LLM 决策指令不生效（同标点优先级思路：玩家直接指令永远压过 LLM 自主决策），
+        /// 防止决策节拍用快照坐标覆盖玩家的"跟着我"意图。
+        /// </summary>
+        public float PlayerCommandUntil;
+
         public INavigationSystem NavigationSystem;
         public StateTransitionRequest PendingRequest;
 

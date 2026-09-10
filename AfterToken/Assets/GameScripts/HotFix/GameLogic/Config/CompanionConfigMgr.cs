@@ -5,7 +5,7 @@ namespace GameLogic
 {
     /// <summary>
     /// 队友配置管理器（TbCompanion / TbCompanionBark 包装）。
-    /// M1 期 MVP 只有一名队友（id=1 Rook），多队友预留。
+    /// M1 期 MVP 只有一名队友（id=1 Exusiai），多队友预留。
     /// </summary>
     public class CompanionConfigMgr
     {
@@ -15,7 +15,9 @@ namespace GameLogic
         /// <summary>MVP 唯一队友 ID。</summary>
         public const int DefaultCompanionId = 1;
 
-        private System.Collections.Generic.IReadOnlyList<CompanionBark> _barkCache;
+        /// <summary>台词按 trigger 分组的懒建缓存；_cacheSource 引用变化（GM reload 换表）时自动重建。</summary>
+        private Dictionary<string, List<CompanionBark>> _barkIndex;
+        private System.Collections.Generic.IReadOnlyList<CompanionBark> _cacheSource;
 
         /// <summary>获取队友人设卡，不存在时返回 null。</summary>
         public Companion Get(int companionId = DefaultCompanionId)
@@ -31,19 +33,39 @@ namespace GameLogic
                 return null;
             }
 
-            _barkCache ??= ConfigSystem.Instance.Tables.TbCompanionBark.DataList;
-
-            List<CompanionBark> result = null;
-            for (int i = 0; i < _barkCache.Count; i++)
+            var dataList = ConfigSystem.Instance.Tables.TbCompanionBark.DataList;
+            if (_barkIndex == null || !ReferenceEquals(_cacheSource, dataList))
             {
-                var bark = _barkCache[i];
-                if (bark.Trigger == trigger)
-                {
-                    result ??= new List<CompanionBark>(4);
-                    result.Add(bark);
-                }
+                RebuildIndex(dataList);
             }
-            return result;
+
+            return _barkIndex.TryGetValue(trigger, out var result) ? result : null;
+        }
+
+        private void RebuildIndex(System.Collections.Generic.IReadOnlyList<CompanionBark> dataList)
+        {
+            _cacheSource = dataList;
+            _barkIndex = new Dictionary<string, List<CompanionBark>>(16);
+            if (dataList == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < dataList.Count; i++)
+            {
+                var bark = dataList[i];
+                if (bark == null || string.IsNullOrEmpty(bark.Trigger))
+                {
+                    continue;
+                }
+
+                if (!_barkIndex.TryGetValue(bark.Trigger, out var list))
+                {
+                    list = new List<CompanionBark>(4);
+                    _barkIndex[bark.Trigger] = list;
+                }
+                list.Add(bark);
+            }
         }
 
         /// <summary>按权重随机抽一条台词，无匹配返回 null。</summary>

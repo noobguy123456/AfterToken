@@ -43,10 +43,14 @@ namespace GameLogic
             CursorManager.Instance?.ShowCursor();
 
             var brain = CompanionSystem.Instance != null ? CompanionSystem.Instance.Brain : null;
+            if (brain != null)
+            {
+                brain.ChatUIOpen = true;
+            }
             if (_titleText != null)
             {
                 string name = brain != null ? brain.CompanionName : CompanionEntity.CompanionName;
-                _titleText.text = $"RADIO — {name.ToUpperInvariant()}";
+                _titleText.text = Loc.Get("ui.chat.title", name.ToUpperInvariant());
             }
             if (_statusText != null)
             {
@@ -103,6 +107,11 @@ namespace GameLogic
         protected override void OnDestroy()
         {
             IsOpen = false;
+            var brain = CompanionSystem.Instance != null ? CompanionSystem.Instance.Brain : null;
+            if (brain != null)
+            {
+                brain.ChatUIOpen = false;
+            }
             CursorManager.Instance?.HideCursor();
             base.OnDestroy();
         }

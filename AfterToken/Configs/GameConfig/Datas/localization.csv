@@ -47,7 +47,7 @@
 ,ui.settlement.loot.empty,No loot recovered,没有带回任何物资,,,
 ,ui.settlement.loot.value,Estimated Value: {0}G,估值合计：{0}G,,,
 ,ui.settlement.confirm,Return to Base,返回基地,,,
-,companion.rook.name,Rook,Rook,,,
+,companion.exusiai.name,Exusiai,能天使,,,
 ,companion.bark.safe_idle.1,"Sector's quiet. Too quiet.",这片区域真安静。安静过头了。,,,
 ,companion.bark.safe_idle.2,Perimeter looks clear.,周边看起来安全。,,,
 ,companion.bark.safe_idle.3,Remember to check your ammo.,记得检查弹药。,,,
@@ -89,6 +89,7 @@
 ,companion.bark.chat_busy.2,Talk later. Busy.,回头再聊。现在忙着。,,,
 ,ui.chat.hint,Type a message... (Enter send / Esc close),输入消息……（Enter 发送 / Esc 关闭）,,,
 ,ui.chat.transmitting,transmitting...,发送中……,,,
+,ui.chat.title,"RADIO — {0}",无线电 — {0},,,
 
 ,companion.bark.quiet_ack,"Copy. Radio silence.",收到。保持静默。,,,
 ,companion.bark.danger_alert.1,"Movement. We are spotted.",有动静。我们被发现了。,,,

@@ -15,7 +15,22 @@ namespace GameLogic
     {
         public static CompanionSystem Instance { get; private set; }
 
-        private static readonly Vector3 SpawnOffset = new Vector3(1.5f, 0f, -1.5f);
+        /// <summary>队友出生偏移兜底值（TbCompanion.spawnOffsetX/Z 缺失时用）。</summary>
+        private static readonly Vector3 SpawnOffsetFallback = new Vector3(1.5f, 0f, -1.5f);
+
+        /// <summary>队友出生偏移（相对玩家出生点），读 TbCompanion。</summary>
+        private static Vector3 SpawnOffset
+        {
+            get
+            {
+                var persona = CompanionConfigMgr.Instance.Get();
+                if (persona == null)
+                {
+                    return SpawnOffsetFallback;
+                }
+                return new Vector3(persona.SpawnOffsetX, 0f, persona.SpawnOffsetZ);
+            }
+        }
 
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
         private readonly HashSet<int> _threats = new HashSet<int>();
@@ -149,6 +164,9 @@ namespace GameLogic
 
             var ctx = _companion.Context;
             ctx.FollowEnabled = !ctx.FollowEnabled;
+            // G 键同为玩家显式指令：清 LLM 指令并进保护期（与聊天 follow/hold 同规）
+            ctx.ClearLlmDirective();
+            ctx.PlayerCommandUntil = Time.time + CompanionBrain.PlayerCommandGraceSeconds;
             if (ctx.FollowEnabled)
             {
                 // 切回跟随时清除标点驻守姿态

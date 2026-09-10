@@ -36,6 +36,12 @@ namespace GameLogic.AI.Llm
     /// </summary>
     public class LlmClient
     {
+        /// <summary>
+        /// 单次请求输出 token 上限。中文 80 字 bark + JSON 契约包装约需 200+，
+        /// 低于此值会截断导致契约解析失败并静默降级本地 bark。
+        /// </summary>
+        private const int MaxOutputTokens = 256;
+
         private readonly LlmConfig _config;
 
         public LlmClient(LlmConfig config)
@@ -113,7 +119,7 @@ namespace GameLogic.AI.Llm
             {
                 ["model"] = _config.model,
                 ["temperature"] = _config.EffectiveTemperature,
-                ["max_tokens"] = 120,
+                ["max_tokens"] = MaxOutputTokens,
                 ["messages"] = new JArray
                 {
                     new JObject { ["role"] = "system", ["content"] = systemPrompt },
@@ -131,7 +137,7 @@ namespace GameLogic.AI.Llm
             {
                 ["model"] = _config.model,
                 ["temperature"] = _config.EffectiveTemperature,
-                ["max_tokens"] = 256,
+                ["max_tokens"] = MaxOutputTokens,
                 ["system"] = systemPrompt,
                 ["messages"] = new JArray
                 {

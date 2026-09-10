@@ -368,9 +368,9 @@
     "ko": ""
   },
   {
-    "key": "companion.rook.name",
-    "en": "Rook",
-    "zh_cn": "Rook",
+    "key": "companion.exusiai.name",
+    "en": "Exusiai",
+    "zh_cn": "能天使",
     "zh_tw": "",
     "ja": "",
     "ko": ""
@@ -699,6 +699,14 @@
     "key": "ui.chat.transmitting",
     "en": "transmitting...",
     "zh_cn": "发送中……",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.chat.title",
+    "en": "RADIO — {0}",
+    "zh_cn": "无线电 — {0}",
     "zh_tw": "",
     "ja": "",
     "ko": ""

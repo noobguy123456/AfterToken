@@ -619,3 +619,55 @@ Luban 配置表数据补充
   ⑥ 脱战沿：播 `combat_end`，之后 20s 冷静期（`PostCombatCalmSeconds`）内无战斗才恢复安全轮播。
 - 配置：TbCompanionBark +13 行（quiet_ack×1 / danger_alert×2 / combat_end×2 / combat_dir 8 方位×1，冷却 0/8/6/10s）；localization +13 词条（en+zh_cn）；均已导表（已备份 .pre_chatter.bak）。
 - 验证：dotnet build 0 error；Luban 导表成功且 json 数据落地；Unity 重编译 console 无报错。实机轮播节奏由玩家验收。
+
+## 2026-09-10 队友"来我这"只到指令发送点 + 贴脸跟随 + 台词过频 修复
+- bug①根因：聊天指令 intent=follow 虽然正确切了 Follow 态，但 M5 决策节拍器（安全期 8s 一拍）继续自主决策，LLM 看到"boss 在 (x,z)"很容易回 `move_to <快照坐标>`——仲裁里 LLM 指令优先级高于姿态层，于是队友被拉去"发指令那一刻玩家站的位置"站住，不再跟随。
+- 修复（玩家显式指令保护期）：`CompanionStateContext` +`PlayerCommandUntil`；聊天 follow/hold/retreat 指令与 G 键跟随开关都会 `ClearLlmDirective()` + 置 30s 保护期（`CompanionBrain.PlayerCommandGraceSeconds`）；仲裁层与 `DecisionDriver.Tick` 在保护期内跳过 LLM 指令（省 token 且防覆盖），与"标点压过 LLM"同一优先级思路。
+- bug②a（贴脸）：TbCompanion `followStopDist` 2.2→3.5（另：`move_to` 类指令目标是快照点、到位距离≈0，保护期落地后该路径不再误触发）。
+- bug②b（台词过频）：双管齐下——安全轮播 `idleChatMin/MaxInterval` 25/40→45/70；M5 决策台词原来是每拍（8s）必播，现加节流：action=none 不播，其余最小间隔 20s（`DecisionDriver.DecisionSayMinInterval`）。
+- 验证：导表成功且 json 数据落地（followStopDist=3.5 等）；dotnet build 0 error。Unity 侧 console 未验（编辑器当时不在线），实机节奏由玩家验收。companion.xlsx 已备份 .pre_follow.bak。
+
+## 2026-09-10 队友头顶名牌（名字+血量数字）
+- `CompanionEntity` 血条根节点下新增世界空间 TMP 名牌：第一行呼号（TbCompanion.nameKey → Loc.Get，兜底 "Rook"），第二行 HP 数字（150/200 式），淡绿色、fontSize 2.2、sortingOrder 12；挂在 HealthBarRoot 上随 LateUpdate 一起 billboard，无需额外朝向逻辑。
+- 名牌文本在 `UpdateHealthBar`（掉血/初始化）时刷新；`NAMEPLATE_OFFSET_Y=0.45` 避免两行文本压到血条。
+- 注意：编辑器 Enter Play Mode 关闭了域重载时 Play 中改代码不生效，需重启 Play 验证。
+- 顺带修正：followStopDist 由 3.5 回调到 2.6（3.5m 在当前相机缩放下会把队友挤出画面外）。
+- 实测（MCP，101 关）：名牌渲染/billboard/掉血联动（TakeDamage(50)→"Rook 150/200"+血条同步缩短）截图验收通过；dotnet build 0 error。
+- 工具沉淀：`.tmp_check_scene.cs`（查场景/队友状态）、`.tmp_goto101.cs`（GM level 101 等价直跳）保留进常用 MCP 工具组。
+
+## 2026-09-10 LLM 输出语言跟随游戏语言设置
+- 问题：三条 LLM 通道（安全闲聊/操控决策/自由对话）的契约里硬编码 "English"，中文界面下 AI 中英混杂。
+- 修复（PromptBuilder）：三处契约删掉硬编码 English，新增 `OutputLanguageName`（读 `LocalizationSystem.Instance.Current`，映射简中/繁中/日/韩/英）+ `AppendLanguageInstruction`，在三个 system prompt 末尾追加显式语言规则（指令放最后权重最高）："write the say field entirely in X (the player's selected game language). Never mix languages in one line."
+- prompt 每次请求现组，玩家中途切语言立即生效，无需重开。
+- 验证：MCP 实测当前 English 下三条 prompt 尾部指令正确；SetLanguage(ChineseSimplified) 后指令变 Simplified Chinese（测完已还原 English）；dotnet build 0 error。
+
+## 2026-09-10 AI 队友/LLM 系统 code review 修复（11 项全收）
+- 实际 bug：
+  ① `LlmClient` OpenAI 路径 `max_tokens` 120→256（`MaxOutputTokens` 常量统一两条协议路径）：120 对中文 80 字+JSON 契约包装不够，截断→契约解析失败→静默降级本地 bark；
+  ② `CompanionConfigMgr` 台词缓存改 trigger→List 懒建字典（`_cacheSource` 引用比对，GM reload 换表后自动重建），消除每次 GetBarks 全表线性扫描。
+- 性能：
+  ③ `DecisionDriver` 遥测改缓冲写（20 行或 30s flush 一次，csv 超 1MB 删文件重写表头），消除每拍一次主线程同步 IO + 文件无限增长；
+  ④ `CompanionStateMachineDriver.UpdateContext` 感知节拍化（`SenseInterval=0.2s`）：最近威胁+可见敌人（全敌人扫描+Linecast，最贵）按节拍跑，ThreatCount 清理/标点解析留逐帧。
+- 规范：
+  ⑤ `CompanionBrain.CompanionName` getter 缩进错乱修正；
+  ⑥ 聊天窗标题 `RADIO — {name}` 硬编码 → 本地化词条 `ui.chat.title`（en/zh_cn），Loc.Get format 参数；
+  ⑦ `CompanionFollowState` 过期注释（"默认 2.2m"）改指表。
+- 写死数据入表（TbCompanion +10 列，均带代码兜底）：conversationHold=30、postCombatCalm=20、dirHintInterval=8、offlineFailThreshold=3、decisionSayInterval=20、maxReportEntries=5、leashDist=8、leashStopDist=3、spawnOffsetX=1.5、spawnOffsetZ=-1.5；接线 `CompanionBrain`（4 项）/`DecisionDriver`（2 项）/`CompanionEngageState`（2 项）/`CompanionSystem`（出生偏移）。QuietKeywords 与 LlmProviders 厂商预设经权衡保留在代码（解析逻辑/端点协议知识，非调参数据）。
+- 扩展性：
+  ⑨ 契约白名单常量化——聊天 intent 唯一出处 `CompanionBrain.IntentNone/Follow/Hold/Retreat`（prompt 侧 `PromptBuilder.ChatIntentWhitelist`），操控 action 唯一出处 `DecisionDriver.Action*` + `ControlActionWhitelist`（prompt 文本与 `ActionWhitelist` 数组均由其派生），FSM 仲裁同步引用，消除 4 处散落魔法字符串；
+  ⑩ `CompanionBrain.IsInConversation` 不再反向读 `CompanionChatUI.IsOpen`，改由 UI OnCreate/OnDestroy 写 `Brain.ChatUIOpen`（`CompanionChatUI.IsOpen` 静态属性保留给玩法输入抑制）；
+  ⑪ 单队友假设立 ADR：`docs/adr/0005-single-companion-mvp.md`（记录 5 个让位点：多实体持有、字幕归因、感知节拍、LLM 预算池、DefaultCompanionId）。
+- 验证：dotnet build 0 error；导表成功；MCP 实测新会话 console 干净（早前整表加载失败系 Play 启动时同步懒加载抢跑的存量现象，与本次无关）、TbCompanion 新字段读数正确（ConversationHold=30 等）、`ui.chat.title` 词条输出 "RADIO — ROOK"。companion.xlsx/__beans__.xlsx 已备份 .pre_review.bak。实机节奏类改动（0.2s 感知节拍、遥测缓冲）由玩家验收。
+
+## 2026-09-10 队友人设更换为能天使（Exusiai）
+- TbCompanion id=1：`nameKey` companion.rook.name→companion.exusiai.name；`personaPrompt` 整段重写为能天使人设（英文 system prompt）：拉特兰天使/企鹅物流快递员/喊玩家 Boss/乐观吵闹爱苹果派/战斗风格台词示例，保留 60 字符短句与不 break character 约束。
+- localization：`companion.rook.name` 改为 `companion.exusiai.name`，en/zh_cn 均为 "Exusiai"——**头顶名牌是 Latin-only 静态字库，中文"能天使"会缺字**；中文语境的名字由 LLM 台词承担（人设已写明中文里喊"老板"）。
+- 代码兜底同步：`CompanionEntity.CompanionName` 常量 "Rook"→"Exusiai"；CompanionBrain/CompanionConfigMgr/ADR-0005 注释同步。
+- 坑：openpyxl 写 companion.xlsx 时列偏移一位（A 列是 ##var 标记列，id 在 B 列）导致 id 被 nameKey 覆盖、Luban 报"id 不是 int"——已修正并复验。
+- 验证：导表成功；dotnet build 0 error；MCP Play 实测 nameKey=companion.exusiai.name、词条取到 "Exusiai"、personaPrompt 为新版。人设实际对话表现（LLM 是否接住能天使语气）由玩家实机验收。
+
+## 2026-09-10 名牌中文化（"Latin-only"误判澄清）
+- 澄清：名牌字体 `TMPFontProvider.DefaultFont` = TMP Settings 默认字体 `SourceHanSans-Regular SDF`（思源黑体，AtlasPopulationMode=Dynamic），本身支持中文；此前注释"Latin-only 静态字库"是误判（错把 UI prefab 用的 MainUIFont=LiberationSans 当成了名牌字体）。MainUIFont 是 UI prefab 序列化引用的静态拉丁字库，两者不同。
+- 改动：localization `companion.exusiai.name` 的 zh_cn 从 "Exusiai" 改为 "能天使"；修正 `CompanionEntity.EnsureNameplate` 的错误注释。
+- 验证：MCP 实测 zh 模式下名牌文本 "能天使 / 200/200"、字体 SourceHanSans、`HasCharacter(能天使)=True`，截图确认无缺字；dotnet build 0 error。
+- 注意：名牌语言切换不即时刷新（`UpdateNameplate` 只在掉血/初始化时跑，没挂 OnLanguageChanged），切换语言后名牌要等下次刷新才变——如需即时刷新再单独修。

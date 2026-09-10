@@ -5,16 +5,16 @@ namespace GameLogic
 {
     /// <summary>
     /// 队友交战状态（护主）：优先攻击 Attack 标点目标，其次离队友最近的激活威胁；
-    /// 与玩家保持 ≤8m 护航距离，超出先收拢。真实开火走 IWeaponEvent.OnFire 弹道链路。
+    /// 与玩家保持 leashDist（读 TbCompanion）护航距离，超出先收拢。真实开火走 IWeaponEvent.OnFire 弹道链路。
     /// </summary>
     public class CompanionEngageState : CompanionStateBase
     {
         public override string StateName => "Engage";
 
-        /// <summary>护航半径：与玩家距离超过该值优先收拢。</summary>
-        private const float LEASH_DISTANCE = 8f;
-        /// <summary>收拢到位距离。</summary>
-        private const float LEASH_STOP_DISTANCE = 3f;
+        /// <summary>护航半径兜底值（TbCompanion.leashDist 缺失时用）：与玩家距离超过该值优先收拢。</summary>
+        private const float LeashDistanceFallback = 8f;
+        /// <summary>收拢到位距离兜底值（TbCompanion.leashStopDist 缺失时用）。</summary>
+        private const float LeashStopDistanceFallback = 3f;
         /// <summary>
         /// 最小交战距离兜底值（TbCompanion.engageMinDist 缺失时用）：贴脸时 SphereCast 起点
         /// （枪口在中心前方）已钻进敌人碰撞体导致命中丢失，且步枪贴脸也不合理——小于该距离边退边打。
@@ -26,6 +26,8 @@ namespace GameLogic
         private readonly CompanionPathMover _mover = new CompanionPathMover();
         private float _fireCooldown;
         private float _minEngageDistance = MIN_ENGAGE_DISTANCE_FALLBACK;
+        private float _leashDistance = LeashDistanceFallback;
+        private float _leashStopDistance = LeashStopDistanceFallback;
         private WeaponConfig _weapon;
 
         protected override void OnEnterState(IFsm<CompanionEntity> fsm)
@@ -33,9 +35,20 @@ namespace GameLogic
             _mover.Reset();
             _fireCooldown = 0.2f; // 进战斗小幅延迟，避免同帧瞬发
             var persona = CompanionConfigMgr.Instance.Get();
-            if (persona != null && persona.EngageMinDist > 0.01f)
+            if (persona != null)
             {
-                _minEngageDistance = persona.EngageMinDist;
+                if (persona.EngageMinDist > 0.01f)
+                {
+                    _minEngageDistance = persona.EngageMinDist;
+                }
+                if (persona.LeashDist > 0.1f)
+                {
+                    _leashDistance = persona.LeashDist;
+                }
+                if (persona.LeashStopDist > 0.1f)
+                {
+                    _leashStopDistance = persona.LeashStopDist;
+                }
             }
             _weapon = WeaponConfigMgr.Instance?.Get(Owner.WeaponConfigId);
             if (_weapon == null)
@@ -61,9 +74,9 @@ namespace GameLogic
             if (Context.PlayerExists)
             {
                 float distToPlayer = Vector2.Distance(ownerPos, Context.PlayerPosition);
-                if (distToPlayer > LEASH_DISTANCE)
+                if (distToPlayer > _leashDistance)
                 {
-                    _mover.MoveTowards(Owner, Context.NavigationSystem, Context.PlayerPosition, elapse, LEASH_STOP_DISTANCE);
+                    _mover.MoveTowards(Owner, Context.NavigationSystem, Context.PlayerPosition, elapse, _leashStopDistance);
                     // 收拢途中仍可开火
                     TryFire(target, ownerPos);
                     return;

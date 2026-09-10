@@ -59,14 +59,48 @@ namespace GameLogic.AI.Llm
     /// <summary>
     /// Prompt 组装：人设卡 + 世界观摘要 + 输出契约（system），上下文快照（user）。
     /// 不知道 HTTP 细节，也不知道 FSM 存在。
+    /// say 文本的输出语言跟随玩家游戏语言（LocalizationSystem.Current），防止中英混杂。
     /// </summary>
     public static class PromptBuilder
     {
+        /// <summary>当前游戏语言对应的 LLM 输出语言名（写给模型看的）。</summary>
+        private static string OutputLanguageName
+        {
+            get
+            {
+                var lang = LocalizationSystem.Instance != null
+                    ? LocalizationSystem.Instance.Current
+                    : TEngine.Language.English;
+                switch (lang)
+                {
+                    case TEngine.Language.ChineseSimplified: return "Simplified Chinese";
+                    case TEngine.Language.ChineseTraditional: return "Traditional Chinese";
+                    case TEngine.Language.Japanese: return "Japanese";
+                    case TEngine.Language.Korean: return "Korean";
+                    default: return "English";
+                }
+            }
+        }
+
+        /// <summary>把输出语言指令追加到 system prompt 末尾（指令放最后权重最高）。</summary>
+        private static void AppendLanguageInstruction(StringBuilder sb)
+        {
+            sb.Append("\nLanguage rule: write the \"say\" field entirely in ")
+              .Append(OutputLanguageName)
+              .Append(" (the player's selected game language). Never mix languages in one line.");
+        }
+
+        /// <summary>
+        /// 聊天契约 intent 白名单（prompt 文本侧）。
+        /// 执行侧裁决见 <see cref="CompanionBrain.IntentNone"/> 等常量，两处取值必须一致。
+        /// </summary>
+        public const string ChatIntentWhitelist = "none|follow|hold|retreat";
+
         /// <summary>输出契约说明（写进 system prompt，与请求体 response_format 双保险）。</summary>
         private const string ContractInstruction =
             "Respond ONLY with a JSON object, no other text: " +
-            "{\"say\": \"<one short in-character line, 60 characters max, English>\", " +
-            "\"intent\": \"none|follow|hold|retreat\", " +
+            "{\"say\": \"<one short in-character line, 60 characters max>\", " +
+            "\"intent\": \"" + ChatIntentWhitelist + "\", " +
             "\"mood\": \"calm|tense|hurt\"}. " +
             "Use intent \"none\" unless the situation clearly calls for a movement suggestion.";
 
@@ -107,6 +141,7 @@ namespace GameLogic.AI.Llm
             sb.Append(ContractInstruction);
             sb.Append('\n');
             sb.Append(FewShotExamples);
+            AppendLanguageInstruction(sb);
             return sb.ToString();
         }
 
@@ -138,9 +173,9 @@ namespace GameLogic.AI.Llm
         /// <summary>操控契约说明（action/target 白名单，防瞎编）。</summary>
         private const string ControlContractInstruction =
             "You are deciding your NEXT ACTION in the field. Respond ONLY with a JSON object: " +
-            "{\"action\": \"follow|hold|move_to|engage|loot|retreat|extract|none\", " +
+            "{\"action\": \"" + DecisionDriver.ControlActionWhitelist + "\", " +
             "\"target\": \"<enemy id for engage | loot id for loot | \\\"x,z\\\" for move_to | empty string otherwise>\", " +
-            "\"say\": \"<one short in-character line, 60 characters max, English>\", " +
+            "\"say\": \"<one short in-character line, 60 characters max>\", " +
             "\"mood\": \"calm|tense|hurt\"}. " +
             "Rules: never invent ids that are not in the report; " +
             "pick \"none\" to keep doing what you are doing; " +
@@ -166,6 +201,7 @@ namespace GameLogic.AI.Llm
             sb.Append(ControlContractInstruction);
             sb.Append('\n');
             sb.Append(ControlFewShot);
+            AppendLanguageInstruction(sb);
             return sb.ToString();
         }
 
@@ -206,7 +242,7 @@ namespace GameLogic.AI.Llm
                 sb.Append("extraction: ").Append(FormatPos(ctx.ExtractionPos.Value)).Append('\n');
             }
             sb.Append("current_action: ").Append(ctx.CurrentAction ?? "follow").Append('\n');
-            sb.Append("actions: follow / hold / move_to / engage / loot / retreat / extract / none");
+            sb.Append("actions: ").Append(DecisionDriver.ControlActionWhitelist.Replace('|', '/'));
             return sb.ToString();
         }
 
@@ -221,8 +257,8 @@ namespace GameLogic.AI.Llm
         private const string ChatContractInstruction =
             "The player (your boss) is speaking directly to you over the radio. " +
             "Respond ONLY with a JSON object, no other text: " +
-            "{\"say\": \"<your reply, in character, 80 characters max, English>\", " +
-            "\"intent\": \"none|follow|hold|retreat\", " +
+            "{\"say\": \"<your reply, in character, 80 characters max>\", " +
+            "\"intent\": \"" + ChatIntentWhitelist + "\", " +
             "\"mood\": \"calm|tense|hurt\"}. " +
             "Rules: actually answer what the boss asked or react to what they said; " +
             "use intent \"follow\" or \"hold\" only if the boss clearly told you to move with them or stay put; " +
@@ -250,6 +286,7 @@ namespace GameLogic.AI.Llm
             sb.Append(ChatContractInstruction);
             sb.Append('\n');
             sb.Append(ChatFewShot);
+            AppendLanguageInstruction(sb);
             return sb.ToString();
         }
 

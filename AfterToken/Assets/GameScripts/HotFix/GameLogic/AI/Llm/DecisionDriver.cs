@@ -28,10 +28,19 @@ namespace GameLogic.AI.Llm
         private const float CombatIntervalFallback = 3f;
         private const float DecisionTimeoutFallback = 3f;
         private const int ControlBudgetFallback = 120;
-        /// <summary>快报中最多列出的敌人/掉落物数量（控 token）。</summary>
-        private const int MaxReportEntries = 5;
+        /// <summary>快报中最多列出的敌人/掉落物数量兜底（TbCompanion.maxReportEntries 缺失时用；控 token）。</summary>
+        private const int MaxReportEntriesFallback = 5;
         /// <summary>LLM 台词最大长度（与 CompanionBrain 一致）。</summary>
         private const int MaxSayLength = 80;
+        /// <summary>决策台词最小间隔兜底（秒）（TbCompanion.decisionSayInterval 缺失时用；决策节拍本身很快，台词不节流会刷屏）。</summary>
+        private const float DecisionSayMinIntervalFallback = 20f;
+
+        private int MaxReportEntries =>
+            _brain.Persona != null && _brain.Persona.MaxReportEntries > 0
+                ? _brain.Persona.MaxReportEntries : MaxReportEntriesFallback;
+        private float DecisionSayMinInterval =>
+            _brain.Persona != null && _brain.Persona.DecisionSayInterval > 0.1f
+                ? _brain.Persona.DecisionSayInterval : DecisionSayMinIntervalFallback;
 
         private float SafeInterval =>
             _brain.Persona != null && _brain.Persona.DecisionIntervalSafe > 0.1f
@@ -48,8 +57,22 @@ namespace GameLogic.AI.Llm
             _brain.Persona != null && _brain.Persona.ControlBudgetPerRun > 0
                 ? _brain.Persona.ControlBudgetPerRun : ControlBudgetFallback;
 
-        private static readonly string[] ActionWhitelist =
-            { "follow", "hold", "move_to", "engage", "loot", "retreat", "extract", "none" };
+        /// <summary>操控动作名（执行侧唯一出处；prompt 侧白名单见 <see cref="ControlActionWhitelist"/>，FSM 仲裁也引用这里的常量）。</summary>
+        public const string ActionFollow = "follow";
+        public const string ActionHold = "hold";
+        public const string ActionMoveTo = "move_to";
+        public const string ActionEngage = "engage";
+        public const string ActionLoot = "loot";
+        public const string ActionRetreat = "retreat";
+        public const string ActionExtract = "extract";
+        public const string ActionNone = "none";
+
+        /// <summary>操控契约 action 白名单（prompt 文本侧，与上面的 Action* 常量一一对应）。</summary>
+        public const string ControlActionWhitelist =
+            ActionFollow + "|" + ActionHold + "|" + ActionMoveTo + "|" + ActionEngage + "|"
+            + ActionLoot + "|" + ActionRetreat + "|" + ActionExtract + "|" + ActionNone;
+
+        private static readonly string[] ActionWhitelist = ControlActionWhitelist.Split('|');
 
         private readonly CompanionSystem _system;
         private readonly CompanionBrain _brain;
@@ -57,6 +80,8 @@ namespace GameLogic.AI.Llm
         private float _timer = 2f; // 开局先稳 2 秒再发第一拍
         private bool _inFlight;
         private int _requestCount;
+        /// <summary>上一次决策台词时间（节流用）。</summary>
+        private float _lastSayTime = -999f;
 
         // ── 遥测 ──
         private int _total;
@@ -80,6 +105,12 @@ namespace GameLogic.AI.Llm
             }
             var companion = _system.Companion;
             if (companion == null || companion.IsDead || companion.Context == null)
+            {
+                return;
+            }
+
+            // 玩家显式指令保护期内暂停自主决策（指令会被仲裁丢弃，打了也白打还费 token）
+            if (Time.time < companion.Context.PlayerCommandUntil)
             {
                 return;
             }
@@ -149,8 +180,11 @@ namespace GameLogic.AI.Llm
             }
 
             RecordTelemetry(state, sendTime, valid: true, action: action, tokens: tokens);
-            if (!string.IsNullOrWhiteSpace(say))
+            // 台词节流：none 决策不播报，其余按最小间隔放行（决策节拍远快于玩家阅读节奏）
+            if (!string.IsNullOrWhiteSpace(say) && action != ActionNone
+                && Time.time - _lastSayTime >= DecisionSayMinInterval)
             {
+                _lastSayTime = Time.time;
                 _brain.SayFromLlm(say);
             }
         }
@@ -230,22 +264,22 @@ namespace GameLogic.AI.Llm
 
             switch (action)
             {
-                case "none":
+                case ActionNone:
                     return true; // 维持现状，不动指令槽
 
-                case "follow":
+                case ActionFollow:
                     ctx.FollowEnabled = true;
                     ctx.StanceHold = false;
                     SetDirective(ctx, action, 0, Vector2.zero, interval);
                     return true;
 
-                case "hold":
-                case "retreat": // MVP 无独立撤退执行体，映射驻守（生存撤退由驱动器硬规则管）
+                case ActionHold:
+                case ActionRetreat: // MVP 无独立撤退执行体，映射驻守（生存撤退由驱动器硬规则管）
                     ctx.StanceHold = true;
                     SetDirective(ctx, action, 0, Vector2.zero, interval);
                     return true;
 
-                case "move_to":
+                case ActionMoveTo:
                     if (!TryParsePos(target, out Vector2 movePos))
                     {
                         return false;
@@ -253,7 +287,7 @@ namespace GameLogic.AI.Llm
                     SetDirective(ctx, action, 0, movePos, interval);
                     return true;
 
-                case "engage":
+                case ActionEngage:
                     if (!int.TryParse(target, NumberStyles.Integer, CultureInfo.InvariantCulture, out int enemyId)
                         || !EnemyRegistry.TryGet(enemyId, out var enemy) || enemy == null || enemy.IsDead)
                     {
@@ -262,7 +296,7 @@ namespace GameLogic.AI.Llm
                     SetDirective(ctx, action, enemyId, Vector2.zero, interval);
                     return true;
 
-                case "loot":
+                case ActionLoot:
                     if (!int.TryParse(target, NumberStyles.Integer, CultureInfo.InvariantCulture, out int lootId))
                     {
                         return false;
@@ -275,7 +309,7 @@ namespace GameLogic.AI.Llm
                     SetDirective(ctx, action, lootId, pickup.transform.position.ToXZ(), interval);
                     return true;
 
-                case "extract":
+                case ActionExtract:
                     var point = FindExtractionPoint();
                     if (point == null)
                     {
@@ -415,7 +449,7 @@ namespace GameLogic.AI.Llm
             return list;
         }
 
-        private static List<ControlLootInfo> CollectLoot(Vector2 companionPos)
+        private List<ControlLootInfo> CollectLoot(Vector2 companionPos)
         {
             var pickups = PickupEntity.Instances;
             if (pickups.Count == 0)
@@ -466,6 +500,16 @@ namespace GameLogic.AI.Llm
 
         // ── 遥测（M5c）──
 
+        /// <summary>遥测缓冲条数阈值：攒够才落盘，避免每拍一次同步 IO。</summary>
+        private const int TelemetryFlushLines = 20;
+        /// <summary>遥测最长滞留时间（秒）：即使行数不够也落盘，防止崩溃丢日志。</summary>
+        private const float TelemetryFlushInterval = 30f;
+        /// <summary>csv 体积上限：超过即删文件重写表头，避免无限增长。</summary>
+        private const long TelemetryMaxFileBytes = 1024 * 1024;
+
+        private readonly List<string> _telemetryBuffer = new List<string>(TelemetryFlushLines);
+        private float _lastTelemetryFlushTime;
+
         private void RecordTelemetry(string state, float sendTime, bool valid, string action, int tokens)
         {
             long latencyMs = (long)((Time.time - sendTime) * 1000f);
@@ -477,23 +521,58 @@ namespace GameLogic.AI.Llm
             _latencyTotalMs += latencyMs;
             _tokensTotal += tokens;
 
+            _telemetryBuffer.Add(string.Format(CultureInfo.InvariantCulture,
+                "{0:yyyy-MM-dd HH:mm:ss},{1},{2},{3},{4},{5}\n",
+                DateTime.Now, state, latencyMs, valid ? 1 : 0, action, tokens));
+
+            if (_telemetryBuffer.Count >= TelemetryFlushLines ||
+                Time.time - _lastTelemetryFlushTime >= TelemetryFlushInterval)
+            {
+                FlushTelemetry();
+            }
+        }
+
+        /// <summary>把缓冲的遥测行一次性落盘；主线程调用但频次为每 20 拍/30 秒一次。</summary>
+        private void FlushTelemetry()
+        {
+            if (_telemetryBuffer.Count == 0)
+            {
+                return;
+            }
+
             try
             {
                 if (string.IsNullOrEmpty(_csvPath))
                 {
                     _csvPath = Path.Combine(Application.dataPath, "../Logs/companion_control.csv");
                 }
+                // 体积上限：超了整文件重写（遥测日志可丢，不能无限涨）
+                if (File.Exists(_csvPath) && new FileInfo(_csvPath).Length > TelemetryMaxFileBytes)
+                {
+                    File.Delete(_csvPath);
+                }
                 bool needHeader = !File.Exists(_csvPath) || new FileInfo(_csvPath).Length == 0;
+
+                var sb = new StringBuilder();
                 if (needHeader)
                 {
-                    File.AppendAllText(_csvPath, "timestamp,state,latency_ms,valid,action,tokens\n");
+                    sb.Append("timestamp,state,latency_ms,valid,action,tokens\n");
                 }
-                File.AppendAllText(_csvPath, string.Format(CultureInfo.InvariantCulture,
-                    "{0:yyyy-MM-dd HH:mm:ss},{1},{2},{3},{4},{5}\n",
-                    DateTime.Now, state, latencyMs, valid ? 1 : 0, action, tokens));
+                for (int i = 0; i < _telemetryBuffer.Count; i++)
+                {
+                    sb.Append(_telemetryBuffer[i]);
+                }
+                File.AppendAllText(_csvPath, sb.ToString());
+                _telemetryBuffer.Clear();
+                _lastTelemetryFlushTime = Time.time;
             }
             catch (Exception e)
             {
+                // 落盘失败保留缓冲（下次再试），只防缓冲无限膨胀
+                if (_telemetryBuffer.Count > TelemetryFlushLines * 4)
+                {
+                    _telemetryBuffer.Clear();
+                }
                 Log.Warning($"[DecisionDriver] 遥测写入失败: {e.Message}");
             }
         }

@@ -44,6 +44,16 @@ public sealed partial class Companion : Luban.BeanBase
         DecisionTimeout = (float)_obj.GetValue("decisionTimeout");
         ControlBudgetPerRun = (int)_obj.GetValue("controlBudgetPerRun");
         ProactiveEngageDist = (float)_obj.GetValue("proactiveEngageDist");
+        ConversationHold = (float)_obj.GetValue("conversationHold");
+        PostCombatCalm = (float)_obj.GetValue("postCombatCalm");
+        DirHintInterval = (float)_obj.GetValue("dirHintInterval");
+        OfflineFailThreshold = (int)_obj.GetValue("offlineFailThreshold");
+        DecisionSayInterval = (float)_obj.GetValue("decisionSayInterval");
+        MaxReportEntries = (int)_obj.GetValue("maxReportEntries");
+        LeashDist = (float)_obj.GetValue("leashDist");
+        LeashStopDist = (float)_obj.GetValue("leashStopDist");
+        SpawnOffsetX = (float)_obj.GetValue("spawnOffsetX");
+        SpawnOffsetZ = (float)_obj.GetValue("spawnOffsetZ");
     }
 
     public static Companion DeserializeCompanion(JToken _buf)
@@ -135,6 +145,16 @@ public sealed partial class Companion : Luban.BeanBase
     /// 主动开火警戒半径m
     /// </summary>
     public readonly float ProactiveEngageDist;
+    public readonly float ConversationHold;
+    public readonly float PostCombatCalm;
+    public readonly float DirHintInterval;
+    public readonly int OfflineFailThreshold;
+    public readonly float DecisionSayInterval;
+    public readonly int MaxReportEntries;
+    public readonly float LeashDist;
+    public readonly float LeashStopDist;
+    public readonly float SpawnOffsetX;
+    public readonly float SpawnOffsetZ;
 
 
     public const int __ID__ = 1038461410;
@@ -168,6 +188,16 @@ public sealed partial class Companion : Luban.BeanBase
         + "decisionTimeout:" + DecisionTimeout + ","
         + "controlBudgetPerRun:" + ControlBudgetPerRun + ","
         + "proactiveEngageDist:" + ProactiveEngageDist + ","
+        + "conversationHold:" + ConversationHold + ","
+        + "postCombatCalm:" + PostCombatCalm + ","
+        + "dirHintInterval:" + DirHintInterval + ","
+        + "offlineFailThreshold:" + OfflineFailThreshold + ","
+        + "decisionSayInterval:" + DecisionSayInterval + ","
+        + "maxReportEntries:" + MaxReportEntries + ","
+        + "leashDist:" + LeashDist + ","
+        + "leashStopDist:" + LeashStopDist + ","
+        + "spawnOffsetX:" + SpawnOffsetX + ","
+        + "spawnOffsetZ:" + SpawnOffsetZ + ","
         + "}";
     }
 }

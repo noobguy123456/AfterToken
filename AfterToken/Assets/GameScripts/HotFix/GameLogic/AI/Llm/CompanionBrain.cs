@@ -16,23 +16,23 @@ namespace GameLogic.AI.Llm
         Online,
         /// <summary>连续失败 1~2 次，台词混入"信号干扰"表达。</summary>
         Degraded,
-        /// <summary>连续失败 ≥3 次或未配置 API，全走本地 bark 表，后台探测恢复。</summary>
+        /// <summary>连续失败达到阈值（TbCompanion.offlineFailThreshold）或未配置 API，全走本地 bark 表，后台探测恢复。</summary>
         Offline,
     }
 
     /// <summary>
     /// 队友大脑：LLM 链路的调度中枢（纯 C# 类，由 CompanionSystem 每帧 Tick）。
     /// - 轮播六规则：①安全默认轮播设定语言 ②玩家"闭嘴"类指令进入安静模式（自主台词全停，再次主动沟通自动解除）
-    ///   ③对话后 30s 保持期暂停轮播 ④敌人发现玩家（ThreatCount 0→>0）播危险预警
-    ///   ⑤战斗中不轮播、按 8s 节奏报最近威胁方位 ⑥脱战播台词 + 20s 冷静期后才回安全轮播。
+    ///   ③对话保持期（conversationHold，读表）内暂停轮播 ④敌人发现玩家（ThreatCount 0→>0）播危险预警
+    ///   ⑤战斗中不轮播、按 dirHintInterval（读表）节奏报最近威胁方位 ⑥脱战播台词 + postCombatCalm（读表）冷静期后才回安全轮播。
     /// - 意图裁决：LLM intent 白名单校验 + TTL 过期 → 写 Context.PendingRequest（FSM 不知道 LLM 存在）。
     /// - LinkState 三态断联降级，Offline 后台探测恢复。
     /// 战斗类台词（交战/标点/死亡等）不走 LLM，由 <see cref="SayLocal"/> 秒回。
     /// </summary>
     public class CompanionBrain
     {
-        /// <summary>进入 Offline 的连续失败次数阈值。</summary>
-        private const int OFFLINE_FAIL_THRESHOLD = 3;
+        /// <summary>进入 Offline 的连续失败次数阈值兜底（TbCompanion.offlineFailThreshold 缺失时用）。</summary>
+        private const int OfflineFailThresholdFallback = 3;
         /// <summary>防复读记忆的台词条数。</summary>
         private const int RECENT_LINE_CAP = 3;
         /// <summary>LLM 台词最大长度（契约 ≤60，留宽容截断）。</summary>
@@ -41,12 +41,40 @@ namespace GameLogic.AI.Llm
         private const int CHAT_HISTORY_ROUNDS = 4;
         /// <summary>自由对话最小发送间隔（秒）：玩家主动对话不套用闲聊的长节奏，只做防抖。</summary>
         private const float ChatMinInterval = 1f;
+        /// <summary>对话会话保持时长兜底（秒）（TbCompanion.conversationHold 缺失时用）。</summary>
+        private const float ConversationHoldFallback = 30f;
+        /// <summary>脱离战斗后的冷静期兜底（秒）（TbCompanion.postCombatCalm 缺失时用）。</summary>
+        private const float PostCombatCalmFallback = 20f;
+        /// <summary>战斗中方位提示的全局最小间隔兜底（秒）（TbCompanion.dirHintInterval 缺失时用）。</summary>
+        private const float DirHintIntervalFallback = 8f;
+
+        private int OfflineFailThreshold =>
+            _persona != null && _persona.OfflineFailThreshold > 0
+                ? _persona.OfflineFailThreshold : OfflineFailThresholdFallback;
         /// <summary>对话会话保持时长（秒）：最后一条对话后该时长内仍视为"对话中"，暂停随机闲聊。</summary>
-        private const float ConversationHoldSeconds = 30f;
+        private float ConversationHold =>
+            _persona != null && _persona.ConversationHold > 0.1f
+                ? _persona.ConversationHold : ConversationHoldFallback;
         /// <summary>脱离战斗后的冷静期（秒）：期间无战斗才恢复安全轮播。</summary>
-        private const float PostCombatCalmSeconds = 20f;
+        private float PostCombatCalm =>
+            _persona != null && _persona.PostCombatCalm > 0.1f
+                ? _persona.PostCombatCalm : PostCombatCalmFallback;
         /// <summary>战斗中方位提示的全局最小间隔（秒），单方向词条冷却由 bark 表另管。</summary>
-        private const float DirHintInterval = 8f;
+        private float DirHintIntervalSec =>
+            _persona != null && _persona.DirHintInterval > 0.1f
+                ? _persona.DirHintInterval : DirHintIntervalFallback;
+        /// <summary>玩家显式移动指令（聊天 follow/hold、G 键跟随）对 LLM 自主决策的压制时长（秒）。</summary>
+        public const float PlayerCommandGraceSeconds = 30f;
+
+        /// <summary>
+        /// 聊天契约 intent 值（执行侧唯一出处）。
+        /// prompt 侧白名单见 <see cref="PromptBuilder.ChatIntentWhitelist"/>，两处取值必须一致。
+        /// 与操控通道动作（<see cref="DecisionDriver.ActionFollow"/> 等）是两条独立契约，别混用。
+        /// </summary>
+        public const string IntentNone = "none";
+        public const string IntentFollow = "follow";
+        public const string IntentHold = "hold";
+        public const string IntentRetreat = "retreat";
 
         /// <summary>安静指令关键词（中英文，Contains 匹配）。</summary>
         private static readonly string[] QuietKeywords =
@@ -89,12 +117,15 @@ namespace GameLogic.AI.Llm
         /// <summary>上一次方位提示时间（全局节流）。</summary>
         private float _lastDirHintTime = -999f;
 
+        /// <summary>聊天 UI 是否打开（由 CompanionChatUI OnCreate/OnDestroy 写入；大脑不反向读 UI 类）。</summary>
+        public bool ChatUIOpen;
+
         /// <summary>
-        /// 是否处于对话会话中（聊天窗打开，或最后一条对话未满 <see cref="ConversationHoldSeconds"/>）。
+        /// 是否处于对话会话中（聊天窗打开，或最后一条对话未满 ConversationHold（读 TbCompanion））。
         /// 对话中暂停安全闲聊（LLM 与本地兜底都停），避免自言自语插进玩家对话。
         /// </summary>
         public bool IsInConversation =>
-            CompanionChatUI.IsOpen || Time.time - _lastChatActivityTime < ConversationHoldSeconds;
+            ChatUIOpen || Time.time - _lastChatActivityTime < ConversationHold;
 
         /// <summary>玩家发起的对话请求是否正在等 LLM 回复（聊天 UI 显示等待态用）。</summary>
         public bool ChatInFlight => _chatInFlight;
@@ -152,7 +183,7 @@ namespace GameLogic.AI.Llm
             else
             {
                 _consecutiveFailures++;
-                if (_consecutiveFailures >= OFFLINE_FAIL_THRESHOLD && LinkState != CompanionLinkState.Offline)
+                if (_consecutiveFailures >= OfflineFailThreshold && LinkState != CompanionLinkState.Offline)
                 {
                     LinkState = CompanionLinkState.Offline;
                     _offlineProbeTimer = 0f;
@@ -166,14 +197,14 @@ namespace GameLogic.AI.Llm
             }
         }
 
-        /// <summary>队友呼号（字幕显示名），配置缺失回退 Rook。</summary>
+        /// <summary>队友呼号（字幕显示名），配置缺失回退 Exusiai。</summary>
         public string CompanionName
         {
             get
             {
                 if (_persona != null && !string.IsNullOrEmpty(_persona.NameKey))
                 {
-            return Loc.Get(_persona.NameKey);
+                    return Loc.Get(_persona.NameKey);
                 }
                 return CompanionEntity.CompanionName;
             }
@@ -258,7 +289,7 @@ namespace GameLogic.AI.Llm
             if (inCombat)
             {
                 _lastCombatTime = Time.time;
-                if (Time.time - _lastDirHintTime >= DirHintInterval)
+                if (Time.time - _lastDirHintTime >= DirHintIntervalSec)
                 {
                     _lastDirHintTime = Time.time;
                     SayDirectionHint(ctx);
@@ -267,7 +298,7 @@ namespace GameLogic.AI.Llm
             }
 
             // 规则6：脱战冷静期内不进入安全轮播
-            if (Time.time - _lastCombatTime < PostCombatCalmSeconds)
+            if (Time.time - _lastCombatTime < PostCombatCalm)
             {
                 return;
             }
@@ -463,7 +494,7 @@ namespace GameLogic.AI.Llm
                         SayLocal("safe_idle");
                     }
                 }
-                else if (_consecutiveFailures < OFFLINE_FAIL_THRESHOLD)
+                else if (_consecutiveFailures < OfflineFailThreshold)
                 {
                     // 失败但未掉线（NotifyExternalRequestResult 的状态迁移台词可能没触发），补一句即时反馈
                     SayLocal("chat_busy");
@@ -590,7 +621,7 @@ namespace GameLogic.AI.Llm
             Log.Warning($"[CompanionBrain] LLM 请求失败({_consecutiveFailures}): {error}");
 
             bool enteredOffline = false;
-            if (_consecutiveFailures >= OFFLINE_FAIL_THRESHOLD && LinkState != CompanionLinkState.Offline)
+            if (_consecutiveFailures >= OfflineFailThreshold && LinkState != CompanionLinkState.Offline)
             {
                 LinkState = CompanionLinkState.Offline;
                 _offlineProbeTimer = 0f;
@@ -679,7 +710,7 @@ namespace GameLogic.AI.Llm
         /// <summary>意图裁决：白名单 + TTL 过期作废。仅调整姿态（follow/hold），retreat 映射为驻守收缩。</summary>
         private void TryApplyIntent(string intent, float sendTime)
         {
-            if (string.IsNullOrEmpty(intent) || intent == "none")
+            if (string.IsNullOrEmpty(intent) || intent == IntentNone)
             {
                 return;
             }
@@ -695,15 +726,20 @@ namespace GameLogic.AI.Llm
                 return;
             }
 
+            // 玩家显式指令（聊天里直接下的移动命令）：清掉在途 LLM 指令并进入保护期，
+            // 防止下一拍决策用快照坐标把"跟着我"覆盖成"去旧位置站着"
+            ctx.ClearLlmDirective();
+            ctx.PlayerCommandUntil = Time.time + PlayerCommandGraceSeconds;
+
             switch (intent)
             {
-                case "follow":
+                case IntentFollow:
                     ctx.FollowEnabled = true;
                     ctx.StanceHold = false;
                     ctx.PendingRequest = new StateTransitionRequest(typeof(CompanionFollowState));
                     break;
-                case "hold":
-                case "retreat": // MVP 无独立撤退建议执行体，映射为驻守（生存撤退由本地硬规则管）
+                case IntentHold:
+                case IntentRetreat: // MVP 无独立撤退建议执行体，映射为驻守（生存撤退由本地硬规则管）
                     ctx.StanceHold = true;
                     ctx.PendingRequest = new StateTransitionRequest(typeof(CompanionHoldState));
                     break;

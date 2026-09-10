@@ -5,18 +5,20 @@ namespace GameLogic
 {
     /// <summary>
     /// AI 队友实体（占位视觉：胶囊 + 右侧武器盒，正式模型接入后替换 CreateVisual）。
-    /// 行为完全由 FSM/Companion 驱动；本实体只承载数值、受伤、血条与朝向。
+    /// 行为完全由 FSM/Companion 驱动；本实体只承载数值、受伤、血条名牌与朝向。
     /// MVP 敌人索敌不变（只追玩家），队友受伤链路已就绪但暂无伤害来源。
     /// </summary>
     public class CompanionEntity : MonoBehaviour, IDamageable
     {
         /// <summary>队友呼号（字幕显示名，人设卡接入后由 TbCompanion 提供）。</summary>
-        public const string CompanionName = "Rook";
+        public const string CompanionName = "Exusiai";
 
         private const float HEALTH_BAR_WIDTH = 1.0f;
         private const float HEALTH_BAR_HEIGHT = 0.12f;
         private const float HEALTH_BAR_FILL_HEIGHT = 0.08f;
         private const float HEALTH_BAR_OFFSET_Y = 1.35f;
+        /// <summary>名牌（名字+血量数字）相对血条根节点的上偏移（两行文本居中，留够行高避免压到血条）。</summary>
+        private const float NAMEPLATE_OFFSET_Y = 0.45f;
 
         /// <summary>队友武器默认值（TbCompanion.weaponConfigId 缺失时的兜底）。</summary>
         public const int DefaultWeaponConfigId = 1003;
@@ -28,6 +30,7 @@ namespace GameLogic
         private Renderer _visualRenderer;
         private Transform _healthBarRoot;
         private SpriteRenderer _healthBarFill;
+        private TMPro.TextMeshPro _nameplate;
         private Vector3 _healthBarFixedOffset;
         private Quaternion _healthBarFixedRotation;
         private static Camera _healthBarCamera;
@@ -219,8 +222,46 @@ namespace GameLogic
             _healthBarFill.sortingOrder = 11;
             _healthBarFill.transform.localScale = new Vector3(HEALTH_BAR_WIDTH, HEALTH_BAR_FILL_HEIGHT, 1f);
 
+            EnsureNameplate();
+
             _healthBarFixedRotation = _healthBarRoot.rotation;
             _healthBarFixedOffset = _healthBarRoot.position - transform.position;
+        }
+
+        /// <summary>
+        /// 头顶名牌：名字 + 血量数字（世界空间 TMP，挂血条根节点随 LateUpdate 一起 billboard）。
+        /// 字体走 TMPFontProvider.DefaultFont（= TMP Settings 默认的思源黑体动态字库），中英文都能渲染。
+        /// </summary>
+        private void EnsureNameplate()
+        {
+            if (_nameplate != null) return;
+
+            var labelGo = new GameObject("Nameplate");
+            labelGo.transform.SetParent(_healthBarRoot, false);
+            labelGo.transform.localPosition = new Vector3(0f, NAMEPLATE_OFFSET_Y, 0f);
+            _nameplate = labelGo.AddComponent<TMPro.TextMeshPro>();
+            _nameplate.alignment = TMPro.TextAlignmentOptions.Center;
+            _nameplate.fontSize = 2.2f;
+            _nameplate.color = new Color(0.75f, 0.95f, 0.8f);
+            _nameplate.font = TMPFontProvider.DefaultFont;
+            var meshRenderer = _nameplate.GetComponent<MeshRenderer>();
+            if (meshRenderer != null)
+            {
+                meshRenderer.sortingOrder = 12;
+            }
+        }
+
+        private void UpdateNameplate()
+        {
+            if (_nameplate == null) return;
+
+            string displayName = CompanionName;
+            var persona = CompanionConfigMgr.Instance.Get();
+            if (persona != null && !string.IsNullOrEmpty(persona.NameKey))
+            {
+                displayName = Loc.Get(persona.NameKey);
+            }
+            _nameplate.text = displayName + "\n" + _hp + "/" + _maxHp;
         }
 
         private void LateUpdate()
@@ -247,6 +288,8 @@ namespace GameLogic
 
             // 队友血条固定绿色系（与敌人红黄绿渐变区分）
             _healthBarFill.color = ratio > 0.3f ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.9f, 0.6f, 0.1f);
+
+            UpdateNameplate();
         }
 
         #endregion

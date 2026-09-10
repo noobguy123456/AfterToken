@@ -4,7 +4,7 @@ using UnityEngine;
 namespace GameLogic
 {
     /// <summary>
-    /// 队友跟随状态（默认姿态）：保持与玩家 followStopDist（TbCompanion，默认 2.2m）以内，超出则寻路追赶。
+    /// 队友跟随状态（默认姿态）：保持与玩家 followStopDist（读 TbCompanion）以内，超出则寻路追赶。
     /// </summary>
     public class CompanionFollowState : CompanionStateBase
     {

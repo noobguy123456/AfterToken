@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GameLogic.AI.Llm;
 using UnityEngine;
 
 namespace GameLogic
@@ -16,6 +17,11 @@ namespace GameLogic
 
         /// <summary>低血撤退阈值兜底值（TbCompanion.retreatHpRatio 缺失时用）。</summary>
         public const float RetreatHpRatioFallback = 0.3f;
+
+        /// <summary>感知节拍（秒）：最近威胁/可见敌人的全量扫描按此节流，不逐帧跑。</summary>
+        public const float SenseInterval = 0.2f;
+
+        private float _senseTimer;
 
         /// <summary>低血撤退阈值（最大 HP 比例）。</summary>
         public static float RetreatHpRatio
@@ -56,7 +62,7 @@ namespace GameLogic
                 context.ThreatCount = 0;
             }
 
-            // Attack 标点目标：存活且已激活（在威胁集合内）才作为优先交战目标
+            // Attack 标点目标：存活且已激活（在威胁集合内）才作为优先交战目标（单条字典查找，留逐帧）
             context.PingTarget = null;
             if (context.HasPing && context.PingType == PingType.Attack
                 && EnemyRegistry.TryGet(context.PingTargetId, out var pinged)
@@ -65,10 +71,15 @@ namespace GameLogic
                 context.PingTarget = pinged;
             }
 
-            context.NearestThreat = FindNearestThreat(owner.transform.position.ToXZ(), threats);
-
-            // 主动开火感知：警戒半径内 + 视线通畅的最近敌人（敌人未追击也算）
-            context.NearestVisibleEnemy = FindNearestVisibleEnemy(owner.transform.position.ToXZ());
+            // 感知节拍：最近威胁 + 可见敌人扫描（后者含全敌人遍历 + Linecast，最贵）按 SenseInterval 节流。
+            // 0.2s 的反应延迟对交战判定无感，逐帧跑是纯浪费。
+            _senseTimer -= Time.deltaTime;
+            if (_senseTimer <= 0f)
+            {
+                _senseTimer = SenseInterval;
+                context.NearestThreat = FindNearestThreat(owner.transform.position.ToXZ(), threats);
+                context.NearestVisibleEnemy = FindNearestVisibleEnemy(owner.transform.position.ToXZ());
+            }
 
             // LLM 指令（M5）：过期清理 + engage 目标解析（目标死亡/失效则指令作废）
             if (!context.HasLlmDirective)
@@ -78,7 +89,7 @@ namespace GameLogic
                     context.ClearLlmDirective();
                 }
             }
-            else if (context.LlmAction == "engage")
+            else if (context.LlmAction == DecisionDriver.ActionEngage)
             {
                 context.LlmTarget = null;
                 if (EnemyRegistry.TryGet(context.LlmTargetId, out var llmTarget)
@@ -150,21 +161,23 @@ namespace GameLogic
             }
 
             // 5. LLM 操控指令（M5）：仅 llm 操控模式且链路未断时生效；
-            // 死亡/低血撤退/玩家标点/交战护主（上方硬规矩）永远压过它
-            if (CompanionSystem.IsLlmControlActive && context.HasLlmDirective)
+            // 死亡/低血撤退/玩家标点/交战护主（上方硬规矩）永远压过它；
+            // 玩家显式指令保护期内同样不生效（聊天 follow/hold、G 键跟随）
+            if (CompanionSystem.IsLlmControlActive && context.HasLlmDirective
+                && Time.time >= context.PlayerCommandUntil)
             {
                 switch (context.LlmAction)
                 {
-                    case "follow":
+                    case DecisionDriver.ActionFollow:
                         return typeof(CompanionFollowState);
-                    case "hold":
-                    case "retreat": // LLM 撤退建议映射驻守（生存撤退由上方硬规则管）
+                    case DecisionDriver.ActionHold:
+                    case DecisionDriver.ActionRetreat: // LLM 撤退建议映射驻守（生存撤退由上方硬规则管）
                         return typeof(CompanionHoldState);
-                    case "move_to":
-                    case "loot":
-                    case "extract":
+                    case DecisionDriver.ActionMoveTo:
+                    case DecisionDriver.ActionLoot:
+                    case DecisionDriver.ActionExtract:
                         return typeof(CompanionPingMoveState);
-                    case "engage":
+                    case DecisionDriver.ActionEngage:
                         if (context.LlmTarget != null && !context.LlmTarget.IsDead)
                         {
                             return typeof(CompanionEngageState);
