@@ -48,9 +48,13 @@ namespace GameLogic
         private readonly List<Image> _enemyDotPool = new();
         private Image _companionDot;
         private Image _pingMarker;
+        private PingType _pingMarkerType = PingType.None;
 
         private static readonly Color CompanionDotColor = new Color(0.3f, 1f, 0.4f);
-        private static readonly Color PingMarkerColor = new Color(1f, 0.6f, 0.1f);
+        // 标点按类型着色（与 PingSystem 世界标记同色）：Move=青 / Attack=红 / Loot=黄
+        private static readonly Color PingMoveColor = new Color(0.2f, 0.9f, 1f);
+        private static readonly Color PingAttackColor = new Color(1f, 0.25f, 0.2f);
+        private static readonly Color PingLootColor = new Color(1f, 0.85f, 0.2f);
 
         #region 脚本工具生成的代码
 
@@ -169,7 +173,7 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 标点图标（橙色菱形：模板旋转 45°）。
+        /// 标点图标：按类型区分——目标点青色菱形 / 敌人点红色脉冲菱形 / 物资点黄色圆点。
         /// </summary>
         private void UpdatePingMarker(MinimapSystem minimap, Rect window)
         {
@@ -181,6 +185,7 @@ namespace GameLogic
                 {
                     _pingMarker.gameObject.SetActive(false);
                 }
+                _pingMarkerType = PingType.None;
                 return;
             }
 
@@ -188,14 +193,44 @@ namespace GameLogic
             {
                 _pingMarker = Object.Instantiate(_enemyDotTemplate, _iconRoot);
                 _pingMarker.name = "m_img_PingMarker";
-                _pingMarker.color = PingMarkerColor;
-                _pingMarker.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                _pingMarkerType = PingType.None; // 强制走一次样式应用
             }
+            if (ping.ActivePingType != _pingMarkerType)
+            {
+                ApplyPingMarkerStyle(ping.ActivePingType);
+            }
+            // 敌人点脉冲缩放（其余类型恢复基准尺寸）
+            float scale = ping.ActivePingType == PingType.Attack
+                ? 1.2f + Mathf.Sin(Time.time * 6f) * 0.25f
+                : 1f;
+            _pingMarker.transform.localScale = Vector3.one * scale;
+
             if (!_pingMarker.gameObject.activeSelf)
             {
                 _pingMarker.gameObject.SetActive(true);
             }
             ((RectTransform)_pingMarker.transform).anchoredPosition = pos;
+        }
+
+        /// <summary>按标点类型应用颜色与形状（菱形=旋转 45°，圆点=不转）。</summary>
+        private void ApplyPingMarkerStyle(PingType type)
+        {
+            _pingMarkerType = type;
+            switch (type)
+            {
+                case PingType.Attack:
+                    _pingMarker.color = PingAttackColor;
+                    _pingMarker.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                    break;
+                case PingType.Loot:
+                    _pingMarker.color = PingLootColor;
+                    _pingMarker.transform.localRotation = Quaternion.identity;
+                    break;
+                default: // Move 及后续地面类标点
+                    _pingMarker.color = PingMoveColor;
+                    _pingMarker.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                    break;
+            }
         }
 
         /// <summary>

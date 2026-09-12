@@ -71,6 +71,7 @@ namespace GameLogic
             "cfg_tblocalization",
             "cfg_tbcompanion",
             "cfg_tbcompanionbark",
+            "cfg_tbaudio",
         };
 
         /// <summary>

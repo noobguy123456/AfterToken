@@ -64,6 +64,22 @@
     "ko": ""
   },
   {
+    "key": "ui.settings.voice_player_volume",
+    "en": "Voice Volume (Player)",
+    "zh_cn": "玩家语音音量",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.voice_npc_volume",
+    "en": "Voice Volume (NPC)",
+    "zh_cn": "NPC 语音音量",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
     "key": "ui.settings.quality",
     "en": "Quality",
     "zh_cn": "画质档位",
@@ -155,6 +171,134 @@
     "key": "ui.settings.action",
     "en": "Action",
     "zh_cn": "动作",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.fire",
+    "en": "Fire",
+    "zh_cn": "开火",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.aim",
+    "en": "Aim / Scope",
+    "zh_cn": "瞄准/开镜",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.reload",
+    "en": "Reload",
+    "zh_cn": "换弹",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.dodge",
+    "en": "Dodge",
+    "zh_cn": "闪避",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.interact",
+    "en": "Interact",
+    "zh_cn": "交互",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.weapon_wheel",
+    "en": "Weapon Wheel",
+    "zh_cn": "武器轮盘",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.bag",
+    "en": "Bag",
+    "zh_cn": "背包",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.crosshair_style",
+    "en": "Crosshair Style",
+    "zh_cn": "准星样式",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.map",
+    "en": "Map",
+    "zh_cn": "地图",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.ping",
+    "en": "Ping",
+    "zh_cn": "标点",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.companion_follow",
+    "en": "Companion Follow",
+    "zh_cn": "队友跟随",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.companion_chat",
+    "en": "Companion Chat",
+    "zh_cn": "队友对话",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.press_key",
+    "en": "Press a key for {0} (ESC to cancel)",
+    "zh_cn": "按下 {0} 的新按键，ESC 取消。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.conflict",
+    "en": "{0} is already bound to {1}.",
+    "zh_cn": "{0} 已绑定给 {1}。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.bound",
+    "en": "{0} bound to {1}.",
+    "zh_cn": "{0} 已绑定为 {1}。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.reset_done",
+    "en": "Bindings reset to defaults.",
+    "zh_cn": "按键绑定已重置为默认。",
     "zh_tw": "",
     "ja": "",
     "ko": ""
@@ -811,6 +955,526 @@
     "key": "companion.bark.combat_dir.back_right",
     "en": "Contact! Back-right!",
     "zh_cn": "接敌！右后方！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.lobby.title",
+    "en": "Select Level",
+    "zh_cn": "选择关卡",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.lobby.stage",
+    "en": "Stage {0}",
+    "zh_cn": "关卡 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.unlock.clear_stage",
+    "en": "Clear Stage {0}",
+    "zh_cn": "通关关卡 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.unlock.player_level",
+    "en": "Player Lv{0}",
+    "zh_cn": "玩家等级 {0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.unlock.locked",
+    "en": "Locked",
+    "zh_cn": "未解锁",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.death.title",
+    "en": "YOU DIED",
+    "zh_cn": "你已阵亡",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.death.subtitle",
+    "en": "You have been defeated. Choose your next move.",
+    "zh_cn": "你被击败了。选择下一步行动。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.death.restart",
+    "en": "Restart",
+    "zh_cn": "重新开始",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.death.back_to_base",
+    "en": "Back to Base",
+    "zh_cn": "返回基地",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.reward.lost",
+    "en": "[Lost] {0}x{1}",
+    "zh_cn": "[丢失] {0}x{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.bag.capacity",
+    "en": "Capacity: {0}/{1}",
+    "zh_cn": "容量：{0}/{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.container.title",
+    "en": "Container",
+    "zh_cn": "战利品容器",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.tooltip.quality",
+    "en": "Quality: {0}",
+    "zh_cn": "品质：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.tooltip.type",
+    "en": "Type: {0}",
+    "zh_cn": "类型：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.tooltip.price",
+    "en": "Price: {0}",
+    "zh_cn": "价格：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.state.active",
+    "en": "Active",
+    "zh_cn": "进行中",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.state.ready",
+    "en": "Ready",
+    "zh_cn": "可交付",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.state.done",
+    "en": "Done",
+    "zh_cn": "已完成",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.state.available",
+    "en": "Available",
+    "zh_cn": "可接取",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.no_selection",
+    "en": "No quest selected",
+    "zh_cn": "未选择任务",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.rewards",
+    "en": "Rewards: {0}",
+    "zh_cn": "奖励：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.ready_suffix",
+    "en": "(Ready)",
+    "zh_cn": "（可交付）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.quest.fallback_title",
+    "en": "Quest #{0}",
+    "zh_cn": "任务 #{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.interact.open",
+    "en": "Press {0} to Open",
+    "zh_cn": "按 {0} 打开",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.interact.read",
+    "en": "Press {0} to Read",
+    "zh_cn": "按 {0} 阅读",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.interact.talk",
+    "en": "Press {0} to Talk",
+    "zh_cn": "按 {0} 交谈",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.note.fallback_title",
+    "en": "Note",
+    "zh_cn": "纸条",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.settings.bind.cancelled",
+    "en": "Rebind cancelled.",
+    "zh_cn": "已取消改绑。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.gold",
+    "en": "Gold: {0}",
+    "zh_cn": "金币：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.level",
+    "en": "Lv: {0} ({1}/{2})",
+    "zh_cn": "等级：{0}（{1}/{2}）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.time",
+    "en": "Time: {0}s",
+    "zh_cn": "时间：{0} 秒",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.cost",
+    "en": "Cost: {0}G",
+    "zh_cn": "花费：{0} 金",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.unlock_slot_building",
+    "en": "+1 slot at building Lv{0}",
+    "zh_cn": "建筑 {0} 级 +1 栏位",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.unlock_slot_player",
+    "en": "+{0} slot per player Lv",
+    "zh_cn": "玩家每级 +{0} 栏位",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.unlock_button",
+    "en": "Unlock\\n{0}G",
+    "zh_cn": "解锁\\n{0} 金",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.state.building",
+    "en": "Building... {0}%",
+    "zh_cn": "建造中… {0}%",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.state.upgrading",
+    "en": "Upgrading... {0}%",
+    "zh_cn": "升级中… {0}%",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.state.idle",
+    "en": "Idle",
+    "zh_cn": "空闲",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.order",
+    "en": "Order #{0}\\nNeed: {1}\\nReward: {2}G",
+    "zh_cn": "订单 #{0}\\n需求：{1}\\n奖励：{2} 金",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.build_cost_time",
+    "en": "Cost: {0}G | Time: {1}s",
+    "zh_cn": "花费：{0} 金 | 耗时：{1} 秒",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.building_not_found",
+    "en": "Building not found",
+    "zh_cn": "未找到建筑",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.no_production",
+    "en": "(no production)",
+    "zh_cn": "（无生产）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.max_level",
+    "en": "Max level",
+    "zh_cn": "已满级",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.upgrade_cost",
+    "en": "Cost: {0}G + items",
+    "zh_cn": "花费：{0} 金 + 材料",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.start_production",
+    "en": "Start",
+    "zh_cn": "开始生产",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.free",
+    "en": "(free)",
+    "zh_cn": "（免费）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.busy",
+    "en": "Building is busy",
+    "zh_cn": "建筑忙碌中",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.max_level",
+    "en": "Max level reached",
+    "zh_cn": "已达最高等级",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.no_gold",
+    "en": "Not enough gold",
+    "zh_cn": "金币不足",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.no_materials",
+    "en": "Not enough materials",
+    "zh_cn": "材料不足",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.config",
+    "en": "Config error",
+    "zh_cn": "配置错误",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.cannot_place",
+    "en": "Cannot place here",
+    "zh_cn": "此处无法放置",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.count_limit",
+    "en": "Count limit reached",
+    "zh_cn": "数量已达上限",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.battle.extraction_paused",
+    "en": "EXTRACTION PAUSED - ENEMY IN ZONE",
+    "zh_cn": "撤离暂停——区域内有敌人",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.battle.extracting",
+    "en": "EXTRACTING {0}s",
+    "zh_cn": "撤离中 {0} 秒",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.battle.hp",
+    "en": "HP: {0}/{1}",
+    "zh_cn": "生命：{0}/{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.battle.ammo",
+    "en": "Ammo: {0}/{1}",
+    "zh_cn": "弹药：{0}/{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.battle.weapon",
+    "en": "Weapon: {0}",
+    "zh_cn": "武器：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.damage",
+    "en": "Damage: {0}",
+    "zh_cn": "伤害：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.fire_rate",
+    "en": "Fire Rate: {0}",
+    "zh_cn": "射速：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.clip",
+    "en": "Clip: {0}",
+    "zh_cn": "弹匣：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.reload",
+    "en": "Reload: {0}",
+    "zh_cn": "换弹：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.range",
+    "en": "Range: {0}",
+    "zh_cn": "射程：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.sim.err.slot_not_unlockable",
+    "en": "Slot not unlockable",
+    "zh_cn": "栏位不可解锁",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.wheel.empty",
+    "en": "Empty",
+    "zh_cn": "空",
     "zh_tw": "",
     "ja": "",
     "ko": ""

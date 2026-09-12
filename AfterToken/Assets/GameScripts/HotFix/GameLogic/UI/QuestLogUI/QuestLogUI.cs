@@ -137,10 +137,10 @@ namespace GameLogic
         {
             switch (state)
             {
-                case QuestState.Active: return "Active";
-                case QuestState.ReadyToTurnIn: return "Ready";
-                case QuestState.Completed: return "Done";
-                default: return "Available";
+                case QuestState.Active: return Loc.Get("ui.quest.state.active");
+                case QuestState.ReadyToTurnIn: return Loc.Get("ui.quest.state.ready");
+                case QuestState.Completed: return Loc.Get("ui.quest.state.done");
+                default: return Loc.Get("ui.quest.state.available");
             }
         }
 
@@ -152,7 +152,7 @@ namespace GameLogic
             var cfg = questId != 0 ? QuestConfigMgr.Instance.Get(questId) : null;
             if (cfg == null)
             {
-                if (_nameText != null) _nameText.text = "No quest selected";
+                if (_nameText != null) _nameText.text = Loc.Get("ui.quest.no_selection");
                 if (_descText != null) _descText.text = string.Empty;
                 if (_objectivesText != null) _objectivesText.text = string.Empty;
                 if (_rewardsText != null) _rewardsText.text = string.Empty;
@@ -181,7 +181,7 @@ namespace GameLogic
 
             if (_rewardsText != null)
             {
-                _rewardsText.text = $"Rewards: {FormatRewards(cfg.Rewards)}";
+                _rewardsText.text = Loc.Get("ui.quest.rewards", FormatRewards(cfg.Rewards));
             }
         }
 

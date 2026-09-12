@@ -137,6 +137,7 @@ public partial class Tables
     /// 队友本地台词表
     /// </summary>
     public cfg.TbCompanionBark TbCompanionBark {get; }
+    public cfg.TbAudio TbAudio {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -172,6 +173,7 @@ public partial class Tables
         TbLocalization = new cfg.TbLocalization(loader("cfg_tblocalization"));
         TbCompanion = new cfg.TbCompanion(loader("cfg_tbcompanion"));
         TbCompanionBark = new cfg.TbCompanionBark(loader("cfg_tbcompanionbark"));
+        TbAudio = new cfg.TbAudio(loader("cfg_tbaudio"));
         ResolveRef();
     }
     
@@ -208,6 +210,7 @@ public partial class Tables
         TbLocalization.ResolveRef(this);
         TbCompanion.ResolveRef(this);
         TbCompanionBark.ResolveRef(this);
+        TbAudio.ResolveRef(this);
     }
 }
 

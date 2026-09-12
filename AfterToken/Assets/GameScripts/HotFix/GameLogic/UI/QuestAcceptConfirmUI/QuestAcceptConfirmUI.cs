@@ -54,7 +54,7 @@ namespace GameLogic
             var cfg = _questId != 0 ? QuestConfigMgr.Instance.Get(_questId) : null;
             if (_questNameText != null)
             {
-                _questNameText.text = cfg != null ? cfg.Name : $"Quest #{_questId}";
+                _questNameText.text = cfg != null ? cfg.Name : Loc.Get("ui.quest.fallback_title", _questId);
             }
             if (_questDescText != null)
             {

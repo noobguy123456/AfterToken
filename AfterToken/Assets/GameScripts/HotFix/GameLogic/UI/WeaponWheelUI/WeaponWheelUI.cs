@@ -71,7 +71,7 @@ namespace GameLogic
             var weapon = WeaponSystem.Instance?.GetWeaponInSlot(slot);
             if (_slotLabels[slot] != null)
             {
-                _slotLabels[slot].text = weapon != null ? weapon.Config.name : "Empty";
+                _slotLabels[slot].text = weapon != null ? weapon.Config.name : Loc.Get("ui.wheel.empty");
             }
             if (_slotIcons[slot] != null)
             {
@@ -130,8 +130,8 @@ namespace GameLogic
             var cfg = weapon.Config;
             _statsText.text =
                 $"{cfg.name}\n" +
-                $"Damage: {cfg.damage:0.#}   Fire Rate: {cfg.fireRate:0.#}/s   Clip: {cfg.clipSize}\n" +
-                $"Reload: {cfg.reloadTime:0.#}s   Range: {cfg.maxRange:0.#}m";
+                $"{Loc.Get("ui.wheel.damage", cfg.damage.ToString("0.#"))}   {Loc.Get("ui.wheel.fire_rate", cfg.fireRate.ToString("0.#"))}/s   {Loc.Get("ui.wheel.clip", cfg.clipSize)}\n" +
+                $"{Loc.Get("ui.wheel.reload", cfg.reloadTime.ToString("0.#"))}s   {Loc.Get("ui.wheel.range", cfg.maxRange.ToString("0.#"))}m";
         }
 
         protected override void OnDestroy()

@@ -84,6 +84,29 @@ namespace GameLogic
         }
 
         /// <summary>
+        /// 动作的本地化词条键（设置面板行走 Loc.Bind，跟随语言切换）。
+        /// </summary>
+        public static string GetLocKey(KeyBindAction action)
+        {
+            switch (action)
+            {
+                case KeyBindAction.Fire: return "ui.settings.bind.fire";
+                case KeyBindAction.Aim: return "ui.settings.bind.aim";
+                case KeyBindAction.Reload: return "ui.settings.bind.reload";
+                case KeyBindAction.Dodge: return "ui.settings.bind.dodge";
+                case KeyBindAction.Interact: return "ui.settings.bind.interact";
+                case KeyBindAction.WeaponWheel: return "ui.settings.bind.weapon_wheel";
+                case KeyBindAction.Bag: return "ui.settings.bind.bag";
+                case KeyBindAction.CrosshairStyle: return "ui.settings.bind.crosshair_style";
+                case KeyBindAction.Map: return "ui.settings.bind.map";
+                case KeyBindAction.Ping: return "ui.settings.bind.ping";
+                case KeyBindAction.CompanionFollow: return "ui.settings.bind.companion_follow";
+                case KeyBindAction.CompanionChat: return "ui.settings.bind.companion_chat";
+                default: return null;
+            }
+        }
+
+        /// <summary>
         /// 当前生效的键位（无自定义记录时返回默认）。
         /// </summary>
         public static KeyCode GetKey(KeyBindAction action)
@@ -147,7 +170,7 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 键位显示名：鼠标键转成 LMB/RMB/MMB 风格，其余直接用 KeyCode 名。
+        /// 键位显示名：鼠标键转 LMB/RMB/MMB 风格，回车转 Enter，其余直接用 KeyCode 名。
         /// </summary>
         public static string GetKeyDisplayName(KeyCode key)
         {
@@ -161,6 +184,8 @@ namespace GameLogic
                 case KeyCode.Mouse5: return "Mouse6";
                 case KeyCode.Mouse6: return "Mouse7";
                 case KeyCode.Space: return "Space";
+                case KeyCode.Return: return "Enter";
+                case KeyCode.KeypadEnter: return "Num Enter";
                 default: return key.ToString();
             }
         }

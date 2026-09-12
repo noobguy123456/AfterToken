@@ -48,7 +48,7 @@ namespace GameLogic
         public void OnPlayerEnteredNpc(NpcEntity npc)
         {
             _currentNpc = npc;
-            ShowPrompt("Press E to Talk");
+            ShowPrompt(Loc.Get("ui.interact.talk", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace GameLogic
         {
             if (_currentNpc != null)
             {
-                ShowPrompt("Press E to Talk");
+                ShowPrompt(Loc.Get("ui.interact.talk", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
             }
         }
 

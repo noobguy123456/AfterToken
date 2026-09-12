@@ -39,6 +39,7 @@ namespace GameLogic
             {
                 InitializeBattleSystems();
                 ApplyLevelConfig();
+                AudioSystem.Instance?.PlaySceneBgm("Battle");
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Locked);
                 CursorManager.Instance?.ForceHideCursor();
 

@@ -103,7 +103,8 @@ namespace GameLogic
                 Log.Warning($"[LocalizationSystem] 词条无英文兜底: {key}");
                 return key;
             }
-            return text;
+            // CSV 单元格放不下真实换行，词条里的字面 \n 在此还原
+            return text.Replace("\\n", "\n");
         }
 
         /// <summary>

@@ -82,16 +82,16 @@ namespace GameLogic
             }
             if (_qualityText != null)
             {
-                _qualityText.text = $"Quality: {item.Quality}";
+                _qualityText.text = Loc.Get("ui.tooltip.quality", item.Quality);
                 _qualityText.color = qualityColor;
             }
             if (_typeText != null)
             {
-                _typeText.text = $"Type: {item.ItemType}";
+                _typeText.text = Loc.Get("ui.tooltip.type", item.ItemType);
             }
             if (_priceText != null)
             {
-                _priceText.text = $"Price: {item.Price}";
+                _priceText.text = Loc.Get("ui.tooltip.price", item.Price);
             }
             if (_descText != null)
             {

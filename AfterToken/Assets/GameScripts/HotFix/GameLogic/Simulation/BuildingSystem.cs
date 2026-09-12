@@ -100,32 +100,32 @@ namespace GameLogic
             var cfg = BuildingConfigMgr.Instance.Get(configId);
             if (cfg == null)
             {
-                reason = "Config error";
+                reason = Loc.Get("ui.sim.err.config");
                 return false;
             }
 
             ComputeFootprint(cfg, position, rotationY, out _, out var cells);
             if (!IsAreaFree(cells))
             {
-                reason = "Cannot place here";
+                reason = Loc.Get("ui.sim.err.cannot_place");
                 return false;
             }
 
             if (CountByConfig(configId) >= GetMaxCount(configId))
             {
-                reason = "Count limit reached";
+                reason = Loc.Get("ui.sim.err.count_limit");
                 return false;
             }
 
             if (!CurrencySystem.HasGold(cfg.BuildCostGold))
             {
-                reason = "Not enough gold";
+                reason = Loc.Get("ui.sim.err.no_gold");
                 return false;
             }
 
             if (!InventorySystem.HasItems(cfg.BuildCostItems))
             {
-                reason = "Not enough materials";
+                reason = Loc.Get("ui.sim.err.no_materials");
                 return false;
             }
 
@@ -207,20 +207,20 @@ namespace GameLogic
             var cfg = BuildingConfigMgr.Instance.Get(configId);
             if (cfg == null)
             {
-                reason = "Config error";
+                reason = Loc.Get("ui.sim.err.config");
                 return false;
             }
 
             long price = GetSlotPrice(configId);
             if (price <= 0)
             {
-                reason = "Slot not unlockable";
+                reason = Loc.Get("ui.sim.err.slot_not_unlockable");
                 return false;
             }
 
             if (!CurrencySystem.HasGold(price))
             {
-                reason = "Not enough gold";
+                reason = Loc.Get("ui.sim.err.no_gold");
                 return false;
             }
 
@@ -281,26 +281,26 @@ namespace GameLogic
             var building = GetBuilding(instanceId);
             if (building == null || building.State != BuildingState.Idle)
             {
-                reason = "Building is busy";
+                reason = Loc.Get("ui.sim.err.busy");
                 return false;
             }
 
             var cfg = BuildingConfigMgr.Instance.Get(building.ConfigId);
             if (cfg == null || building.Level >= cfg.MaxLevel)
             {
-                reason = "Max level reached";
+                reason = Loc.Get("ui.sim.err.max_level");
                 return false;
             }
 
             if (!CurrencySystem.HasGold(cfg.UpgradeCostGold))
             {
-                reason = "Not enough gold";
+                reason = Loc.Get("ui.sim.err.no_gold");
                 return false;
             }
 
             if (!InventorySystem.HasItems(cfg.UpgradeCostItems))
             {
-                reason = "Not enough materials";
+                reason = Loc.Get("ui.sim.err.no_materials");
                 return false;
             }
 

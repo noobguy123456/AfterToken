@@ -82,6 +82,10 @@ namespace GameLogic
         private TextMeshProUGUI _musicVolumeValueText;
         private Slider _soundVolumeSlider;
         private TextMeshProUGUI _soundVolumeValueText;
+        private Slider _voicePlayerVolumeSlider;
+        private TextMeshProUGUI _voicePlayerVolumeValueText;
+        private Slider _voiceNpcVolumeSlider;
+        private TextMeshProUGUI _voiceNpcVolumeValueText;
 
         // ---- Graphics 页签：画质 ----
         private Button _qualityPrevButton;
@@ -176,6 +180,10 @@ namespace GameLogic
             _musicVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeValue");
             _soundVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_SoundVolume");
             _soundVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeValue");
+            _voicePlayerVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_VoicePlayerVolume");
+            _voicePlayerVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_VoicePlayerVolumeValue");
+            _voiceNpcVolumeSlider = FindChildComponent<Slider>("m_rect_ContentRoot/m_panel_Audio/m_slider_VoiceNpcVolume");
+            _voiceNpcVolumeValueText = FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_VoiceNpcVolumeValue");
 
             _qualityPrevButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_Graphics/m_btn_QualityPrev");
             _qualityNextButton = FindChildComponent<Button>("m_rect_ContentRoot/m_panel_Graphics/m_btn_QualityNext");
@@ -309,6 +317,16 @@ namespace GameLogic
                 _soundVolumeSlider.onValueChanged.RemoveAllListeners();
                 _soundVolumeSlider.onValueChanged.AddListener(OnSoundVolumeChanged);
             }
+            if (_voicePlayerVolumeSlider != null)
+            {
+                _voicePlayerVolumeSlider.onValueChanged.RemoveAllListeners();
+                _voicePlayerVolumeSlider.onValueChanged.AddListener(OnVoicePlayerVolumeChanged);
+            }
+            if (_voiceNpcVolumeSlider != null)
+            {
+                _voiceNpcVolumeSlider.onValueChanged.RemoveAllListeners();
+                _voiceNpcVolumeSlider.onValueChanged.AddListener(OnVoiceNpcVolumeChanged);
+            }
             if (_qualityPrevButton != null)
             {
                 _qualityPrevButton.onClick.RemoveAllListeners();
@@ -375,6 +393,7 @@ namespace GameLogic
 
         private void ShowTab(SettingsTab tab)
         {
+            AudioSystem.Instance?.PlayUI("sfx_ui_click");
             // 切页签时取消进行中的改绑，避免在不可见面板上挂着"按任意键"状态
             CancelCapture();
             if (_panelGeneral != null)
@@ -676,10 +695,26 @@ namespace GameLogic
                 _soundVolumeSlider.wholeNumbers = false;
                 _soundVolumeSlider.value = VolumeSetting.Sound;
             }
+            if (_voicePlayerVolumeSlider != null)
+            {
+                _voicePlayerVolumeSlider.minValue = VolumeSetting.Min;
+                _voicePlayerVolumeSlider.maxValue = VolumeSetting.Max;
+                _voicePlayerVolumeSlider.wholeNumbers = false;
+                _voicePlayerVolumeSlider.value = VolumeSetting.VoicePlayer;
+            }
+            if (_voiceNpcVolumeSlider != null)
+            {
+                _voiceNpcVolumeSlider.minValue = VolumeSetting.Min;
+                _voiceNpcVolumeSlider.maxValue = VolumeSetting.Max;
+                _voiceNpcVolumeSlider.wholeNumbers = false;
+                _voiceNpcVolumeSlider.value = VolumeSetting.VoiceNpc;
+            }
 
             UpdateVolumeText(_masterVolumeValueText, VolumeSetting.Master);
             UpdateVolumeText(_musicVolumeValueText, VolumeSetting.Music);
             UpdateVolumeText(_soundVolumeValueText, VolumeSetting.Sound);
+            UpdateVolumeText(_voicePlayerVolumeValueText, VolumeSetting.VoicePlayer);
+            UpdateVolumeText(_voiceNpcVolumeValueText, VolumeSetting.VoiceNpc);
         }
 
         private void OnMasterVolumeChanged(float value)
@@ -698,6 +733,18 @@ namespace GameLogic
         {
             VolumeSetting.Sound = value;
             UpdateVolumeText(_soundVolumeValueText, value);
+        }
+
+        private void OnVoicePlayerVolumeChanged(float value)
+        {
+            VolumeSetting.VoicePlayer = value;
+            UpdateVolumeText(_voicePlayerVolumeValueText, value);
+        }
+
+        private void OnVoiceNpcVolumeChanged(float value)
+        {
+            VolumeSetting.VoiceNpc = value;
+            UpdateVolumeText(_voiceNpcVolumeValueText, value);
         }
 
         private void UpdateVolumeText(TextMeshProUGUI text, float value)
@@ -807,6 +854,8 @@ namespace GameLogic
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MasterVolumeLabel"), "ui.settings.master_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_MusicVolumeLabel"), "ui.settings.music_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_SoundVolumeLabel"), "ui.settings.sound_volume");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_VoicePlayerVolumeLabel"), "ui.settings.voice_player_volume");
+            Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Audio/m_text_VoiceNpcVolumeLabel"), "ui.settings.voice_npc_volume");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_Graphics/m_text_QualityLabel"), "ui.settings.quality");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmProviderLabel"), "ui.settings.llm.provider");
             Loc.Bind(FindChildComponent<TextMeshProUGUI>("m_rect_ContentRoot/m_panel_AI/m_text_LlmEndpointLabel"), "ui.settings.llm.endpoint");
@@ -918,7 +967,8 @@ namespace GameLogic
                 var label = row.transform.Find("m_text_ActionLabel")?.GetComponent<TextMeshProUGUI>();
                 if (label != null)
                 {
-                    label.text = KeyBindingSetting.GetDisplayName(action);
+                    // 走 Loc.Bind 跟随语言切换
+                    Loc.Bind(label, KeyBindingSetting.GetLocKey(action));
                 }
 
                 var button = row.transform.Find("m_btn_Rebind")?.GetComponent<Button>();
@@ -944,7 +994,7 @@ namespace GameLogic
             CancelCapture();
             KeyBindingSetting.ResetToDefaults();
             BuildBindingRows();
-            SetBindingHint("Bindings reset to defaults.");
+            SetBindingHint(Loc.Get("ui.settings.bind.reset_done"));
         }
 
         private void StartCapture(KeyBindAction action, TextMeshProUGUI keyText)
@@ -962,7 +1012,7 @@ namespace GameLogic
             {
                 _capturingKeyText.text = "...";
             }
-            SetBindingHint($"Press a key for {KeyBindingSetting.GetDisplayName(action)} (ESC to cancel)");
+            SetBindingHint(Loc.Get("ui.settings.bind.press_key", Loc.Get(KeyBindingSetting.GetLocKey(action))));
         }
 
         private void PollCapture()
@@ -970,7 +1020,7 @@ namespace GameLogic
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 CancelCapture();
-                SetBindingHint("Rebind cancelled.");
+                SetBindingHint(Loc.Get("ui.settings.bind.cancelled"));
                 return;
             }
 
@@ -982,13 +1032,13 @@ namespace GameLogic
                 if (KeyBindingSetting.TryGetActionByKey(key, out var usedBy) && usedBy != _capturingAction)
                 {
                     CancelCapture();
-                    SetBindingHint($"{KeyBindingSetting.GetKeyDisplayName(key)} is already bound to {KeyBindingSetting.GetDisplayName(usedBy)}.");
+                    SetBindingHint(Loc.Get("ui.settings.bind.conflict", KeyBindingSetting.GetKeyDisplayName(key), Loc.Get(KeyBindingSetting.GetLocKey(usedBy))));
                     return;
                 }
 
                 KeyBindingSetting.SetKey(_capturingAction, key);
                 EndCapture();
-                SetBindingHint($"{KeyBindingSetting.GetDisplayName(_capturingAction)} bound to {KeyBindingSetting.GetKeyDisplayName(key)}.");
+                SetBindingHint(Loc.Get("ui.settings.bind.bound", Loc.Get(KeyBindingSetting.GetLocKey(_capturingAction)), KeyBindingSetting.GetKeyDisplayName(key)));
                 return;
             }
         }

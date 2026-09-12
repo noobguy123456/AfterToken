@@ -1,0 +1,156 @@
+[
+  {
+    "id": 1,
+    "name": "bgm_mainmenu",
+    "audioType": "bgm",
+    "volume": 0.7,
+    "loop": true,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": "MainMenu"
+  },
+  {
+    "id": 2,
+    "name": "bgm_base",
+    "audioType": "bgm",
+    "volume": 0.7,
+    "loop": true,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": "Simulation"
+  },
+  {
+    "id": 3,
+    "name": "bgm_battle",
+    "audioType": "bgm",
+    "volume": 0.7,
+    "loop": true,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": "Battle"
+  },
+  {
+    "id": 4,
+    "name": "bgm_combat",
+    "audioType": "bgm",
+    "volume": 0.7,
+    "loop": true,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": "Combat"
+  },
+  {
+    "id": 10,
+    "name": "sfx_fire_pistol",
+    "audioType": "sfx",
+    "volume": 0.8,
+    "loop": false,
+    "spatial": true,
+    "minDist": 2,
+    "maxDist": 30,
+    "sceneKey": ""
+  },
+  {
+    "id": 11,
+    "name": "sfx_fire_smg",
+    "audioType": "sfx",
+    "volume": 0.8,
+    "loop": false,
+    "spatial": true,
+    "minDist": 2,
+    "maxDist": 30,
+    "sceneKey": ""
+  },
+  {
+    "id": 12,
+    "name": "sfx_fire_rifle",
+    "audioType": "sfx",
+    "volume": 0.85,
+    "loop": false,
+    "spatial": true,
+    "minDist": 2,
+    "maxDist": 35,
+    "sceneKey": ""
+  },
+  {
+    "id": 13,
+    "name": "sfx_fire_rocket",
+    "audioType": "sfx",
+    "volume": 0.9,
+    "loop": false,
+    "spatial": true,
+    "minDist": 3,
+    "maxDist": 50,
+    "sceneKey": ""
+  },
+  {
+    "id": 14,
+    "name": "sfx_reload",
+    "audioType": "sfx",
+    "volume": 0.7,
+    "loop": false,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": ""
+  },
+  {
+    "id": 15,
+    "name": "sfx_footstep",
+    "audioType": "sfx",
+    "volume": 0.5,
+    "loop": false,
+    "spatial": true,
+    "minDist": 1.5,
+    "maxDist": 18,
+    "sceneKey": ""
+  },
+  {
+    "id": 16,
+    "name": "sfx_explosion",
+    "audioType": "sfx",
+    "volume": 0.9,
+    "loop": false,
+    "spatial": true,
+    "minDist": 4,
+    "maxDist": 60,
+    "sceneKey": ""
+  },
+  {
+    "id": 17,
+    "name": "sfx_pickup",
+    "audioType": "sfx",
+    "volume": 0.8,
+    "loop": false,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": ""
+  },
+  {
+    "id": 20,
+    "name": "sfx_ui_click",
+    "audioType": "ui",
+    "volume": 0.7,
+    "loop": false,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": ""
+  },
+  {
+    "id": 30,
+    "name": "voice_blip",
+    "audioType": "voice",
+    "volume": 0.8,
+    "loop": false,
+    "spatial": false,
+    "minDist": 0,
+    "maxDist": 0,
+    "sceneKey": ""
+  }
+]

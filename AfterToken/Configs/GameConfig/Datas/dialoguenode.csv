@@ -1,17 +1,17 @@
-##var,id,dialogueId,type,speaker,text,choices,condition,action,next
-##type,int,int,string,string,string,string,string,string,int
-##,节点ID,所属对话,类型(line/choice/setflag/end),说话人,正文,选项(文本->节点|...),进入条件,到达动作,下一节点(0=结束)
-,9001,900,line,Quartermaster,Back in one piece. Good.,,,,9006
-,9002,900,line,Quartermaster,"Supplies are tight, friend. Keep bringing back whatever you find.",,,,9003
-,9003,900,choice,Quartermaster,Need anything?,Just looking->9004|Leave->9005,,,0
-,9004,900,line,Quartermaster,"The workshop's yours. Build it up, and we all eat.",,,,0
-,9005,900,line,Quartermaster,Stay sharp out there.,,,,0
-,9006,900,setflag,,,,,flag:+met_quartermaster,9002
-,9011,901,line,Doc,Patching up raiders and fools. Guess which one you are.,,,,9012
-,9012,901,line,Doc,Come back if you're bleeding. Not before.,,,,0
-,9100,900,line,Quartermaster,Dummies down? Fine work. Here is your pay.,,quest:1001:ready,quest:turnin:1001,9101
-,9101,900,line,Quartermaster,That is the timber. The workshop thanks you.,,quest:1002:ready,quest:turnin:1002,9102
-,9102,900,line,Quartermaster,The training ground is crawling with dummies. Scrap 5 of them for me.,,quest:1001:accept,quest:accept:1001,9103
-,9103,900,line,Quartermaster,We need wood for the workshop. Bring back 3 pieces.,,quest:1002:accept,quest:accept:1002,9001
-,9111,901,line,Doc,Back from the stage in one piece. Color me impressed.,,quest:1003:ready,quest:turnin:1003,9112
-,9112,901,line,Doc,Prove yourself: get into Stage 101 and extract alive.,,quest:1003:accept,quest:accept:1003,9011
+##var,id,dialogueId,type,speaker,text,choices,condition,action,next,voiceClip
+##type,int,int,string,string,string,string,string,string,int,string
+##,节点ID,所属对话,类型(line/choice/setflag/end),说话人,正文,选项(文本->节点|...),进入条件,到达动作,下一节点(0=结束),语音(音频地址;空=占位blip)
+,9001,900,line,Quartermaster,Back in one piece. Good.,,,,9006,
+,9002,900,line,Quartermaster,"Supplies are tight, friend. Keep bringing back whatever you find.",,,,9003,
+,9003,900,choice,Quartermaster,Need anything?,Just looking->9004|Leave->9005,,,0,
+,9004,900,line,Quartermaster,"The workshop's yours. Build it up, and we all eat.",,,,0,
+,9005,900,line,Quartermaster,Stay sharp out there.,,,,0,
+,9006,900,setflag,,,,,flag:+met_quartermaster,9002,
+,9011,901,line,Doc,Patching up raiders and fools. Guess which one you are.,,,,9012,
+,9012,901,line,Doc,Come back if you're bleeding. Not before.,,,,0,
+,9100,900,line,Quartermaster,Dummies down? Fine work. Here is your pay.,,quest:1001:ready,quest:turnin:1001,9101,
+,9101,900,line,Quartermaster,That is the timber. The workshop thanks you.,,quest:1002:ready,quest:turnin:1002,9102,
+,9102,900,line,Quartermaster,The training ground is crawling with dummies. Scrap 5 of them for me.,,quest:1001:accept,quest:accept:1001,9103,
+,9103,900,line,Quartermaster,We need wood for the workshop. Bring back 3 pieces.,,quest:1002:accept,quest:accept:1002,9001,
+,9111,901,line,Doc,Back from the stage in one piece. Color me impressed.,,quest:1003:ready,quest:turnin:1003,9112,
+,9112,901,line,Doc,Prove yourself: get into Stage 101 and extract alive.,,quest:1003:accept,quest:accept:1003,9011,

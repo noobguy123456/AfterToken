@@ -17,12 +17,16 @@ namespace GameLogic
         private const string LEGACY_SOUND_KEY = "Setting.SoundVolume";
 
         private const float DEFAULT_VALUE = 1f;
+        /// <summary>语音音量默认值略低于主音量，避免盖过 BGM。</summary>
+        private const float DEFAULT_VOICE_VALUE = 0.8f;
         private const float MIN_VALUE = 0f;
         private const float MAX_VALUE = 1f;
 
         private static float? _cachedMaster;
         private static float? _cachedMusic;
         private static float? _cachedSound;
+        private static float? _cachedVoicePlayer;
+        private static float? _cachedVoiceNpc;
 
         /// <summary>
         /// 主音量（AudioListener.volume）。
@@ -114,6 +118,60 @@ namespace GameLogic
             }
         }
 
+        /// <summary>
+        /// 玩家语音音量（AudioSystem 语音子通道逐 agent 应用，不走 mixer）。
+        /// </summary>
+        public static float VoicePlayer
+        {
+            get
+            {
+                if (!_cachedVoicePlayer.HasValue)
+                {
+                    var d = SaveSystem.Data.settings;
+                    _cachedVoicePlayer = d.voicePlayerVolumeInitialized ? d.voicePlayerVolume : DEFAULT_VOICE_VALUE;
+                }
+                return Mathf.Clamp(_cachedVoicePlayer.Value, MIN_VALUE, MAX_VALUE);
+            }
+            set
+            {
+                _cachedVoicePlayer = Mathf.Clamp(value, MIN_VALUE, MAX_VALUE);
+
+                var d = SaveSystem.Data.settings;
+                d.voicePlayerVolumeInitialized = true;
+                d.voicePlayerVolume = _cachedVoicePlayer.Value;
+                SaveSystem.Flush();
+
+                OnChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// NPC 语音音量（AudioSystem 语音子通道逐 agent 应用，不走 mixer）。
+        /// </summary>
+        public static float VoiceNpc
+        {
+            get
+            {
+                if (!_cachedVoiceNpc.HasValue)
+                {
+                    var d = SaveSystem.Data.settings;
+                    _cachedVoiceNpc = d.voiceNpcVolumeInitialized ? d.voiceNpcVolume : DEFAULT_VOICE_VALUE;
+                }
+                return Mathf.Clamp(_cachedVoiceNpc.Value, MIN_VALUE, MAX_VALUE);
+            }
+            set
+            {
+                _cachedVoiceNpc = Mathf.Clamp(value, MIN_VALUE, MAX_VALUE);
+
+                var d = SaveSystem.Data.settings;
+                d.voiceNpcVolumeInitialized = true;
+                d.voiceNpcVolume = _cachedVoiceNpc.Value;
+                SaveSystem.Flush();
+
+                OnChanged?.Invoke();
+            }
+        }
+
         public static float Min => MIN_VALUE;
         public static float Max => MAX_VALUE;
         public static float Default => DEFAULT_VALUE;
@@ -131,6 +189,11 @@ namespace GameLogic
             ApplyMaster(Master);
             ApplyMusic(Music);
             ApplySound(Sound);
+            // Voice 组 mixer 固定 1：语音音量由 AudioSystem 按子通道逐 agent 应用（VoicePlayer/VoiceNpc）
+            if (GameModule.Audio != null)
+            {
+                GameModule.Audio.VoiceVolume = 1f;
+            }
         }
 
         private static void ApplyMaster(float value)
@@ -165,6 +228,8 @@ namespace GameLogic
             _cachedMaster = null;
             _cachedMusic = null;
             _cachedSound = null;
+            _cachedVoicePlayer = null;
+            _cachedVoiceNpc = null;
         }
     }
 }

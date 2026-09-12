@@ -48,6 +48,9 @@ namespace GameLogic
             VolumeSetting.ApplyAll();
             QualitySetting.Apply();
 
+            // 音频系统（persistent，BGM 跨场景存活）
+            AudioSystem.EnsureCreated();
+
             StartGameLogic();
 
 #if UNITY_EDITOR

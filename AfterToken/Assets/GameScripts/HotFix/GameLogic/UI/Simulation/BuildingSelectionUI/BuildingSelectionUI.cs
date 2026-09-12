@@ -105,7 +105,7 @@ namespace GameLogic
             descRect.offsetMax = new Vector2(-10, -30);
 
             var descText = descGo.AddComponent<TextMeshProUGUI>();
-            descText.text = $"{cfg.Desc}\nCost: {cfg.BuildCostGold}G | Time: {cfg.BuildTime}s";
+            descText.text = $"{cfg.Desc}\n" + Loc.Get("ui.sim.build_cost_time", cfg.BuildCostGold, cfg.BuildTime);
             descText.fontSize = 14;
             descText.alignment = TextAlignmentOptions.Left;
             descText.color = new Color(0.8f, 0.8f, 0.8f);

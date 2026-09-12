@@ -16,6 +16,7 @@ namespace GameLogic
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
                 CursorManager.Instance?.ForceShowCursor();
                 HideLauncherUI();
+                AudioSystem.Instance?.PlaySceneBgm("MainMenu");
                 await GameModule.UI.ShowUIAsyncAwait<MainMenuUI>();
 
 #if UNITY_EDITOR

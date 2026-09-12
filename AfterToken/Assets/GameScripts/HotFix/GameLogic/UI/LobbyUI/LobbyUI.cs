@@ -43,7 +43,7 @@ namespace GameLogic
         {
             if (_titleText != null)
             {
-                _titleText.text = "Select Level";
+                Loc.Bind(_titleText, "ui.lobby.title");
                 _titleText.fontSize = 48;
                 _titleText.alignment = TextAlignmentOptions.Center;
                 
@@ -189,7 +189,7 @@ namespace GameLogic
             var text = go.GetComponentInChildren<TextMeshProUGUI>();
             if (text != null)
             {
-                text.text = unlocked ? $"Stage {level.id}" : $"Stage {level.id}\n[{lockHint}]";
+                text.text = unlocked ? Loc.Get("ui.lobby.stage", level.id) : Loc.Get("ui.lobby.stage", level.id) + $"\n[{lockHint}]";
                 text.fontSize = 24;
                 text.alignment = TextAlignmentOptions.Center;
             }

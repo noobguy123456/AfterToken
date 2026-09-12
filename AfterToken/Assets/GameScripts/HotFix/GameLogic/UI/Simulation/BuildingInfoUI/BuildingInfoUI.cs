@@ -145,7 +145,7 @@ namespace GameLogic
             var cfg = building != null ? BuildingConfigMgr.Instance.Get(building.ConfigId) : null;
             if (building == null || cfg == null)
             {
-                if (_titleText != null) _titleText.text = "Building not found";
+                if (_titleText != null) _titleText.text = Loc.Get("ui.sim.building_not_found");
                 return;
             }
 
@@ -153,9 +153,9 @@ namespace GameLogic
 
             string stateText = building.State switch
             {
-                BuildingState.Building => $"Constructing... {building.Progress * 100f:F0}%",
-                BuildingState.Upgrading => $"Upgrading... {building.Progress * 100f:F0}%",
-                _ => "Idle",
+                BuildingState.Building => Loc.Get("ui.sim.state.building", (building.Progress * 100f).ToString("F0")),
+                BuildingState.Upgrading => Loc.Get("ui.sim.state.upgrading", (building.Progress * 100f).ToString("F0")),
+                _ => Loc.Get("ui.sim.state.idle"),
             };
             if (_stateText != null) _stateText.text = stateText;
 
@@ -176,7 +176,7 @@ namespace GameLogic
                 }
                 if (running == 0)
                 {
-                    sb.Append("(no production)");
+                    sb.Append(Loc.Get("ui.sim.no_production"));
                 }
                 _queueText.text = sb.ToString().TrimEnd();
             }
@@ -184,8 +184,8 @@ namespace GameLogic
             if (_upgradeText != null)
             {
                 _upgradeText.text = building.Level >= cfg.MaxLevel
-                    ? "Max level"
-                    : $"Cost: {cfg.UpgradeCostGold}G + items";
+                    ? Loc.Get("ui.sim.max_level")
+                    : Loc.Get("ui.sim.upgrade_cost", cfg.UpgradeCostGold);
             }
         }
 
@@ -226,7 +226,7 @@ namespace GameLogic
             text.alignment = TextAlignmentOptions.Left;
             text.color = Color.white;
 
-            var btn = CreateItemButton(rect, "Start", new Vector2(168f, 0f), () => TryStartProduction(recipe.Id));
+            var btn = CreateItemButton(rect, Loc.Get("ui.sim.start_production"), new Vector2(168f, 0f), () => TryStartProduction(recipe.Id));
             var btnRect = btn.GetComponent<RectTransform>();
             btnRect.sizeDelta = new Vector2(76f, 40f);
 
@@ -341,7 +341,7 @@ namespace GameLogic
 
         private static string FormatItems(IReadOnlyList<GameConfig.cfg.ItemExchange> items)
         {
-            if (items == null || items.Count == 0) return "(free)";
+            if (items == null || items.Count == 0) return Loc.Get("ui.sim.free");
             var sb = new StringBuilder();
             for (int i = 0; i < items.Count; i++)
             {

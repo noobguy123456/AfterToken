@@ -34,18 +34,17 @@ namespace GameLogic
 
         private void BindTexts()
         {
-            // 项目字体 MainUIFont 为 Latin-only 静态字库，UI 文本统一使用英文。
-            if (_titleText != null) _titleText.text = "YOU DIED";
-            if (_messageText != null) _messageText.text = "You have been defeated. Choose your next move.";
+            if (_titleText != null) Loc.Bind(_titleText, "ui.death.title");
+            if (_messageText != null) Loc.Bind(_messageText, "ui.death.subtitle");
             if (_restartButton != null)
             {
                 var restartText = _restartButton.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (restartText != null) restartText.text = "Restart";
+                if (restartText != null) Loc.Bind(restartText, "ui.death.restart");
             }
             if (_returnButton != null)
             {
                 var returnText = _returnButton.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (returnText != null) returnText.text = "Back to Base";
+                if (returnText != null) Loc.Bind(returnText, "ui.death.back_to_base");
             }
         }
 

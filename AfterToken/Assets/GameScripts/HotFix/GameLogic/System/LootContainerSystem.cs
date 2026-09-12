@@ -47,7 +47,7 @@ namespace GameLogic
             _currentContainer = container;
             if (!container.IsOpened)
             {
-                ShowPrompt("Press E to Open");
+                ShowPrompt(Loc.Get("ui.interact.open", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
             }
         }
 

@@ -45,7 +45,7 @@ namespace GameLogic
         public void OnPlayerEnteredNote(NoteEntity note)
         {
             _currentNote = note;
-            ShowPrompt("Press E to Read");
+            ShowPrompt(Loc.Get("ui.interact.read", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
         }
 
         /// <summary>

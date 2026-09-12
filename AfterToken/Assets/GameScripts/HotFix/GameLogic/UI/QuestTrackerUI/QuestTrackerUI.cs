@@ -86,7 +86,7 @@ namespace GameLogic
                 bool ready = QuestSystem.GetState(questId) == QuestState.ReadyToTurnIn;
                 if (nameText != null)
                 {
-                    nameText.text = ready ? $"{cfg.Name} (Ready)" : cfg.Name;
+                    nameText.text = ready ? $"{cfg.Name} {Loc.Get("ui.quest.ready_suffix")}" : cfg.Name;
                     nameText.color = ready ? ReadyNameColor : ActiveNameColor;
                 }
                 if (objectivesText != null)

@@ -207,6 +207,7 @@ namespace GameLogic
                 case "line":
                     _currentNode = node;
                     _waitingChoice = false;
+                    AudioSystem.Instance?.PlayDialogueVoice(node.VoiceClip);
                     GameEvent.Get<IDialogueEvent>()?.OnDialogueLine(node.Id, node.Speaker, node.Text);
                     break;
 
@@ -254,10 +255,14 @@ namespace GameLogic
             var ui = GameModule.UI.GetUI<DialogueUI>();
             if (ui != null && ui.IsTyping)
             {
+                // 跳过打字的同时停掉当前行语音
+                AudioSystem.Instance?.StopVoice(VoiceChannel.Npc);
                 ui.CompleteLine();
                 return;
             }
 
+            // 推进到下一行，当前行语音随之终止
+            AudioSystem.Instance?.StopVoice(VoiceChannel.Npc);
             PlayNode(_currentNode.Next != 0 ? DialogueConfigMgr.Instance.GetNode(_currentNode.Next) : null);
         }
 
@@ -270,6 +275,7 @@ namespace GameLogic
             if (index < 0 || index >= _choices.Count) return;
 
             int next = _choices[index].Value;
+            AudioSystem.Instance?.StopVoice(VoiceChannel.Npc);
             PlayNode(next != 0 ? DialogueConfigMgr.Instance.GetNode(next) : null);
         }
 
@@ -279,6 +285,9 @@ namespace GameLogic
         public void EndDialogue()
         {
             if (!IsPlaying) return;
+
+            // 对话结束（含跳过/打断）时停掉残留语音
+            AudioSystem.Instance?.StopVoice(VoiceChannel.Npc);
 
             if (_dialogue != null && _dialogue.OnceOnly)
             {

@@ -32,6 +32,7 @@ public sealed partial class DialogueNode : Luban.BeanBase
         Condition = (string)_obj.GetValue("condition");
         Action = (string)_obj.GetValue("action");
         Next = (int)_obj.GetValue("next");
+        VoiceClip = (string)_obj.GetValue("voiceClip");
     }
 
     public static DialogueNode DeserializeDialogueNode(JToken _buf)
@@ -75,6 +76,7 @@ public sealed partial class DialogueNode : Luban.BeanBase
     /// 下一节点(0=结束)
     /// </summary>
     public readonly int Next;
+    public readonly string VoiceClip;
 
 
     public const int __ID__ = 518787428;
@@ -96,6 +98,7 @@ public sealed partial class DialogueNode : Luban.BeanBase
         + "condition:" + Condition + ","
         + "action:" + Action + ","
         + "next:" + Next + ","
+        + "voiceClip:" + VoiceClip + ","
         + "}";
     }
 }

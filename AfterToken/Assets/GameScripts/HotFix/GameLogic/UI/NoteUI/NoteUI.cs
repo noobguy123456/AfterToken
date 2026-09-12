@@ -71,7 +71,7 @@ namespace GameLogic
         {
             if (_titleText != null)
             {
-                _titleText.text = cfg != null ? cfg.Title : "Note";
+                _titleText.text = cfg != null ? cfg.Title : Loc.Get("ui.note.fallback_title");
             }
 
             if (_contentText != null)

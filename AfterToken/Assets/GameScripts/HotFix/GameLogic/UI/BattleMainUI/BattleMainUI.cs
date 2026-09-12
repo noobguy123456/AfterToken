@@ -142,7 +142,7 @@ namespace GameLogic
                     {
                         _extractionPauseShown = true;
                         _extractionShownTenths = -1;
-                        _textExtraction.text = "EXTRACTION PAUSED - ENEMY IN ZONE";
+                        _textExtraction.text = Loc.Get("ui.battle.extraction_paused");
                         _textExtraction.color = ExtractionPausedColor;
                     }
                 }
@@ -154,7 +154,7 @@ namespace GameLogic
                     {
                         _extractionPauseShown = false;
                         _extractionShownTenths = tenths;
-                        _textExtraction.text = $"EXTRACTING  {tenths / 10f:F1}s";
+                        _textExtraction.text = Loc.Get("ui.battle.extracting", $"{tenths / 10f:F1}");
                         _textExtraction.color = ExtractionNormalColor;
                     }
                 }
@@ -267,7 +267,7 @@ namespace GameLogic
 
         private void OnHpChanged(int currentHp, int maxHp)
         {
-            if (_textHp != null) _textHp.text = $"HP: {currentHp}/{maxHp}";
+            if (_textHp != null) _textHp.text = Loc.Get("ui.battle.hp", currentHp, maxHp);
             if (_sliderHp != null)
                 _sliderHp.value = maxHp > 0 ? (float)currentHp / maxHp : 0f;
         }
@@ -280,7 +280,7 @@ namespace GameLogic
 
         private void OnAmmoChanged(int currentAmmo, int maxAmmo)
         {
-            if (_textAmmo != null) _textAmmo.text = $"Ammo: {currentAmmo}/{maxAmmo}";
+            if (_textAmmo != null) _textAmmo.text = Loc.Get("ui.battle.ammo", currentAmmo, maxAmmo);
         }
 
         private void OnWeaponEquipped(int ownerId, int slot, int weaponConfigId)
@@ -320,13 +320,13 @@ namespace GameLogic
             var playerSystem = PlayerSystem.Instance;
             if (playerSystem != null)
             {
-                if (_textHp != null) _textHp.text = $"HP: {playerSystem.CurrentHp}/{playerSystem.MaxHp}";
+                if (_textHp != null) _textHp.text = Loc.Get("ui.battle.hp", playerSystem.CurrentHp, playerSystem.MaxHp);
                 if (_sliderHp != null) _sliderHp.value = playerSystem.MaxHp > 0 ? (float)playerSystem.CurrentHp / playerSystem.MaxHp : 0f;
                 if (_sliderStamina != null) _sliderStamina.value = playerSystem.MaxStamina > 0 ? (float)playerSystem.CurrentStamina / playerSystem.MaxStamina : 0f;
             }
             else
             {
-                if (_textHp != null) _textHp.text = "HP: -/-";
+                if (_textHp != null) _textHp.text = Loc.Get("ui.battle.hp", "-", "-");
                 if (_sliderHp != null) _sliderHp.value = 0f;
                 if (_sliderStamina != null) _sliderStamina.value = 0f;
             }
@@ -334,13 +334,13 @@ namespace GameLogic
             var weapon = WeaponSystem.Instance?.CurrentWeapon;
             if (weapon != null)
             {
-                if (_textAmmo != null) _textAmmo.text = $"Ammo: {weapon.CurrentAmmo}/{weapon.Config.clipSize}";
-                if (_textWeapon != null) _textWeapon.text = $"Weapon: {weapon.Config.name}";
+                if (_textAmmo != null) _textAmmo.text = Loc.Get("ui.battle.ammo", weapon.CurrentAmmo, weapon.Config.clipSize);
+                if (_textWeapon != null) _textWeapon.text = Loc.Get("ui.battle.weapon", weapon.Config.name);
             }
             else
             {
-                if (_textAmmo != null) _textAmmo.text = "Ammo: -/-";
-                if (_textWeapon != null) _textWeapon.text = "Weapon: -";
+                if (_textAmmo != null) _textAmmo.text = Loc.Get("ui.battle.ammo", "-", "-");
+                if (_textWeapon != null) _textWeapon.text = Loc.Get("ui.battle.weapon", "-");
             }
 
         }

@@ -146,13 +146,21 @@ namespace GameLogic
             {
                 _startButton.onClick.RemoveAllListeners();
                 // Start 直接进入基地（模拟经营场景即据点，选关在基地内进行）
-                _startButton.onClick.AddListener(() => GameApp.ChangeProcedure<ProcedureSimulation>());
+                _startButton.onClick.AddListener(() =>
+                {
+                    PlayClickSfx();
+                    GameApp.ChangeProcedure<ProcedureSimulation>();
+                });
             }
 
             if (_savesButton != null)
             {
                 _savesButton.onClick.RemoveAllListeners();
-                _savesButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<SaveSlotSelectUI>());
+                _savesButton.onClick.AddListener(() =>
+                {
+                    PlayClickSfx();
+                    GameModule.UI.ShowUIAsync<SaveSlotSelectUI>();
+                });
             }
 
             if (_exitButton != null)
@@ -160,6 +168,7 @@ namespace GameLogic
                 _exitButton.onClick.RemoveAllListeners();
                 _exitButton.onClick.AddListener(() =>
                 {
+                    PlayClickSfx();
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -171,8 +180,17 @@ namespace GameLogic
             if (_settingsButton != null)
             {
                 _settingsButton.onClick.RemoveAllListeners();
-                _settingsButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<SettingsUI>());
+                _settingsButton.onClick.AddListener(() =>
+                {
+                    PlayClickSfx();
+                    GameModule.UI.ShowUIAsync<SettingsUI>();
+                });
             }
+        }
+
+        private static void PlayClickSfx()
+        {
+            AudioSystem.Instance?.PlayUI("sfx_ui_click");
         }
     }
 }

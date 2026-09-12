@@ -8,7 +8,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 9006
+    "next": 9006,
+    "voiceClip": ""
   },
   {
     "id": 9002,
@@ -19,7 +20,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 9003
+    "next": 9003,
+    "voiceClip": ""
   },
   {
     "id": 9003,
@@ -30,7 +32,8 @@
     "choices": "Just looking->9004|Leave->9005",
     "condition": "",
     "action": "",
-    "next": 0
+    "next": 0,
+    "voiceClip": ""
   },
   {
     "id": 9004,
@@ -41,7 +44,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 0
+    "next": 0,
+    "voiceClip": ""
   },
   {
     "id": 9005,
@@ -52,7 +56,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 0
+    "next": 0,
+    "voiceClip": ""
   },
   {
     "id": 9006,
@@ -63,7 +68,8 @@
     "choices": "",
     "condition": "",
     "action": "flag:+met_quartermaster",
-    "next": 9002
+    "next": 9002,
+    "voiceClip": ""
   },
   {
     "id": 9011,
@@ -74,7 +80,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 9012
+    "next": 9012,
+    "voiceClip": ""
   },
   {
     "id": 9012,
@@ -85,7 +92,8 @@
     "choices": "",
     "condition": "",
     "action": "",
-    "next": 0
+    "next": 0,
+    "voiceClip": ""
   },
   {
     "id": 9100,
@@ -96,7 +104,8 @@
     "choices": "",
     "condition": "quest:1001:ready",
     "action": "quest:turnin:1001",
-    "next": 9101
+    "next": 9101,
+    "voiceClip": ""
   },
   {
     "id": 9101,
@@ -107,7 +116,8 @@
     "choices": "",
     "condition": "quest:1002:ready",
     "action": "quest:turnin:1002",
-    "next": 9102
+    "next": 9102,
+    "voiceClip": ""
   },
   {
     "id": 9102,
@@ -118,7 +128,8 @@
     "choices": "",
     "condition": "quest:1001:accept",
     "action": "quest:accept:1001",
-    "next": 9103
+    "next": 9103,
+    "voiceClip": ""
   },
   {
     "id": 9103,
@@ -129,7 +140,8 @@
     "choices": "",
     "condition": "quest:1002:accept",
     "action": "quest:accept:1002",
-    "next": 9001
+    "next": 9001,
+    "voiceClip": ""
   },
   {
     "id": 9111,
@@ -140,7 +152,8 @@
     "choices": "",
     "condition": "quest:1003:ready",
     "action": "quest:turnin:1003",
-    "next": 9112
+    "next": 9112,
+    "voiceClip": ""
   },
   {
     "id": 9112,
@@ -151,6 +164,7 @@
     "choices": "",
     "condition": "quest:1003:accept",
     "action": "quest:accept:1003",
-    "next": 9011
+    "next": 9011,
+    "voiceClip": ""
   }
 ]

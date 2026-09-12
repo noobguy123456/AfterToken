@@ -110,7 +110,7 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 锁定提示（英文），供 UI 显示。已解锁时返回 null。
+        /// 锁定提示（本地化），供 UI 显示。已解锁时返回 null。
         /// </summary>
         public static string GetLockHint(UnlockContentType contentType, int targetId)
         {
@@ -124,17 +124,17 @@ namespace GameLogic
             var parts = new List<string>();
             if (cfg.RequireCompleteLevelId > 0 && !PlayerProfileSystem.IsLevelCompleted(cfg.RequireCompleteLevelId))
             {
-                parts.Add($"Clear Stage {cfg.RequireCompleteLevelId}");
+                parts.Add(Loc.Get("ui.unlock.clear_stage", cfg.RequireCompleteLevelId));
             }
             if (cfg.RequirePlayerLevel > 0 && PlayerProfileSystem.Level < cfg.RequirePlayerLevel)
             {
-                parts.Add($"Player Lv{cfg.RequirePlayerLevel}");
+                parts.Add(Loc.Get("ui.unlock.player_level", cfg.RequirePlayerLevel));
             }
             if (cfg.CostGold > 0)
             {
                 parts.Add($"{cfg.CostGold}G");
             }
-            return parts.Count > 0 ? string.Join(" + ", parts) : "Locked";
+            return parts.Count > 0 ? string.Join(" + ", parts) : Loc.Get("ui.unlock.locked");
         }
 
         /// <summary>

@@ -88,7 +88,7 @@ namespace GameLogic
 
             if (_capacityText != null)
             {
-                _capacityText.text = $"Capacity: {Warehouse.UsedSlots}/{Warehouse.MaxSlots}";
+                _capacityText.text = Loc.Get("ui.bag.capacity", Warehouse.UsedSlots, Warehouse.MaxSlots);
             }
 
             if (_slotRoot == null || _slotTemplate == null)

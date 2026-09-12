@@ -64,6 +64,8 @@ namespace GameLogic
                 {
                     placeholder.text = Loc.Get("ui.chat.hint");
                 }
+                // 清空残留文本：上次关窗前若有未发送字符（或关窗键的字符漏进输入框）不带入下次
+                _input.text = string.Empty;
                 _input.onSubmit.AddListener(OnSubmit);
                 _input.ActivateInputField();
             }
@@ -83,6 +85,14 @@ namespace GameLogic
                 }
             }
 
+            // 再按一次聊天绑定键关闭窗口（回车键除外：回车是发送，由 OnSubmit 空文本关闭兜底）
+            var chatKey = KeyBindingSetting.GetKey(KeyBindAction.CompanionChat);
+            if (chatKey != KeyCode.Return && chatKey != KeyCode.KeypadEnter && Input.GetKeyDown(chatKey))
+            {
+                GameModule.UI.CloseUI<CompanionChatUI>();
+                return;
+            }
+
             // 保持输入框聚焦：发送后 TMP 会失焦，点到别处也要能继续打字
             if (_input != null && !_input.isFocused)
             {
@@ -92,8 +102,15 @@ namespace GameLogic
 
         private void OnSubmit(string text)
         {
+            // 空文本提交 = 关闭窗口（聊天键绑回车时，空 Enter 即关窗）
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                GameModule.UI.CloseUI<CompanionChatUI>();
+                return;
+            }
+
             var brain = CompanionSystem.Instance != null ? CompanionSystem.Instance.Brain : null;
-            if (brain != null && !string.IsNullOrWhiteSpace(text))
+            if (brain != null)
             {
                 brain.RequestChatReply(text);
             }

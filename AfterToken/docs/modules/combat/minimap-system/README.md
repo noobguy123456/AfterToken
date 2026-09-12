@@ -18,4 +18,5 @@
 - 图标投影：`(uv - window.min) / window.size * 220 - 110`，出窗口即隐藏；玩家靠近地图边缘时标记不再居中（传统小地图行为）
 - RenderTexture 为运行时对象，`MinimapSystem.OnDestroy` 负责 Release + Destroy，UI 只绑定不持有
 - prefab 结构：`m_rect_Panel`(232×232 底衬，右上角 anchor，偏移 -16,-16) → `m_raw_Map` / `m_rect_IconRoot`（均内缩 6px = 220×220）；`m_img_EnemyDot` 红点模板（默认隐藏，运行时池化克隆），`m_img_Player` 绿色玩家标记（代码驱动位置）
+- 图标约定：敌人红点（模板池化）、队友绿点、玩家绿标、标点按类型区分——**目标点(Move) 青色菱形 / 敌人点(Attack) 红色脉冲菱形（1.2±0.25 缩放）/ 物资点(Loot) 黄色圆点**，与 PingSystem 世界标记同色
 - 未来美术化方向：烘焙纹理可替换为美术绘制的平面地图图（每关一张），系统/UI 代码无需改动

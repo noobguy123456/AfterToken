@@ -80,7 +80,7 @@ namespace GameLogic
             }
             foreach (var item in ItemsLost)
             {
-                sb.Append($"[丢失]{ItemConfigMgr.Instance.GetName(item.ItemId)}x{item.Count} ");
+                sb.Append(Loc.Get("ui.reward.lost", ItemConfigMgr.Instance.GetName(item.ItemId), item.Count) + " ");
             }
             return sb.ToString().TrimEnd();
         }

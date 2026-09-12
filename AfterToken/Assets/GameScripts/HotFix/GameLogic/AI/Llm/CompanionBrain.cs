@@ -783,6 +783,7 @@ namespace GameLogic.AI.Llm
 
         private void EmitSay(string text)
         {
+            text = SanitizeRichText(text);
             if (string.IsNullOrWhiteSpace(text))
             {
                 return;
@@ -794,6 +795,20 @@ namespace GameLogic.AI.Llm
                 _recentLines.RemoveAt(0);
             }
             GameEvent.Get<ICompanionEvent>()?.OnCompanionSay(CompanionName, text);
+        }
+
+        // LLM 回复偶尔夹带 <tag> 风格片段（思考标签/情绪标记/JSON 残渣），字幕 TMP 开了 richText
+        // 但未知标签会原样显示成 "</>" 这类符号，上字幕/进记忆前统一剥掉
+        private static readonly System.Text.RegularExpressions.Regex TagPattern =
+            new System.Text.RegularExpressions.Regex("</?[^<>]{0,32}>", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static string SanitizeRichText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+            return TagPattern.Replace(text, string.Empty).Trim();
         }
 
         private void ResetIdleChatTimer()

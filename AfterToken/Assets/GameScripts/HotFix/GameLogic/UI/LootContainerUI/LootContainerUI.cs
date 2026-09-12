@@ -106,7 +106,7 @@ namespace GameLogic
         {
             if (_titleText != null)
             {
-                _titleText.text = "Container";
+                _titleText.text = Loc.Get("ui.container.title");
             }
 
             if (_slotRoot == null || _slotTemplate == null) return;

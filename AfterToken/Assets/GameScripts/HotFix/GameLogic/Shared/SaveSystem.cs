@@ -420,6 +420,16 @@ namespace GameLogic
         public bool soundVolumeInitialized;
         public float soundVolume;
         /// <summary>
+        /// 玩家语音音量（0..1，AudioSystem 语音子通道逐 agent 应用）。
+        /// </summary>
+        public bool voicePlayerVolumeInitialized;
+        public float voicePlayerVolume;
+        /// <summary>
+        /// NPC 语音音量（0..1，AudioSystem 语音子通道逐 agent 应用）。
+        /// </summary>
+        public bool voiceNpcVolumeInitialized;
+        public float voiceNpcVolume;
+        /// <summary>
         /// 画质档位（QualitySettings 档位索引）。
         /// </summary>
         public bool qualityLevelInitialized;

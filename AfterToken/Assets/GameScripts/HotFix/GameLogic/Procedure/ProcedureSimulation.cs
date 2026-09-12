@@ -27,6 +27,7 @@ namespace GameLogic
 
                 InitializeSceneContent();
                 InitializeSimulationSystems();
+                AudioSystem.Instance?.PlaySceneBgm("Simulation");
                 CursorManager.Instance?.SetLockMode(GameCursorLockMode.Free);
                 CursorManager.Instance?.ForceShowCursor();
                 await SpawnPlayerAsync(ct);

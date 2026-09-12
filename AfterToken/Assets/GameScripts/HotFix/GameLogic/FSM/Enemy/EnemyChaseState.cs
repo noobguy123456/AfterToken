@@ -42,6 +42,10 @@ namespace GameLogic
         private float _stuckRecoverTimer;
         private float _pathFailInterval = BASE_FAIL_RETRY_INTERVAL;
 
+        // 脚步音效：追击移动时按固定间隔播放 3D 脚步（占位音，由 AudioSystem 做距离衰减）
+        private const float FOOTSTEP_INTERVAL = 0.45f;
+        private float _footstepTimer;
+
         // 静态缓存 LayerMask 与物理查询缓冲，避免 ApplySeparation/HasLineOfSight 每帧的结果数组分配。
         private static readonly int EnemyMask = LayerMask.GetMask("Enemy");
         private static readonly int ObstacleMask = LayerMask.GetMask("Obstacle");
@@ -57,6 +61,7 @@ namespace GameLogic
             _stuckCount = 0;
             _stuckRecoverTimer = 0f;
             _pathFailInterval = BASE_FAIL_RETRY_INTERVAL;
+            _footstepTimer = 0f;
             RefreshPath();
         }
 
@@ -263,6 +268,14 @@ namespace GameLogic
             else
             {
                 Owner.transform.position += (finalDirection * MoveSpeed * elapse).ToWorld();
+            }
+
+            // 追击脚步声（3D 空间音，随距离衰减；AudioSystem 未就绪时静默跳过）
+            _footstepTimer += elapse;
+            if (_footstepTimer >= FOOTSTEP_INTERVAL)
+            {
+                _footstepTimer = 0f;
+                AudioSystem.Instance?.Play3D("sfx_footstep", Owner.transform.position);
             }
         }
 

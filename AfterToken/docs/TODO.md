@@ -75,7 +75,7 @@
 | 事件系统 | 🟡 | P0 | - | `docs/modules/infra/event-system/` | 战斗事件已定义，待补齐 `ILevelEvent`/`IBattleResultEvent`/经营/共享事件 |
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
 | 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
-| 音频系统 | ⏳ | P1 | - | `docs/modules/infra/audio-system/` | BGM / SFX / 音量管理 |
+| 音频系统 | 🟡 | P1 | - | `docs/modules/infra/audio-system/` | 2026-09-12 落地：AudioSystem 门面 + TbAudio 表驱动场景 BGM（交叉淡入淡出）+ 战斗态切战斗曲/duck 0.5/脱战 3s 恢复；SFX 2D/3D/UI（开火/换弹/爆炸/拾取/敌人脚步/UI 点击）；Voice 双子通道（玩家/NPC 独立音量、对话跳过停语音、IVoiceProvider TTS 预留）；四路音量持久化 + SettingsUI 滑条；占位 WAV ×14 程序生成；全链路 MCP 实测通过，待正式资源替换与听感验收 |
 | 特效系统 | 🟡 | P1 | - | `docs/modules/infra/effect-system/` | M1 已落地（2026-09-06），同日去配置表简化：TbEffect 拆除，元数据改挂 prefab EffectDriver 序列化字段，播放按 `EffectIds` 地址常量；EffectSystem+池化+IEffectEvent，爆炸在 Explosion.prefab（shader/材质落 AssetRaw 闭环引用链，消除 Shader.Find 手动维护点）；M2 已落地（2026-09-07）：枪口火焰/命中火花（敌/环境）/拾取光晕接入并实测，爆炸补齐三段式（预警压缩闪光+焦痕 decal）；剩 M3 编辑器预览工具 |
 
 ### 共享系统
@@ -671,3 +671,38 @@ Luban 配置表数据补充
 - 改动：localization `companion.exusiai.name` 的 zh_cn 从 "Exusiai" 改为 "能天使"；修正 `CompanionEntity.EnsureNameplate` 的错误注释。
 - 验证：MCP 实测 zh 模式下名牌文本 "能天使 / 200/200"、字体 SourceHanSans、`HasCharacter(能天使)=True`，截图确认无缺字；dotnet build 0 error。
 - 注意：名牌语言切换不即时刷新（`UpdateNameplate` 只在掉血/初始化时跑，没挂 OnLanguageChanged），切换语言后名牌要等下次刷新才变——如需即时刷新再单独修。
+
+## 2026-09-12 音频系统落地
+- 新增：`AudioSystem`（persistent 门面）、`AudioConfigMgr`（TbAudio 包装）、`IVoiceProvider`（TTS 预留）；audio.xlsx 表（sceneKey 驱动场景 BGM）；dialoguenode 加 `voiceClip` 列；占位 WAV ×14（`Tools/AudioGen/gen_placeholder_audio.py` 程序生成）。
+- 能力：场景 BGM 双 agent 交叉淡入淡出；战斗态聚合 IEnemyEvent 追击/攻击敌人数，切 bgm_combat + duck 0.5，脱战缓冲 3s 恢复（走缩放时间，暂停不推进）；SFX Play2D/Play3D（spatialBlend=1+表配衰减距离）/PlayUI，接线开火/换弹/爆炸/拾取/敌人追击脚步（0.45s 间隔）/主菜单与设置页签点击音；对话语音播放+跳过/推进/结束同步停；四路音量（BGM/SFX/语音Player/语音Npc）持久化 + SettingsUI 音频面板新增两条滑条。
+- 验证：dotnet build 0 error；MCP 实测三场景 BGM 切换、战斗 duck 进出（0.70→0.35→0.70）、3D fire spatial=1.0、语音滑条存在；console 无异常。
+- 踩坑记录：① Luban CSV 注释单元格含半角逗号会撑出额外列，报"非法单元薄 meta 属性定义 …,voice,"误导性错误；② 列名 `voice`/`voiceId` 莫名触发 meta 错误，`voiceClip` 正常；③ CSV 加列必须同步 `__beans__.xlsx` 字段，否则静默忽略；④ GameLogic/GameProto.csproj 是显式 Compile Include 列表，新 .cs 必须手动加条目；⑤ TEngine `AudioType` 与 `UnityEngine.AudioType` 冲突，要写 `TEngine.AudioType.*`；⑥ 脱战计时用缩放时间——测试时若玩家死亡（PlayerDeathUI 暂停 timeScale=0）退出倒计时不推进，属预期。
+
+## 2026-09-12 对话字幕标签残渣修复
+- 问题：LLM 回复偶发夹带 `<tag>` 风格片段（思考标签/情绪标记），字幕 TMP 开了 richText，未知标签原样显示成 `</>` 这类符号。
+- 修复：`CompanionBrain.EmitSay` 统一过 `SanitizeRichText`（编译态正则 `</?[^<>]{0,32}>` 剥标签后 Trim），上字幕/进防复读记忆前清洗；字幕侧的 `<color>` 说话人着色不受影响。
+- 验证：dotnet build 0 error；MCP 实测含 `<mood=happy>`/`</>` 的脏文本经 EmitSay 后字幕只显示纯文本，截图确认。
+
+## 2026-09-12 输入框富文本编辑关闭（`<u></u>` 标签泄漏）
+- 问题：TMP_InputField 的 `richText`（Allow Rich Text Editing）默认 true，输入时按 Ctrl+B/I/U 会往文本里插入 `<b>`/`<i>`/`<u>` 标签，而显示组件没开富文本，标签原样露出（聊天框 `<u>da's</u>`）；API 密钥框中招会直接损坏密钥。
+- 修复：CompanionChatUI 聊天输入框 + SettingsUI 三个 LLM 配置输入框（endpoint/apiKey/model）的 `richText` 全部置 false 并保存 prefab（MCP 实改实存）。
+
+## 2026-09-12 设置输入页本地化 + 聊天框关窗修复
+- 设置-输入页：12 个动作行标签从硬编码英文改为 Loc.Bind 跟随语言（新增 `ui.settings.bind.*` 词条 ×16，含改绑提示/冲突/完成三条动态提示）；`GetKeyDisplayName` 补 `Return→Enter`、`KeypadEnter→Num Enter` 映射。
+- 聊天框：再按一次聊天绑定键关闭窗口（回车除外）；空文本 Enter 提交 = 关窗（绑定键为 Enter 时的关窗路径）；开窗时清空输入框残留文本。
+- 验证：导表成功、dotnet build 0 error；MCP 实测词条取值（开火/队友对话）、输入页截图全中文标签+Enter 显示、空提交关窗 isOpen=False。
+
+## 2026-09-12 小地图标点分类型图标 + 本地化审计 + 标点系统方案
+- 小地图：标点图标按类型区分（MinimapUI.ApplyPingMarkerStyle）——Move 青色菱形 / Attack 红色脉冲菱形 / Loot 黄色圆点，与世界标记同色；MCP 实测三型截图确认。
+- 本地化审计（只读）：遗漏约 63 处赋值点/48 条文案，集中在 LobbyUI/UnlockSystem、PlayerDeathUI、仓库/背包/容器/Tooltip、任务三件套、场景 E 键提示（Loot/Note/Npc，且 E 未跟改绑）、模拟经营全模块、战斗 HUD（BattleMainUI/WeaponWheelUI）、SettingsUI:1023 一条；zh_tw/ja/ko 列全空（只维护 en+zh_cn）；配置表层（quest/item/对话等 cfg.Name/Desc）单语言是独立问题。已全覆盖：MainMenu/SaveSlot/Settlement/QuestBoard/Chat/Companion/Settings（除 1023）。
+- 标点系统 APEX 式方案落地文档 `docs/modules/combat/ping-system/README.md`：8 类型（+Watch/Defend/Help/Regroup/Retreat）+ 长按 0.25s 轮盘/单击快标、M1 轮盘→M2 队友行为→M3 美术音效。
+- 战斗 BGM 差异确认：bgm_battle（8s 低音脉冲，安全态）vs bgm_combat（4s 快速鼓点+军鼓噪声，交战态 duck 0.5），配置与生成器均独立，运行时切换实测通过。
+
+## 2026-09-12 本地化遗漏全量修复（63 处清零）
+- 机制说明：本地化 = Luban 词条表 `Configs/GameConfig/Datas/localization.csv`（key/en/zh_cn/zh_tw/ja/ko，en 兜底）→ TbLocalization → `LocalizationSystem` 索引 → UI 走 `Loc.Get(key[,params])`（{0} 占位）/ `Loc.Bind(TMP, key)`（语言切换自动刷新）。本次 `GetText` 新增字面 `\n` 还原换行（CSV 单元格放不下真实换行）。
+- 词条：补录 62 条（ui.lobby/unlock/death/reward/bag/container/tooltip/quest/interact/note/sim/battle/wheel/settings.bind.cancelled）。
+- 代码：63 处硬编码全部换 Loc（3 个 coder agent 并行：A 组零散 UI、B 组模拟经营、C 组战斗 HUD），含两处 agent 回报的漏项（TryPurchaseSlot 三处 reason、WeaponWheelUI "Empty"）已补词条并修复。
+- 顺带修复：E 键交互提示（开箱/阅读/交谈 4 处）现在跟随按键改绑（{0} 传当前交互键显示名）。
+- 踩坑：Write append 模式不会补前导换行，文件末尾无换行时追加内容会胶合最后一行（本次 localization.csv 末行被胶合成 13 列，Luban 报 meta 错误），修复后导表通过。
+- 验证：导表成功、dotnet build 0 error；MCP 实测 zh 下 7 个代表词条取值/参数化/换行全部正确。
+- 仍遗留：zh_tw/ja/ko 三列全空（只维护 en+zh_cn）；配置数据层（quest/item/对话 cfg.Name/Desc）单语言是独立问题；GM 面板中文硬编码属开发工具范围外。

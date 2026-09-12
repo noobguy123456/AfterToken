@@ -176,7 +176,7 @@ namespace GameLogic
         {
             if (_goldText != null)
             {
-                _goldText.text = $"Gold: {gold}";
+                _goldText.text = Loc.Get("ui.sim.gold", gold);
             }
         }
 
@@ -184,7 +184,7 @@ namespace GameLogic
         {
             if (_levelText != null)
             {
-                _levelText.text = $"Lv: {PlayerProfileSystem.Level} ({exp}/{maxExp})";
+                _levelText.text = Loc.Get("ui.sim.level", PlayerProfileSystem.Level, exp, maxExp);
             }
         }
 
@@ -225,7 +225,7 @@ namespace GameLogic
             var simSystem = GetSimulationSystem();
             if (simSystem?.SimTime != null && _timeText != null)
             {
-                _timeText.text = $"Time: {simSystem.SimTime.CurrentTime:F0}s";
+                _timeText.text = Loc.Get("ui.sim.time", simSystem.SimTime.CurrentTime.ToString("F0"));
             }
         }
 
@@ -284,7 +284,7 @@ namespace GameLogic
             int maxCount = simSystem?.Building != null ? simSystem.Building.GetMaxCount(cfg.Id) : cfg.MaxCount;
 
             var text = textGo.AddComponent<TextMeshProUGUI>();
-            text.text = $"{cfg.Name} (Lv{cfg.MaxLevel})  [{count}/{maxCount}]\nCost: {cfg.BuildCostGold}G{BuildUnlockHint(cfg)}";
+            text.text = $"{cfg.Name} (Lv{cfg.MaxLevel})  [{count}/{maxCount}]\n" + Loc.Get("ui.sim.cost", cfg.BuildCostGold) + BuildUnlockHint(cfg);
             text.fontSize = 14;
             text.alignment = TextAlignmentOptions.Left;
             text.color = Color.white;
@@ -305,11 +305,11 @@ namespace GameLogic
             var sb = new System.Text.StringBuilder();
             if (cfg.MaxCountUpgradeLevel > 0)
             {
-                sb.Append("+1 slot at building Lv").Append(cfg.MaxCountUpgradeLevel).Append("   ");
+                sb.Append(Loc.Get("ui.sim.unlock_slot_building", cfg.MaxCountUpgradeLevel)).Append("   ");
             }
             if (cfg.MaxCountPerPlayerLevel > 0)
             {
-                sb.Append("+").Append(cfg.MaxCountPerPlayerLevel).Append(" slot per player Lv");
+                sb.Append(Loc.Get("ui.sim.unlock_slot_player", cfg.MaxCountPerPlayerLevel));
             }
             return sb.Length > 0 ? "\n" + sb.ToString().TrimEnd() : string.Empty;
         }
@@ -356,7 +356,7 @@ namespace GameLogic
             textRect.offsetMax = Vector2.zero;
 
             var text = textGo.AddComponent<TextMeshProUGUI>();
-            text.text = $"Unlock\n{price}G";
+            text.text = Loc.Get("ui.sim.unlock_button", price);
             text.fontSize = 12;
             text.alignment = TextAlignmentOptions.Center;
             text.color = Color.white;
@@ -386,9 +386,9 @@ namespace GameLogic
             var text = textGo.AddComponent<TextMeshProUGUI>();
             string stateText = building.State switch
             {
-                BuildingState.Building => $"Building... {building.Progress * 100:F0}%",
-                BuildingState.Upgrading => $"Upgrading... {building.Progress * 100:F0}%",
-                _ => "Idle",
+                BuildingState.Building => Loc.Get("ui.sim.state.building", (building.Progress * 100).ToString("F0")),
+                BuildingState.Upgrading => Loc.Get("ui.sim.state.upgrading", (building.Progress * 100).ToString("F0")),
+                _ => Loc.Get("ui.sim.state.idle"),
             };
             text.text = $"{cfg.Name} Lv{building.Level}\n{stateText}";
             text.fontSize = 14;
@@ -461,7 +461,7 @@ namespace GameLogic
             {
                 itemsText += $"{ItemConfigMgr.Instance.GetName(item.Id)}x{item.Num} ";
             }
-            text.text = $"Order #{order.InstanceId}\nNeed: {itemsText}\nReward: {cfg.RewardGold}G";
+            text.text = Loc.Get("ui.sim.order", order.InstanceId, itemsText, cfg.RewardGold);
             text.fontSize = 14;
             text.alignment = TextAlignmentOptions.Left;
             text.color = Color.white;
