@@ -158,6 +158,13 @@ namespace GameLogic
             var weaponConfig = WeaponConfigMgr.Instance?.Get(weaponConfigId);
             if (weaponConfig == null) return;
 
+            // 技能树伤害加成只对玩家开火生效
+            var player = PlayerSystem.Instance?.GetPlayerEntity();
+            bool isPlayerFire = player != null && ownerId == ((IWeaponOwner)player).OwnerId;
+            int damage = isPlayerFire
+                ? Mathf.RoundToInt(weaponConfig.damage * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.DamagePct)))
+                : Mathf.RoundToInt(weaponConfig.damage);
+
             var data = MemoryPool.Acquire<ProjectileData>();
             data.Id = _nextProjectileId++;
             data.ConfigId = weaponConfigId;
@@ -166,7 +173,7 @@ namespace GameLogic
             data.Direction = direction.normalized;
             data.Speed = weaponConfig.projectileSpeed;
             data.LifeTime = weaponConfig.projectileLifeTime;
-            data.Damage = weaponConfig.damage;
+            data.Damage = damage;
             data.PenetrateCount = 0;
             data.BounceCount = 0;
             data.LayerMask = LayerMask.GetMask("Enemy", "Obstacle");

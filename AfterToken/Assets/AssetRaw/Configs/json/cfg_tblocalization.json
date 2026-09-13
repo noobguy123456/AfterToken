@@ -1478,5 +1478,285 @@
     "zh_tw": "",
     "ja": "",
     "ko": ""
+  },
+  {
+    "key": "ui.skill.title",
+    "en": "Skill Tree",
+    "zh_cn": "技能树",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.branch.combat",
+    "en": "Combat",
+    "zh_cn": "战斗",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.branch.survival",
+    "en": "Survival",
+    "zh_cn": "生存",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.branch.economy",
+    "en": "Economy",
+    "zh_cn": "经营",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.upgrade",
+    "en": "Upgrade",
+    "zh_cn": "升级",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.level",
+    "en": "Lv {0}/{1}",
+    "zh_cn": "等级 {0}/{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.effect_per_level",
+    "en": "Per level: {0}",
+    "zh_cn": "每级效果：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.effect_current",
+    "en": "Current: {0}",
+    "zh_cn": "当前效果：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.cost_title",
+    "en": "Cost",
+    "zh_cn": "消耗",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.err.prereq",
+    "en": "Requires {0} at max level",
+    "zh_cn": "需要先将「{0}」升至满级",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.interact.skill_console",
+    "en": "Press {0} to Upgrade Skills",
+    "zh_cn": "按 {0} 升级技能",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1001.name",
+    "en": "Damage Training I",
+    "zh_cn": "伤害强化 I",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1001.desc",
+    "en": "+5% weapon damage per level.",
+    "zh_cn": "每级武器伤害 +5%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1002.name",
+    "en": "Fast Hands",
+    "zh_cn": "快速换弹",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1002.desc",
+    "en": "-6% reload time per level.",
+    "zh_cn": "每级换弹时间 -6%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1003.name",
+    "en": "Extended Mag",
+    "zh_cn": "扩容弹匣",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1003.desc",
+    "en": "+2 clip size per level.",
+    "zh_cn": "每级弹匣容量 +2。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1004.name",
+    "en": "Damage Training II",
+    "zh_cn": "伤害强化 II",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.1004.desc",
+    "en": "+8% weapon damage per level.",
+    "zh_cn": "每级武器伤害 +8%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2001.name",
+    "en": "Vitality",
+    "zh_cn": "体能强化",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2001.desc",
+    "en": "+10 max HP per level.",
+    "zh_cn": "每级生命上限 +10。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2002.name",
+    "en": "Endurance",
+    "zh_cn": "耐力强化",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2002.desc",
+    "en": "+15 max stamina per level.",
+    "zh_cn": "每级耐力上限 +15。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2003.name",
+    "en": "Swift Boots",
+    "zh_cn": "疾行",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2003.desc",
+    "en": "+3% move speed per level.",
+    "zh_cn": "每级移动速度 +3%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2004.name",
+    "en": "Light Dodge",
+    "zh_cn": "轻盈闪避",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.2004.desc",
+    "en": "-8% dodge stamina cost per level.",
+    "zh_cn": "每级闪避耐力消耗 -8%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3001.name",
+    "en": "Business Mind I",
+    "zh_cn": "商业头脑 I",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3001.desc",
+    "en": "+5% gold gained per level.",
+    "zh_cn": "每级金币获取 +5%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3002.name",
+    "en": "Quick Learner",
+    "zh_cn": "快速学习",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3002.desc",
+    "en": "+5% EXP gained per level.",
+    "zh_cn": "每级经验获取 +5%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3003.name",
+    "en": "Production Optimizer",
+    "zh_cn": "生产优化",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3003.desc",
+    "en": "+4% production speed per level.",
+    "zh_cn": "每级生产速度 +4%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3004.name",
+    "en": "Business Mind II",
+    "zh_cn": "商业头脑 II",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.skill.3004.desc",
+    "en": "+8% gold gained per level.",
+    "zh_cn": "每级金币获取 +8%。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
   }
 ]

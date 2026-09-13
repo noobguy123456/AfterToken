@@ -213,7 +213,7 @@ namespace GameLogic
             GameEvent.Get<IWeaponEvent>().OnWeaponSwitched(_owner?.OwnerId ?? 0, slot);
             GameEvent.Get<IPlayerEvent>().OnAmmoChanged(
                 CurrentWeapon?.CurrentAmmo ?? 0,
-                CurrentWeapon?.Config.clipSize ?? 0);
+                CurrentWeapon?.EffectiveClipSize ?? 0);
         }
 
         private bool CanSwitch()

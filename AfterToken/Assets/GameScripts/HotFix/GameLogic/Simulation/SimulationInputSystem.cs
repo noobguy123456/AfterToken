@@ -93,6 +93,7 @@ namespace GameLogic
             // 仅当画面中没有任何菜单 UI（HUD/血条/物品栏等常驻 UI 不算）时，ESC 才弹出设置面板。
             if (TryCloseUI<CompanionChatUI>()) return;
             if (TryCloseUI<BuildingInfoUI>()) return;
+            if (TryCloseUI<SkillTreeUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<LobbyUI>()) return;
             if (TryCloseUI<BuildingSelectionUI>()) return;

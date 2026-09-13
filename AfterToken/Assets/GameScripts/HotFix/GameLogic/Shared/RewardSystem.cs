@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using TEngine;
+using UnityEngine;
 
 namespace GameLogic
 {
@@ -108,13 +109,17 @@ namespace GameLogic
 
             if (reward.Gold > 0)
             {
-                CurrencySystem.AddGold(reward.Gold);
-                result.Gold = reward.Gold;
+                // 技能树金币加成（经营分支）
+                int gold = Mathf.RoundToInt(reward.Gold * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.GoldGainPct)));
+                CurrencySystem.AddGold(gold);
+                result.Gold = gold;
             }
             if (reward.Exp > 0)
             {
-                PlayerProfileSystem.AddExp(reward.Exp);
-                result.Exp = reward.Exp;
+                // 技能树经验加成（经营分支）
+                int exp = Mathf.RoundToInt(reward.Exp * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.ExpGainPct)));
+                PlayerProfileSystem.AddExp(exp);
+                result.Exp = exp;
             }
             if (reward.Items != null)
             {

@@ -30,5 +30,29 @@
     "dropRate": 800,
     "minCount": 1,
     "maxCount": 1
+  },
+  {
+    "id": 5,
+    "enemyId": 9001,
+    "itemId": 11001,
+    "dropRate": 2000,
+    "minCount": 1,
+    "maxCount": 1
+  },
+  {
+    "id": 6,
+    "enemyId": 9002,
+    "itemId": 11002,
+    "dropRate": 1200,
+    "minCount": 1,
+    "maxCount": 1
+  },
+  {
+    "id": 7,
+    "enemyId": 9002,
+    "itemId": 11003,
+    "dropRate": 600,
+    "minCount": 1,
+    "maxCount": 1
   }
 ]

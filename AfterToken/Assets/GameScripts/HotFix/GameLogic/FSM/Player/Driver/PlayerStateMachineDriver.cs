@@ -73,7 +73,7 @@ namespace GameLogic
             context.WantsToDodge = context.DodgePressed;
             context.WantsToReload = context.ReloadPressed &&
                                     context.CurrentWeapon != null &&
-                                    context.CurrentWeapon.CurrentAmmo < context.CurrentWeapon.Config.clipSize &&
+                                    context.CurrentWeapon.CurrentAmmo < context.CurrentWeapon.EffectiveClipSize &&
                                     !context.CurrentWeapon.IsReloading;
             context.WantsToFire = context.FirePressed;
 

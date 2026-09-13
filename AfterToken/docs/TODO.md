@@ -102,7 +102,8 @@
 | 工人系统 | ⏳ | P2 | 建筑系统 | `docs/modules/simulation/worker-system/` | 工人分配、属性成长；MVP 后实现 |
 | 农场系统 | ⏳ | P2 | 经营时间 | `docs/modules/simulation/farm-system/` | 种植、生长、收获；MVP 后实现 |
 | 订单系统 | ✅ | - | - | `docs/modules/simulation/order-system/` | 订单生成、交付、奖励已实现 |
-| NPC 系统 | 🟡 | P1 | - | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity` + `NpcSystem`（E 交谈驱动对话系统）+ 最小档移动（巡逻往返/对话站住转身）已落地；经营场景 2 个测试 NPC 实测通过 |
+| NPC 系统 | 🟡 | P1 | - | `docs/modules/simulation/npc-system/` | `TbNpc` + `NpcEntity` + `NpcSystem`（E 交谈驱动对话系统）+ 最小档移动（巡逻往返/对话站住转身）已落地；经营场景 2 个测试 NPC 实测通过；新增 consoleType 分流（1=技能操作台直开功能界面） |
+| 技能树系统 | 🟡 | P1 | 生产系统（材料链） | `docs/modules/simulation/skill-tree-system/` | 三分支 12 节点 + 材料/金币消耗 + 8 处效果挂点（伤害/生命/耐力/移速/闪避/换弹/弹匣/经济）+ SkillTreeUI（操作台 NPC 处 E 打开）全链路 MCP 实测通过；待用户验收、节点图标美术 |
 
 ### 叙事系统
 
@@ -706,3 +707,13 @@ Luban 配置表数据补充
 - 踩坑：Write append 模式不会补前导换行，文件末尾无换行时追加内容会胶合最后一行（本次 localization.csv 末行被胶合成 13 列，Luban 报 meta 错误），修复后导表通过。
 - 验证：导表成功、dotnet build 0 error；MCP 实测 zh 下 7 个代表词条取值/参数化/换行全部正确。
 - 仍遗留：zh_tw/ja/ko 三列全空（只维护 en+zh_cn）；配置数据层（quest/item/对话 cfg.Name/Desc）单语言是独立问题；GM 面板中文硬编码属开发工具范围外。
+
+## 2026-09-13 技能树系统落地（搜打撤→经营→成长闭环收口）
+- 资源循环：局内掉落/搜刮 → 仓库 → 工坊加工材料链（11001 强化零件/11002 战术核心/11003 基因样本，配方 10-12，敌人掉落 Drop 5-7）→ 基地「技能操作台」NPC（npc id=3，consoleType=1）E 交互升级。**只能在经营场景升级**。
+- 配置：`skill.xlsx`（TbSkill）12 节点三分支（战斗/生存/经营各 4），单前置链（前置需满级），升级消耗=材料+金币无技能点；`__enums__.xlsx` 加 ESkillEffect（11 项）；本地化 `ui.skill.*` + `ui.interact.skill_console` 中英词条。改表前 `Configs/GameConfig/Datas/` 已备份（.pre_skill.bak）。
+- 代码：`SkillSystem`（静态，懒加载/变动即存，GetLevel/GetEffect 聚合/CanUpgrade 四级校验 out 本地化原因/TryUpgrade 双校验后扣费）+ `SkillConfigMgr` + `ISkillEvent` + `SaveData.skill` 段（SwitchSlot 失效链已挂）。
+- 效果挂点 8 处：Ballistic/Projectile 伤害（仅玩家开火）、LoadPlayerConfig 生命/耐力上限、每帧移速、GetDodgeStaminaCost 闪避消耗（判定与扣费同窄口）、WeaponInstance 新增 EffectiveClipSize/EffectiveReloadTime 计算属性并切换全部消费方（含 BattleMainUI 弹药显示、换弹入口判定）、RewardSystem.Grant 金币/经验、ProductionSystem 生产速度。GM/Narrative 直发不吃经济加成（有意）。
+- UI：`SkillTreeUI`（prefab `AssetRaw/UI/SkillTreeUI/`，三分支页签 + Row/Col 节点网格 + 前置连线 + 右侧详情 + 失败红字 3s），ESC 链接入 SimulationInputSystem；`NpcSystem` 加 consoleType 分流与操作台专用交互提示；场景摆放 NpcSkillConsole @(-4,0,-4)。
+- 坑位：①`GameConfig.cfg` 自带 `Color` 类，引用 ESkillEffect 的文件不能裸 using（CS0104），全限定或别名；②npc.xlsx 加列后 `__beans__.xlsx` 的 cfg.Npc bean 必须手动补字段行，否则 Luban 静默丢列（本次 consoleType 因此漏生成一轮）。
+- 验证：导表成功、GameProto/GameLogic build 0 错误；MCP 全链路实测（开 UI/升级扣费/前置锁定文案/存档落盘/101 关卡 MaxHp 100→110 生效），测试技能等级已还原。截图 Assets/Screenshots/skilltree_*.png。
+- 待办：节点图标（Icon 字段预留）、连线美术、用户实机验收。

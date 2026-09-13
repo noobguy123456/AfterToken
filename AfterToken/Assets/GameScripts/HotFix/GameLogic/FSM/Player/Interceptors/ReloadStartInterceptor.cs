@@ -20,7 +20,7 @@ namespace GameLogic
 
             var weapon = context.CurrentWeapon;
             if (weapon == null) return false;
-            if (weapon.CurrentAmmo >= weapon.Config.clipSize) return false;
+            if (weapon.CurrentAmmo >= weapon.EffectiveClipSize) return false;
             if (weapon.IsReloading) return false;
 
             request = new StateTransitionRequest(typeof(PlayerReloadState), Priority);

@@ -103,6 +103,7 @@ docs/modules/
 | `farm-system` | [README](./simulation/farm-system/README.md) | [progress](./simulation/farm-system/progress.md) |
 | `order-system` | [README](./simulation/order-system/README.md) | [progress](./simulation/order-system/progress.md) |
 | `production-system` | [README](./simulation/production-system/README.md) | [progress](./simulation/production-system/progress.md) |
+| `skill-tree-system` | [README](./simulation/skill-tree-system/README.md) | [progress](./simulation/skill-tree-system/progress.md) |
 | `sim-time-system` | [README](./simulation/sim-time-system/README.md) | [progress](./simulation/sim-time-system/progress.md) |
 | `simulation-system` | [README](./simulation/simulation-system/README.md) | [progress](./simulation/simulation-system/progress.md) |
 | `worker-system` | [README](./simulation/worker-system/README.md) | [progress](./simulation/worker-system/progress.md) |

@@ -134,6 +134,7 @@ namespace GameLogic
             UnlockSystem.InvalidateCache();
             Warehouse.InvalidateCache();
             QuestSystem.InvalidateCache();
+            SkillSystem.InvalidateCache();
             SensitivitySetting.InvalidateCache();
             VolumeSetting.InvalidateCache();
             QualitySetting.InvalidateCache();
@@ -280,6 +281,24 @@ namespace GameLogic
         public UnlockSaveData unlock = new UnlockSaveData();
         public DialogueSaveData dialogue = new DialogueSaveData();
         public QuestSaveData quest = new QuestSaveData();
+        public SkillSaveData skill = new SkillSaveData();
+    }
+
+    /// <summary>
+    /// 技能树存档段：只存已学技能（skillId → level），未学的不占条目。
+    /// </summary>
+    [Serializable]
+    public class SkillSaveData
+    {
+        public bool initialized;
+        public List<SkillEntry> skills = new List<SkillEntry>();
+    }
+
+    [Serializable]
+    public class SkillEntry
+    {
+        public int skillId;
+        public int level;
     }
 
     /// <summary>

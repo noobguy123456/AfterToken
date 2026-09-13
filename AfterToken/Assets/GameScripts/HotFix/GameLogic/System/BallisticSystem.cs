@@ -291,11 +291,14 @@ namespace GameLogic
                 SpawnHitSpark(hit.point, hitTarget);
 
                 // 立即伤害（命中反馈统一由 BattleSystem 触发，避免重复）
+                // 技能树伤害加成只对玩家开火生效（队友/敌人不吃玩家技能加成）
                 var damageInfo = MemoryPool.Acquire<DamageInfo>();
                 damageInfo.AttackerId = ownerId;
                 damageInfo.WeaponConfigId = config.id;
                 damageInfo.TargetGameObject = hitTarget;
-                damageInfo.Damage = config.damage;
+                damageInfo.Damage = isPlayerFire
+                    ? Mathf.RoundToInt(config.damage * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.DamagePct)))
+                    : config.damage;
                 damageInfo.HitDirection = (hitPoint - origin).normalized;
                 damageInfo.HitPoint = hitPoint;
                 GameEvent.Get<IBattleEvent>().OnEntityDamaged(damageInfo);

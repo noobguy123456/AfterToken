@@ -1,0 +1,242 @@
+[
+  {
+    "id": 1001,
+    "nameKey": "ui.skill.1001.name",
+    "descKey": "ui.skill.1001.desc",
+    "branch": 1,
+    "maxLevel": 5,
+    "effectType": 1,
+    "effectValue": 0.05,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 0,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 1002,
+    "nameKey": "ui.skill.1002.name",
+    "descKey": "ui.skill.1002.desc",
+    "branch": 1,
+    "maxLevel": 5,
+    "effectType": 5,
+    "effectValue": 0.06,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 1,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 1003,
+    "nameKey": "ui.skill.1003.name",
+    "descKey": "ui.skill.1003.desc",
+    "branch": 1,
+    "maxLevel": 3,
+    "effectType": 6,
+    "effectValue": 2,
+    "costItems": [
+      {
+        "id": 11002,
+        "num": 1
+      }
+    ],
+    "costGold": 200,
+    "prereqSkillId": 0,
+    "row": 2,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 1004,
+    "nameKey": "ui.skill.1004.name",
+    "descKey": "ui.skill.1004.desc",
+    "branch": 1,
+    "maxLevel": 3,
+    "effectType": 1,
+    "effectValue": 0.08,
+    "costItems": [
+      {
+        "id": 11002,
+        "num": 2
+      }
+    ],
+    "costGold": 400,
+    "prereqSkillId": 1001,
+    "row": 0,
+    "col": 1,
+    "icon": ""
+  },
+  {
+    "id": 2001,
+    "nameKey": "ui.skill.2001.name",
+    "descKey": "ui.skill.2001.desc",
+    "branch": 2,
+    "maxLevel": 5,
+    "effectType": 2,
+    "effectValue": 10,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 0,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 2002,
+    "nameKey": "ui.skill.2002.name",
+    "descKey": "ui.skill.2002.desc",
+    "branch": 2,
+    "maxLevel": 3,
+    "effectType": 3,
+    "effectValue": 15,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 1,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 2003,
+    "nameKey": "ui.skill.2003.name",
+    "descKey": "ui.skill.2003.desc",
+    "branch": 2,
+    "maxLevel": 5,
+    "effectType": 4,
+    "effectValue": 0.03,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 3
+      }
+    ],
+    "costGold": 150,
+    "prereqSkillId": 0,
+    "row": 2,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 2004,
+    "nameKey": "ui.skill.2004.name",
+    "descKey": "ui.skill.2004.desc",
+    "branch": 2,
+    "maxLevel": 3,
+    "effectType": 10,
+    "effectValue": 0.08,
+    "costItems": [
+      {
+        "id": 11002,
+        "num": 1
+      }
+    ],
+    "costGold": 200,
+    "prereqSkillId": 0,
+    "row": 3,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 3001,
+    "nameKey": "ui.skill.3001.name",
+    "descKey": "ui.skill.3001.desc",
+    "branch": 3,
+    "maxLevel": 5,
+    "effectType": 7,
+    "effectValue": 0.05,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 0,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 3002,
+    "nameKey": "ui.skill.3002.name",
+    "descKey": "ui.skill.3002.desc",
+    "branch": 3,
+    "maxLevel": 5,
+    "effectType": 8,
+    "effectValue": 0.05,
+    "costItems": [
+      {
+        "id": 11001,
+        "num": 2
+      }
+    ],
+    "costGold": 100,
+    "prereqSkillId": 0,
+    "row": 1,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 3003,
+    "nameKey": "ui.skill.3003.name",
+    "descKey": "ui.skill.3003.desc",
+    "branch": 3,
+    "maxLevel": 5,
+    "effectType": 9,
+    "effectValue": 0.04,
+    "costItems": [
+      {
+        "id": 11002,
+        "num": 1
+      }
+    ],
+    "costGold": 200,
+    "prereqSkillId": 0,
+    "row": 2,
+    "col": 0,
+    "icon": ""
+  },
+  {
+    "id": 3004,
+    "nameKey": "ui.skill.3004.name",
+    "descKey": "ui.skill.3004.desc",
+    "branch": 3,
+    "maxLevel": 3,
+    "effectType": 7,
+    "effectValue": 0.08,
+    "costItems": [
+      {
+        "id": 11002,
+        "num": 2
+      }
+    ],
+    "costGold": 400,
+    "prereqSkillId": 3001,
+    "row": 0,
+    "col": 1,
+    "icon": ""
+  }
+]

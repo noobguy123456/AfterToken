@@ -48,7 +48,7 @@ namespace GameLogic
         public void OnPlayerEnteredNpc(NpcEntity npc)
         {
             _currentNpc = npc;
-            ShowPrompt(Loc.Get("ui.interact.talk", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
+            ShowPrompt(GetInteractPrompt(npc.NpcId));
         }
 
         /// <summary>
@@ -84,7 +84,17 @@ namespace GameLogic
                 return;
             }
 
-            Log.Info($"[NpcSystem] 与 NPC 交谈: {cfg.Name} (id={cfg.Id})");
+            Log.Info($"[NpcSystem] 与 NPC 交互: {cfg.Name} (id={cfg.Id})");
+
+            // 操作台类 NPC（consoleType=1 技能树）：直接开功能界面，不走对话
+            if (cfg.ConsoleType == 1)
+            {
+                HidePrompt();
+                GameEvent.Get<INpcEvent>()?.OnNpcTalked(cfg.Id);
+                GameModule.UI.ShowUIAsync<SkillTreeUI>();
+                return;
+            }
+
             GameEvent.Get<INpcEvent>()?.OnNpcTalked(cfg.Id);
 
             // 配了对话则驱动对话窗口；对话期间收起交互提示
@@ -106,8 +116,22 @@ namespace GameLogic
         {
             if (_currentNpc != null)
             {
-                ShowPrompt(Loc.Get("ui.interact.talk", KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact))));
+                ShowPrompt(GetInteractPrompt(_currentNpc.NpcId));
             }
+        }
+
+        /// <summary>
+        /// 按 NPC 类型取交互提示文案：操作台（consoleType=1）用专用词条，其余用交谈词条。
+        /// </summary>
+        private static string GetInteractPrompt(int npcId)
+        {
+            string keyName = KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact));
+            var cfg = NpcConfigMgr.Instance.Get(npcId);
+            if (cfg != null && cfg.ConsoleType == 1)
+            {
+                return Loc.Get("ui.interact.skill_console", keyName);
+            }
+            return Loc.Get("ui.interact.talk", keyName);
         }
 
         private void ShowPrompt(string text)

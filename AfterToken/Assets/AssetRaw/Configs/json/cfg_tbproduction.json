@@ -98,5 +98,64 @@
     "outputCount": 1,
     "productionTime": 8,
     "icon": "icon_item_potion"
+  },
+  {
+    "id": 10,
+    "name": "Refine Enhancement Part",
+    "desc": "Refine parts from wood and scrap.",
+    "buildingId": 1,
+    "levelRequired": 1,
+    "inputItems": [
+      {
+        "id": 10004,
+        "num": 3
+      }
+    ],
+    "outputItemId": 11001,
+    "outputCount": 1,
+    "productionTime": 5,
+    "icon": ""
+  },
+  {
+    "id": 11,
+    "name": "Assemble Tactical Core",
+    "desc": "Assemble a tactical core.",
+    "buildingId": 1,
+    "levelRequired": 2,
+    "inputItems": [
+      {
+        "id": 11001,
+        "num": 2
+      },
+      {
+        "id": 10000,
+        "num": 1
+      }
+    ],
+    "outputItemId": 11002,
+    "outputCount": 1,
+    "productionTime": 10,
+    "icon": ""
+  },
+  {
+    "id": 12,
+    "name": "Culture Gene Sample",
+    "desc": "Culture a rare gene sample.",
+    "buildingId": 1,
+    "levelRequired": 3,
+    "inputItems": [
+      {
+        "id": 11002,
+        "num": 1
+      },
+      {
+        "id": 10006,
+        "num": 2
+      }
+    ],
+    "outputItemId": 11003,
+    "outputCount": 1,
+    "productionTime": 15,
+    "icon": ""
   }
 ]

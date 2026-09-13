@@ -334,7 +334,7 @@ namespace GameLogic
             var weapon = WeaponSystem.Instance?.CurrentWeapon;
             if (weapon != null)
             {
-                if (_textAmmo != null) _textAmmo.text = Loc.Get("ui.battle.ammo", weapon.CurrentAmmo, weapon.Config.clipSize);
+                if (_textAmmo != null) _textAmmo.text = Loc.Get("ui.battle.ammo", weapon.CurrentAmmo, weapon.EffectiveClipSize);
                 if (_textWeapon != null) _textWeapon.text = Loc.Get("ui.battle.weapon", weapon.Config.name);
             }
             else

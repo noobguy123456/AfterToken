@@ -5,7 +5,8 @@
     "role": "Supply Officer",
     "moveSpeed": 1.2,
     "patrolPath": "-3,3|4,3",
-    "dialogueId": 900
+    "dialogueId": 900,
+    "consoleType": 0
   },
   {
     "id": 2,
@@ -13,6 +14,16 @@
     "role": "Field Medic",
     "moveSpeed": 0,
     "patrolPath": "",
-    "dialogueId": 901
+    "dialogueId": 901,
+    "consoleType": 0
+  },
+  {
+    "id": 3,
+    "name": "Skill Console",
+    "role": "Tech Station",
+    "moveSpeed": 0,
+    "patrolPath": "",
+    "dialogueId": 0,
+    "consoleType": 1
   }
 ]

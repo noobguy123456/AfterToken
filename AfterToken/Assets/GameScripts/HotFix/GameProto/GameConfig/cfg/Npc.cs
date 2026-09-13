@@ -29,6 +29,7 @@ public sealed partial class Npc : Luban.BeanBase
         MoveSpeed = (float)_obj.GetValue("moveSpeed");
         PatrolPath = (string)_obj.GetValue("patrolPath");
         DialogueId = (int)_obj.GetValue("dialogueId");
+        ConsoleType = (int)_obj.GetValue("consoleType");
     }
 
     public static Npc DeserializeNpc(JToken _buf)
@@ -60,6 +61,10 @@ public sealed partial class Npc : Luban.BeanBase
     /// 对话ID(预留,0=无)
     /// </summary>
     public readonly int DialogueId;
+    /// <summary>
+    /// 操作台类型(0=无 1=技能树)
+    /// </summary>
+    public readonly int ConsoleType;
 
 
     public const int __ID__ = 685296183;
@@ -78,6 +83,7 @@ public sealed partial class Npc : Luban.BeanBase
         + "moveSpeed:" + MoveSpeed + ","
         + "patrolPath:" + PatrolPath + ","
         + "dialogueId:" + DialogueId + ","
+        + "consoleType:" + ConsoleType + ","
         + "}";
     }
 }

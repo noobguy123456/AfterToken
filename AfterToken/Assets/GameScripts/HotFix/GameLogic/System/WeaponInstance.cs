@@ -1,3 +1,4 @@
+using GameConfig.cfg;
 using TEngine;
 using UnityEngine;
 
@@ -22,12 +23,27 @@ namespace GameLogic
         /// </summary>
         public float ScopeFov => Config != null ? Config.scopeFov : 0f;
 
+        /// <summary>
+        /// 技能树加成后的弹匣容量（武器系统为玩家专属，直接读玩家技能加成）。
+        /// 所有弹药上限判断/换弹填充/UI 显示统一走该值，不再直接用 Config.clipSize。
+        /// </summary>
+        public int EffectiveClipSize => Config != null
+            ? Config.clipSize + Mathf.RoundToInt(SkillSystem.GetEffect(ESkillEffect.ClipSizeAdd))
+            : 0;
+
+        /// <summary>
+        /// 技能树加成后的换弹时间（秒）。
+        /// </summary>
+        public float EffectiveReloadTime => Config != null
+            ? Config.reloadTime * (1f - SkillSystem.GetEffect(ESkillEffect.ReloadTimePct))
+            : 0f;
+
         private int _reloadTimerId;
 
         public WeaponInstance(WeaponConfig config)
         {
             Config = config;
-            CurrentAmmo = config.clipSize;
+            CurrentAmmo = EffectiveClipSize;
             CurrentSpreadIncrement = 0;
         }
 
@@ -51,7 +67,7 @@ namespace GameLogic
         public void SetAmmo(int ammo)
         {
             if (Config == null) return;
-            CurrentAmmo = Mathf.Clamp(ammo, 0, Config.clipSize);
+            CurrentAmmo = Mathf.Clamp(ammo, 0, EffectiveClipSize);
         }
 
         public void Tick(float deltaTime, bool isMoving, bool isAiming)
@@ -81,7 +97,7 @@ namespace GameLogic
             CurrentSpreadIncrement += Config.fireSpreadIncrement;
 
             GameEvent.Get<IWeaponEvent>().OnFire(origin, direction, Config.id, ownerId);
-            GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
+            GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, EffectiveClipSize);
 
             // 弹匣打空后自动换弹
             if (CurrentAmmo <= 0)
@@ -95,21 +111,21 @@ namespace GameLogic
 
         public void Reload(int ownerId)
         {
-            if (IsReloading || CurrentAmmo >= Config.clipSize) return;
+            if (IsReloading || CurrentAmmo >= EffectiveClipSize) return;
 
             IsReloading = true;
             GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, true);
 
             _reloadTimerId = GameModule.Timer.AddTimer((args) =>
             {
-                CurrentAmmo = Config.clipSize;
+                CurrentAmmo = EffectiveClipSize;
                 IsReloading = false;
                 _reloadTimerId = 0;
-                GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
+                GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, EffectiveClipSize);
                 GameEvent.Get<IWeaponEvent>().OnReloadStateChanged(ownerId, false);
 
                 // TODO: 播放换弹完成音效
-            }, Config.reloadTime);
+            }, EffectiveReloadTime);
 
             // TODO: 播放换弹音效
         }
@@ -147,8 +163,8 @@ namespace GameLogic
         /// </summary>
         public void GM_SetAmmo(int ammo)
         {
-            CurrentAmmo = Mathf.Clamp(ammo, 0, Config.clipSize);
-            GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, Config.clipSize);
+            CurrentAmmo = Mathf.Clamp(ammo, 0, EffectiveClipSize);
+            GameEvent.Get<IPlayerEvent>().OnAmmoChanged(CurrentAmmo, EffectiveClipSize);
         }
 #endif
     }

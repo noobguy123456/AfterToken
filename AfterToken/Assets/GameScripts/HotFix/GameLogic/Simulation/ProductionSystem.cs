@@ -115,7 +115,8 @@ namespace GameLogic
                     continue;
                 }
 
-                production.Progress += deltaTime / cfg.ProductionTime;
+                // 技能树生产速度加成（经营分支）：按系数加速进度推进
+                production.Progress += deltaTime * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.ProductionSpeedPct)) / cfg.ProductionTime;
                 if (production.Progress >= 1f)
                 {
                     production.Progress = 1f;

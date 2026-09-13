@@ -138,6 +138,10 @@ public partial class Tables
     /// </summary>
     public cfg.TbCompanionBark TbCompanionBark {get; }
     public cfg.TbAudio TbAudio {get; }
+    /// <summary>
+    /// 技能树表
+    /// </summary>
+    public cfg.TbSkill TbSkill {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -174,6 +178,7 @@ public partial class Tables
         TbCompanion = new cfg.TbCompanion(loader("cfg_tbcompanion"));
         TbCompanionBark = new cfg.TbCompanionBark(loader("cfg_tbcompanionbark"));
         TbAudio = new cfg.TbAudio(loader("cfg_tbaudio"));
+        TbSkill = new cfg.TbSkill(loader("cfg_tbskill"));
         ResolveRef();
     }
     
@@ -211,6 +216,7 @@ public partial class Tables
         TbCompanion.ResolveRef(this);
         TbCompanionBark.ResolveRef(this);
         TbAudio.ResolveRef(this);
+        TbSkill.ResolveRef(this);
     }
 }
 

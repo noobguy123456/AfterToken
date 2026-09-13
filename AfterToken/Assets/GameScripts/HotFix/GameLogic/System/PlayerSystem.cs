@@ -210,14 +210,14 @@ namespace GameLogic
                 }
             }
 
-            // 同步能否闪避到黑板
-            _playerEntity.Context.CanDodge = _currentStamina >= _dodgeStaminaCost && _playerEntity.Context.CanMove;
+            // 同步能否闪避到黑板（消耗含技能树减免）
+            _playerEntity.Context.CanDodge = _currentStamina >= GetDodgeStaminaCost() && _playerEntity.Context.CanMove;
 
-            // 更新移动速度
+            // 更新移动速度（技能树移速加成实时生效）
             if (!_playerEntity.IsDead && _playerFsm?.CurrentState is not PlayerDodgeState)
             {
                 float multiplier = WeaponSystem.Instance?.GetCurrentMoveSpeedMultiplier() ?? 1f;
-                _playerEntity.MoveSpeed = _playerEntity.BaseMoveSpeed * multiplier;
+                _playerEntity.MoveSpeed = _playerEntity.BaseMoveSpeed * multiplier * (1f + SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.MoveSpeedPct));
             }
         }
 
@@ -262,9 +262,13 @@ namespace GameLogic
         }
 
         /// <summary>
-        /// 获取闪避所需体力。
+        /// 获取闪避所需体力（含技能树闪避消耗减免）。
         /// </summary>
-        public int GetDodgeStaminaCost() => _dodgeStaminaCost;
+        public int GetDodgeStaminaCost()
+        {
+            float reduction = SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.DodgeCostPct);
+            return Mathf.Max(1, Mathf.RoundToInt(_dodgeStaminaCost * (1f - reduction)));
+        }
 
         /// <summary>
         /// 加载玩家配置。
@@ -300,6 +304,9 @@ namespace GameLogic
                 _staminaRecoveryRate = DEFAULT_STAMINA_RECOVERY_RATE;
             }
 
+            // 技能树加成（加算类）：生命/耐力上限。升级发生在经营场景，进入战斗时在此一次性生效。
+            _maxHp += Mathf.RoundToInt(SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.MaxHpAdd));
+            _maxStamina += Mathf.RoundToInt(SkillSystem.GetEffect(GameConfig.cfg.ESkillEffect.StaminaMaxAdd));
             _currentHp = _maxHp;
             _currentStamina = _maxStamina;
         }
