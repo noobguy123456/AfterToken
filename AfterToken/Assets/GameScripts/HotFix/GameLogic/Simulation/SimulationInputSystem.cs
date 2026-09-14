@@ -94,6 +94,7 @@ namespace GameLogic
             if (TryCloseUI<CompanionChatUI>()) return;
             if (TryCloseUI<BuildingInfoUI>()) return;
             if (TryCloseUI<SkillTreeUI>()) return;
+            if (TryCloseUI<CompanionInfoUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<LobbyUI>()) return;
             if (TryCloseUI<BuildingSelectionUI>()) return;

@@ -28,6 +28,7 @@ public sealed partial class CompanionBark : Luban.BeanBase
         TextKey = (string)_obj.GetValue("textKey");
         Weight = (int)_obj.GetValue("weight");
         Cooldown = (float)_obj.GetValue("cooldown");
+        MinTier = (int)_obj.GetValue("minTier");
     }
 
     public static CompanionBark DeserializeCompanionBark(JToken _buf)
@@ -55,6 +56,10 @@ public sealed partial class CompanionBark : Luban.BeanBase
     /// 单键冷却s(0=不限)
     /// </summary>
     public readonly float Cooldown;
+    /// <summary>
+    /// 最低好感档位(1-4)
+    /// </summary>
+    public readonly int MinTier;
 
 
     public const int __ID__ = 494494650;
@@ -72,6 +77,7 @@ public sealed partial class CompanionBark : Luban.BeanBase
         + "textKey:" + TextKey + ","
         + "weight:" + Weight + ","
         + "cooldown:" + Cooldown + ","
+        + "minTier:" + MinTier + ","
         + "}";
     }
 }

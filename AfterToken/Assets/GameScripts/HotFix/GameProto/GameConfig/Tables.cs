@@ -142,6 +142,22 @@ public partial class Tables
     /// 技能树表
     /// </summary>
     public cfg.TbSkill TbSkill {get; }
+    /// <summary>
+    /// 好感档位表
+    /// </summary>
+    public cfg.TbCompanionAffinityTier TbCompanionAffinityTier {get; }
+    /// <summary>
+    /// 好感获取规则表
+    /// </summary>
+    public cfg.TbCompanionAffinityGain TbCompanionAffinityGain {get; }
+    /// <summary>
+    /// 队友分档人格提示表
+    /// </summary>
+    public cfg.TbCompanionPersona TbCompanionPersona {get; }
+    /// <summary>
+    /// 队友记忆规则表
+    /// </summary>
+    public cfg.TbCompanionMemoryRule TbCompanionMemoryRule {get; }
 
 
       public Tables(System.Func<string, JArray> loader)
@@ -179,6 +195,10 @@ public partial class Tables
         TbCompanionBark = new cfg.TbCompanionBark(loader("cfg_tbcompanionbark"));
         TbAudio = new cfg.TbAudio(loader("cfg_tbaudio"));
         TbSkill = new cfg.TbSkill(loader("cfg_tbskill"));
+        TbCompanionAffinityTier = new cfg.TbCompanionAffinityTier(loader("cfg_tbcompanionaffinitytier"));
+        TbCompanionAffinityGain = new cfg.TbCompanionAffinityGain(loader("cfg_tbcompanionaffinitygain"));
+        TbCompanionPersona = new cfg.TbCompanionPersona(loader("cfg_tbcompanionpersona"));
+        TbCompanionMemoryRule = new cfg.TbCompanionMemoryRule(loader("cfg_tbcompanionmemoryrule"));
         ResolveRef();
     }
     
@@ -217,6 +237,10 @@ public partial class Tables
         TbCompanionBark.ResolveRef(this);
         TbAudio.ResolveRef(this);
         TbSkill.ResolveRef(this);
+        TbCompanionAffinityTier.ResolveRef(this);
+        TbCompanionAffinityGain.ResolveRef(this);
+        TbCompanionPersona.ResolveRef(this);
+        TbCompanionMemoryRule.ResolveRef(this);
     }
 }
 

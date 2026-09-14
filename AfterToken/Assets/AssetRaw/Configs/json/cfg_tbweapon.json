@@ -247,7 +247,7 @@
     "lockOnSound": "",
     "muzzleEffect": "",
     "hitEffect": "",
-    "fireSound": "sfx_fire_rifle",
+    "fireSound": "sfx_fire_sniper",
     "reloadSound": "sfx_reload",
     "aimAssistRadius": 2,
     "aimAssistMaxAngle": 15,

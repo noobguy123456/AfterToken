@@ -4,230 +4,327 @@
     "trigger": "safe_idle",
     "textKey": "companion.bark.safe_idle.1",
     "weight": 3,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 2,
     "trigger": "safe_idle",
     "textKey": "companion.bark.safe_idle.2",
     "weight": 3,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 3,
     "trigger": "safe_idle",
     "textKey": "companion.bark.safe_idle.3",
     "weight": 2,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 4,
     "trigger": "safe_idle",
     "textKey": "companion.bark.safe_idle.4",
     "weight": 1,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 10,
     "trigger": "combat_start",
     "textKey": "companion.bark.combat_start.1",
     "weight": 3,
-    "cooldown": 4
+    "cooldown": 4,
+    "minTier": 1
   },
   {
     "id": 11,
     "trigger": "combat_start",
     "textKey": "companion.bark.combat_start.2",
     "weight": 2,
-    "cooldown": 4
+    "cooldown": 4,
+    "minTier": 1
   },
   {
     "id": 20,
     "trigger": "kill",
     "textKey": "companion.bark.kill.1",
     "weight": 3,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 21,
     "trigger": "kill",
     "textKey": "companion.bark.kill.2",
     "weight": 2,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 30,
     "trigger": "ping_move",
     "textKey": "companion.bark.ping_move",
     "weight": 1,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 31,
     "trigger": "ping_loot",
     "textKey": "companion.bark.ping_loot",
     "weight": 1,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 32,
     "trigger": "ping_attack",
     "textKey": "companion.bark.ping_attack",
     "weight": 1,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 40,
     "trigger": "follow_on",
     "textKey": "companion.bark.follow_on",
     "weight": 1,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 41,
     "trigger": "follow_off",
     "textKey": "companion.bark.follow_off",
     "weight": 1,
-    "cooldown": 2
+    "cooldown": 2,
+    "minTier": 1
   },
   {
     "id": 50,
     "trigger": "link_lost",
     "textKey": "companion.bark.link_lost",
     "weight": 1,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 51,
     "trigger": "link_recovered",
     "textKey": "companion.bark.link_recovered",
     "weight": 1,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 52,
     "trigger": "link_degraded",
     "textKey": "companion.bark.link_degraded",
     "weight": 1,
-    "cooldown": 8
+    "cooldown": 8,
+    "minTier": 1
   },
   {
     "id": 60,
     "trigger": "low_hp",
     "textKey": "companion.bark.low_hp",
     "weight": 1,
-    "cooldown": 6
+    "cooldown": 6,
+    "minTier": 1
   },
   {
     "id": 61,
     "trigger": "dead",
     "textKey": "companion.bark.dead",
     "weight": 1,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 70,
     "trigger": "chat_busy",
     "textKey": "companion.bark.chat_busy.1",
     "weight": 1,
-    "cooldown": 3
+    "cooldown": 3,
+    "minTier": 1
   },
   {
     "id": 71,
     "trigger": "chat_busy",
     "textKey": "companion.bark.chat_busy.2",
     "weight": 1,
-    "cooldown": 3
+    "cooldown": 3,
+    "minTier": 1
   },
   {
     "id": 80,
     "trigger": "quiet_ack",
     "textKey": "companion.bark.quiet_ack",
     "weight": 1,
-    "cooldown": 0
+    "cooldown": 0,
+    "minTier": 1
   },
   {
     "id": 90,
     "trigger": "danger_alert",
     "textKey": "companion.bark.danger_alert.1",
     "weight": 3,
-    "cooldown": 8
+    "cooldown": 8,
+    "minTier": 1
   },
   {
     "id": 91,
     "trigger": "danger_alert",
     "textKey": "companion.bark.danger_alert.2",
     "weight": 2,
-    "cooldown": 8
+    "cooldown": 8,
+    "minTier": 1
   },
   {
     "id": 100,
     "trigger": "combat_end",
     "textKey": "companion.bark.combat_end.1",
     "weight": 3,
-    "cooldown": 6
+    "cooldown": 6,
+    "minTier": 1
   },
   {
     "id": 101,
     "trigger": "combat_end",
     "textKey": "companion.bark.combat_end.2",
     "weight": 2,
-    "cooldown": 6
+    "cooldown": 6,
+    "minTier": 1
   },
   {
     "id": 110,
     "trigger": "combat_dir_front",
     "textKey": "companion.bark.combat_dir.front",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 111,
     "trigger": "combat_dir_back",
     "textKey": "companion.bark.combat_dir.back",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 112,
     "trigger": "combat_dir_left",
     "textKey": "companion.bark.combat_dir.left",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 113,
     "trigger": "combat_dir_right",
     "textKey": "companion.bark.combat_dir.right",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 114,
     "trigger": "combat_dir_front_left",
     "textKey": "companion.bark.combat_dir.front_left",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 115,
     "trigger": "combat_dir_front_right",
     "textKey": "companion.bark.combat_dir.front_right",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 116,
     "trigger": "combat_dir_back_left",
     "textKey": "companion.bark.combat_dir.back_left",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
   },
   {
     "id": 117,
     "trigger": "combat_dir_back_right",
     "textKey": "companion.bark.combat_dir.back_right",
     "weight": 1,
-    "cooldown": 10
+    "cooldown": 10,
+    "minTier": 1
+  },
+  {
+    "id": 118,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t2.1",
+    "weight": 3,
+    "cooldown": 0,
+    "minTier": 2
+  },
+  {
+    "id": 119,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t2.2",
+    "weight": 2,
+    "cooldown": 0,
+    "minTier": 2
+  },
+  {
+    "id": 120,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t2.3",
+    "weight": 2,
+    "cooldown": 0,
+    "minTier": 2
+  },
+  {
+    "id": 121,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t3.1",
+    "weight": 3,
+    "cooldown": 0,
+    "minTier": 3
+  },
+  {
+    "id": 122,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t3.2",
+    "weight": 2,
+    "cooldown": 0,
+    "minTier": 3
+  },
+  {
+    "id": 123,
+    "trigger": "safe_idle",
+    "textKey": "companion.bark.safe_idle.t3.3",
+    "weight": 2,
+    "cooldown": 0,
+    "minTier": 3
+  },
+  {
+    "id": 124,
+    "trigger": "gift_receive",
+    "textKey": "companion.bark.gift_receive.1",
+    "weight": 3,
+    "cooldown": 5,
+    "minTier": 1
+  },
+  {
+    "id": 125,
+    "trigger": "gift_receive",
+    "textKey": "companion.bark.gift_receive.2",
+    "weight": 3,
+    "cooldown": 5,
+    "minTier": 1
   }
 ]

@@ -106,6 +106,9 @@ namespace GameLogic.AI.Llm
         private bool _chatInFlight;
         /// <summary>最近一次对话活动（玩家发话或收到回复）的时间，用于对话期间暂停随机闲聊。</summary>
         private float _lastChatActivityTime = -999f;
+        /// <summary>记忆召回节流：每次对话会话最多触发一次二阶段召回。</summary>
+        private bool _recallUsedInConversation;
+        private bool _wasInConversation;
 
         // ── 轮播调度状态（六条轮播规则）──
         /// <summary>安静模式：玩家明确下达"闭嘴/安静"类指令后置位，停止一切自主台词（轮播+LLM 决策台词），玩家再次主动沟通时自动解除。战术播报（危险预警/方位提示/脱战）不受影响。</summary>
@@ -260,6 +263,14 @@ namespace GameLogic.AI.Llm
 
             // M5 操控频道：自检开关与链路状态，非 llm 模式零开销
             _decisionDriver?.Tick(dt);
+
+            // 记忆召回节流：会话结束（淡出 IsInConversation）后重置，每次对话最多召回一次
+            bool inConversation = IsInConversation;
+            if (!inConversation && _wasInConversation)
+            {
+                _recallUsedInConversation = false;
+            }
+            _wasInConversation = inConversation;
 
             // ── 轮播调度（六条规则）──
             var companion = _system.Companion;
@@ -481,12 +492,45 @@ namespace GameLogic.AI.Llm
 
                 if (result.Ok)
                 {
-                    if (TryParseContract(result.Text, out string say, out string intent))
+                    if (TryParseChatContract(result.Text, out string say, out string intent,
+                            out bool memorable, out string memoryType, out List<string> recall))
                     {
                         _lastChatActivityTime = Time.time;
+
+                        // 记忆打标（方案 B：LLM 判断玩家这句话值不值得记）。
+                        // 无论随机写入成败都显示"好奇"提示——不暴露判定结果（需求定义）。
+                        if (memorable && IsMemoryType(memoryType))
+                        {
+                            CompanionMemorySystem.TryRecord(CompanionAffinitySystem.DefaultCompanionId,
+                                memoryType, TruncateForMemory(playerText));
+                            ShowMemoryHint("companion.memory.hint.chat");
+                        }
+
+                        // 记忆召回（候选 2：LLM 驱动两阶段）。每次对话最多一次；二阶段消耗额外额度，先查预算。
+                        if (recall != null && recall.Count > 0 && !_recallUsedInConversation
+                            && _chatRequestCount < _persona.LlmBudgetPerRun)
+                        {
+                            _recallUsedInConversation = true;
+                            var memories = CollectRecalledMemories(recall);
+                            string recallSystem = PromptBuilder.BuildChatSystemWithRecall(_persona, memories);
+                            var recallResult = await _client.ChatAsync(recallSystem, user, _cts.Token);
+                            _chatRequestCount++;
+                            _lastChatRequestTime = Time.time;
+                            NotifyExternalRequestResult(recallResult.Ok);
+                            if (recallResult.Ok && TryParseChatContract(recallResult.Text,
+                                    out string say2, out string intent2, out _, out _, out _))
+                            {
+                                say = say2;
+                                intent = intent2;
+                            }
+                        }
+
                         EmitSay(say);
                         TryApplyIntent(intent, sendTime);
                         RememberChat(playerText, say);
+
+                        // 聊天好感（冷却/数值走 TbCompanionAffinityGain，防刷由配置控制）
+                        CompanionAffinitySystem.AddFromSource("chat");
                     }
                     else
                     {
@@ -680,6 +724,94 @@ namespace GameLogic.AI.Llm
             }
         }
 
+        /// <summary>
+        /// 聊天契约解析（M6 扩展版）：在 say/intent 基础上解析 memorable/memoryType/recall。
+        /// 老字段缺失时按无记忆、无召回处理（向后兼容旧模型回复）。
+        /// </summary>
+        private static bool TryParseChatContract(string raw, out string say, out string intent,
+            out bool memorable, out string memoryType, out List<string> recall)
+        {
+            memorable = false;
+            memoryType = null;
+            recall = null;
+            if (!TryParseContract(raw, out say, out intent))
+            {
+                return false;
+            }
+
+            try
+            {
+                var json = TryParseJObject(raw) ?? TryParseJObject(ExtractJsonSubstring(raw));
+                if (json == null)
+                {
+                    return true; // say/intent 已有，附加字段缺失不致命
+                }
+                memorable = json["memorable"]?.Value<bool>() ?? false;
+                memoryType = json["memoryType"]?.ToString();
+                var recallToken = json["recall"] as JArray;
+                if (recallToken != null && recallToken.Count > 0)
+                {
+                    recall = new List<string>(recallToken.Count);
+                    foreach (var t in recallToken)
+                    {
+                        var s = t?.ToString();
+                        if (IsMemoryType(s) || s == CompanionMemoryRuleConfigMgr.TypeGift)
+                        {
+                            recall.Add(s);
+                        }
+                    }
+                    if (recall.Count == 0) recall = null;
+                }
+            }
+            catch (Exception)
+            {
+                // 附加字段解析失败不致命
+            }
+            return true;
+        }
+
+        /// <summary>聊天记忆类型白名单（chat_player/chat_about_ai；gift 只能由赠礼流程写入）。</summary>
+        private static bool IsMemoryType(string memoryType)
+        {
+            return memoryType == CompanionMemoryRuleConfigMgr.TypeChatPlayer
+                || memoryType == CompanionMemoryRuleConfigMgr.TypeChatAboutAi;
+        }
+
+        /// <summary>玩家原句截取入库（上限 80 字符，防超长文本撑爆存档）。</summary>
+        private static string TruncateForMemory(string text)
+        {
+            const int MaxMemoryLen = 80;
+            return text.Length <= MaxMemoryLen ? text : text.Substring(0, MaxMemoryLen);
+        }
+
+        /// <summary>按模型请求的 recall 类型收集记忆（每类型最多 5 条，注入量可控）。</summary>
+        private static List<CompanionMemoryEntry> CollectRecalledMemories(List<string> recall)
+        {
+            var result = new List<CompanionMemoryEntry>(8);
+            foreach (var type in recall)
+            {
+                var list = CompanionMemorySystem.GetMemories(CompanionAffinitySystem.DefaultCompanionId, type);
+                int take = Mathf.Min(list.Count, 5);
+                for (int i = 0; i < take; i++)
+                {
+                    result.Add(list[i]);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>记忆写入"好奇"提示：队友头顶飘字（不暴露随机写入成败）。</summary>
+        private void ShowMemoryHint(string locKey)
+        {
+            var companion = _system.Companion;
+            if (companion == null)
+            {
+                return;
+            }
+            WorldFloatText.Show(Loc.Get(locKey, CompanionName),
+                companion.transform.position, new UnityEngine.Color(1f, 0.65f, 0.85f));
+        }
+
         private static JObject TryParseJObject(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -795,6 +927,24 @@ namespace GameLogic.AI.Llm
                 _recentLines.RemoveAt(0);
             }
             GameEvent.Get<ICompanionEvent>()?.OnCompanionSay(CompanionName, text);
+            AudioSystem.Instance?.PlayCompanionVoice(BuildVoiceSpeakerId(), text);
+        }
+
+        /// <summary>把玩法状态映射到可配置的 TTS profile；不把具体角色/演员名称写进代码。</summary>
+        private string BuildVoiceSpeakerId()
+        {
+            int id = _persona != null ? _persona.Id : CompanionConfigMgr.DefaultCompanionId;
+            var companion = _system?.Companion;
+            string mood = "calm";
+            if (companion != null && companion.MaxHp > 0 && companion.Hp <= companion.MaxHp * 0.3f)
+            {
+                mood = "hurt";
+            }
+            else if (companion?.Context != null && companion.Context.WantsEngage)
+            {
+                mood = "combat";
+            }
+            return $"companion_{id}_{mood}";
         }
 
         // LLM 回复偶尔夹带 <tag> 风格片段（思考标签/情绪标记/JSON 残渣），字幕 TMP 开了 richText

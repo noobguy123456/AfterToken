@@ -19,6 +19,9 @@ namespace GameLogic
     {
         public static NpcSystem Instance { get; private set; }
 
+        /// <summary>是否有 NPC 交互提示激活中（队友信息提示据此避让，避免共用 InteractionPromptUI 时互相覆盖）。</summary>
+        public bool HasActivePrompt => _currentNpc != null;
+
         private readonly GameEventMgr _eventMgr = new GameEventMgr();
 
         private NpcEntity _currentNpc;

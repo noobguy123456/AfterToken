@@ -35,6 +35,8 @@ public sealed partial class Item : Luban.BeanBase
         ItemType = (cfg.EItemType)(int)_obj.GetValue("itemType");
         Icon = (string)_obj.GetValue("icon");
         StackLimit = (int)_obj.GetValue("stackLimit");
+        AffinityValue = (int)_obj.GetValue("affinityValue");
+        CompanionAccept = (int)_obj.GetValue("companionAccept");
     }
 
     public static Item DeserializeItem(JToken _buf)
@@ -90,6 +92,14 @@ public sealed partial class Item : Luban.BeanBase
     /// 堆叠上限
     /// </summary>
     public readonly int StackLimit;
+    /// <summary>
+    /// 好感值(0=不可赠送)
+    /// </summary>
+    public readonly int AffinityValue;
+    /// <summary>
+    /// 1=NPC接受赠送 0=拒收
+    /// </summary>
+    public readonly int CompanionAccept;
 
 
     public const int __ID__ = -230799747;
@@ -115,6 +125,8 @@ public sealed partial class Item : Luban.BeanBase
         + "itemType:" + ItemType + ","
         + "icon:" + Icon + ","
         + "stackLimit:" + StackLimit + ","
+        + "affinityValue:" + AffinityValue + ","
+        + "companionAccept:" + CompanionAccept + ","
         + "}";
     }
 }

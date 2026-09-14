@@ -1,0 +1,26 @@
+[
+  {
+    "tier": 1,
+    "nameKey": "ui.affinity.t1.name",
+    "threshold": 0,
+    "descKey": "ui.affinity.t1.desc"
+  },
+  {
+    "tier": 2,
+    "nameKey": "ui.affinity.t2.name",
+    "threshold": 100,
+    "descKey": "ui.affinity.t2.desc"
+  },
+  {
+    "tier": 3,
+    "nameKey": "ui.affinity.t3.name",
+    "threshold": 300,
+    "descKey": "ui.affinity.t3.desc"
+  },
+  {
+    "tier": 4,
+    "nameKey": "ui.affinity.t4.name",
+    "threshold": 600,
+    "descKey": "ui.affinity.t4.desc"
+  }
+]

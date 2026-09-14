@@ -1758,5 +1758,269 @@
     "zh_tw": "",
     "ja": "",
     "ko": ""
+  },
+  {
+    "key": "ui.affinity.t1.name",
+    "en": "Stranger",
+    "zh_cn": "陌生",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t2.name",
+    "en": "Familiar",
+    "zh_cn": "熟悉",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t3.name",
+    "en": "Trusted",
+    "zh_cn": "信任",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t4.name",
+    "en": "Bonded",
+    "zh_cn": "默契",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t1.desc",
+    "en": "Keeps it professional. Calls you \"boss\".",
+    "zh_cn": "公事公办，称呼你为“老板”。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t2.desc",
+    "en": "Cracks jokes and remembers what you said.",
+    "zh_cn": "开始开玩笑，会记得你说过的话。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t3.desc",
+    "en": "Worries about you. Cherishes every gift.",
+    "zh_cn": "会担心你的安危，珍惜你送的每件礼物。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.affinity.t4.desc",
+    "en": "Family. Inside jokes and total trust.",
+    "zh_cn": "如同家人，有只属于你们的默契。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.title",
+    "en": "Companion",
+    "zh_cn": "队友信息",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.affinity",
+    "en": "Affinity",
+    "zh_cn": "好感度",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.next_tier",
+    "en": "Next: {0} ({1}/{2})",
+    "zh_cn": "下一档：{0}（{1}/{2}）",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.max_tier",
+    "en": "Max tier reached",
+    "zh_cn": "已达最高档位",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.memories",
+    "en": "Memories",
+    "zh_cn": "记忆",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.memories.empty",
+    "en": "No memories yet.",
+    "zh_cn": "还没有记忆。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.gift",
+    "en": "Give Gift",
+    "zh_cn": "赠送礼物",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.info.close",
+    "en": "Close",
+    "zh_cn": "关闭",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.gift.title",
+    "en": "Select a Gift",
+    "zh_cn": "选择礼物",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.gift.empty",
+    "en": "No giftable items in warehouse.",
+    "zh_cn": "仓库中没有可赠送的物品。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.companion.gift.affinity",
+    "en": "+{0} affinity",
+    "zh_cn": "好感 +{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.affinity.gain",
+    "en": "+{0} ♥",
+    "zh_cn": "+{0} ♥",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.memory.hint.gift",
+    "en": "{0} seems curious about your gift...",
+    "zh_cn": "{0} 对你的礼物感到好奇…",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.memory.hint.chat",
+    "en": "{0} seems to be mulling over your words...",
+    "zh_cn": "{0} 似乎在琢磨你说的话…",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t2.1",
+    "en": "Boss, once this run's over, apple pie's on me!",
+    "zh_cn": "老板，等这趟结束，苹果派我请！",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t2.2",
+    "en": "You'd love Laterano. The sky's bluer, and the pie's better.",
+    "zh_cn": "你会喜欢拉特兰的——天更蓝，苹果派也更香。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t2.3",
+    "en": "Cleaned my guns this morning. Today's gonna be a good day.",
+    "zh_cn": "早上刚擦过枪，今天肯定是个好日子。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t3.1",
+    "en": "Saved you the last slice of apple pie. Don't tell the others.",
+    "zh_cn": "最后一块苹果派给你留着呢，别告诉别人哦。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t3.2",
+    "en": "You watch my back, I watch yours. That's the deal, boss.",
+    "zh_cn": "你替我看着背后，我替你看着背后——就这么说定啦，老板。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.safe_idle.t3.3",
+    "en": "When this is all over, I'm taking you to Laterano for the real thing.",
+    "zh_cn": "等一切都结束了，我带你去拉特兰吃最正宗的苹果派。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "ui.interact.companion_info",
+    "en": "Info",
+    "zh_cn": "查看信息",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.tierup",
+    "en": "Bond deepened: {0}",
+    "zh_cn": "关系加深：{0}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.memory.gift_line",
+    "en": "Gift: {0} x{1}",
+    "zh_cn": "礼物：{0} x{1}",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.gift_receive.1",
+    "en": "For me? Boss, you shouldn't have. Really.",
+    "zh_cn": "给我的？老板，你太客气了。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
+  },
+  {
+    "key": "companion.bark.gift_receive.2",
+    "en": "Ooh, presents! Today just got better.",
+    "zh_cn": "哇，礼物！今天心情值拉满。",
+    "zh_tw": "",
+    "ja": "",
+    "ko": ""
   }
 ]

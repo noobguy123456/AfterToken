@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using GameLogic.AI.Voice;
 using GameConfig.cfg;
 using TEngine;
 using UnityEngine;
@@ -52,7 +53,10 @@ namespace GameLogic
 
         // ── 语音状态 ──
         private readonly Dictionary<VoiceChannel, AudioAgent> _voiceAgents = new Dictionary<VoiceChannel, AudioAgent>(2);
+        private readonly Dictionary<VoiceChannel, AudioSource> _dynamicVoiceSources = new Dictionary<VoiceChannel, AudioSource>(2);
         private CancellationTokenSource _voiceCts;
+        private CancellationTokenSource _npcVoiceRequestCts;
+        private int _npcVoiceRequestVersion;
 
         // ── 战斗态感知 ──
         private readonly HashSet<int> _threats = new HashSet<int>();
@@ -74,6 +78,7 @@ namespace GameLogic
         {
             Instance = this;
             _voiceCts = new CancellationTokenSource();
+            ReloadVoiceProvider();
 
             _eventMgr.AddEvent<int, string, string>(IEnemyEvent_Event.OnEnemyStateChanged, OnEnemyStateChanged);
             _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
@@ -89,6 +94,9 @@ namespace GameLogic
             _voiceCts?.Cancel();
             _voiceCts?.Dispose();
             _voiceCts = null;
+            _npcVoiceRequestCts?.Cancel();
+            _npcVoiceRequestCts?.Dispose();
+            _npcVoiceRequestCts = null;
             if (Instance == this)
             {
                 Instance = null;
@@ -321,6 +329,14 @@ namespace GameLogic
         /// </summary>
         public void PlayDialogueVoice(string voiceClip, VoiceChannel channel = VoiceChannel.Npc)
         {
+            if (channel == VoiceChannel.Npc)
+            {
+                _npcVoiceRequestVersion++;
+                _npcVoiceRequestCts?.Cancel();
+                _npcVoiceRequestCts?.Dispose();
+                _npcVoiceRequestCts = null;
+            }
+            StopDynamicVoice(channel);
             PlayVoiceClip(string.IsNullOrEmpty(voiceClip) ? "voice_blip" : voiceClip, channel);
         }
 
@@ -329,17 +345,29 @@ namespace GameLogic
         /// </summary>
         public void PlayCompanionVoice(string speakerId, string text)
         {
+            int requestVersion = ++_npcVoiceRequestVersion;
+            _npcVoiceRequestCts?.Cancel();
+            _npcVoiceRequestCts?.Dispose();
+            _npcVoiceRequestCts = null;
+            StopDynamicVoice(VoiceChannel.Npc);
+            StopManagedVoiceAgent(VoiceChannel.Npc);
             if (VoiceProvider == null || string.IsNullOrWhiteSpace(text))
             {
                 PlayVoiceClip("voice_blip", VoiceChannel.Npc);
                 return;
             }
-            PlayAiVoiceAsync(speakerId, text).Forget();
+            _npcVoiceRequestCts = CancellationTokenSource.CreateLinkedTokenSource(_voiceCts.Token);
+            PlayAiVoiceAsync(speakerId, text, requestVersion, _npcVoiceRequestCts.Token).Forget();
         }
 
-        private async UniTaskVoid PlayAiVoiceAsync(string speakerId, string text)
+        private async UniTaskVoid PlayAiVoiceAsync(string speakerId, string text, int requestVersion, CancellationToken ct)
         {
-            var clip = await VoiceProvider.RequestClipAsync(speakerId, text, _voiceCts.Token);
+            var clip = await VoiceProvider.RequestClipAsync(speakerId, text, ct);
+            // 新台词已发出或语音被跳过：丢弃晚到结果，避免旧句覆盖新句。
+            if (requestVersion != _npcVoiceRequestVersion)
+            {
+                return;
+            }
             if (clip == null)
             {
                 PlayVoiceClip("voice_blip", VoiceChannel.Npc);
@@ -350,6 +378,7 @@ namespace GameLogic
 
         private void PlayVoiceClip(string audioName, VoiceChannel channel)
         {
+            StopManagedVoiceAgent(channel);
             var cfg = AudioConfigMgr.Instance.GetByName(audioName);
             if (cfg == null)
             {
@@ -367,6 +396,7 @@ namespace GameLogic
         private void PlayClipDirect(AudioClip clip, VoiceChannel channel)
         {
             // Voice agent 由 AudioModule 池管理、只认表内地址；TTS 动态 clip 走独立临时源
+            StopDynamicVoice(channel);
             var go = new GameObject("AiVoiceSource");
             go.transform.SetParent(transform, false);
             var src = go.AddComponent<AudioSource>();
@@ -374,7 +404,17 @@ namespace GameLogic
             src.clip = clip;
             src.volume = GetVoiceChannelVolume(channel);
             src.Play();
+            _dynamicVoiceSources[channel] = src;
             Destroy(go, clip.length + 0.1f);
+        }
+
+        /// <summary>重读 TTS 配置并切换提供器；设置页或调试工具保存配置后可调用。</summary>
+        public void ReloadVoiceProvider()
+        {
+            TtsConfig.Reload();
+            var config = TtsConfig.Load();
+            VoiceProvider = config.IsValid ? new OpenAiTtsVoiceProvider(config) : null;
+            Log.Info(config.IsValid ? "[AudioSystem] 云端 TTS 已启用。" : "[AudioSystem] 云端 TTS 未配置，使用本地语音/占位音。");
         }
 
         private float GetVoiceChannelVolume(VoiceChannel channel)
@@ -385,11 +425,34 @@ namespace GameLogic
         /// <summary>停指定子通道语音（对话跳过/结束时调用）。</summary>
         public void StopVoice(VoiceChannel channel)
         {
+            if (channel == VoiceChannel.Npc)
+            {
+                _npcVoiceRequestVersion++;
+                _npcVoiceRequestCts?.Cancel();
+                _npcVoiceRequestCts?.Dispose();
+                _npcVoiceRequestCts = null;
+            }
+            StopManagedVoiceAgent(channel);
+            StopDynamicVoice(channel);
+        }
+
+        private void StopManagedVoiceAgent(VoiceChannel channel)
+        {
             if (_voiceAgents.TryGetValue(channel, out var agent) && agent != null && !agent.IsFree)
             {
                 agent.Stop(fadeout: false);
             }
             _voiceAgents.Remove(channel);
+        }
+
+        private void StopDynamicVoice(VoiceChannel channel)
+        {
+            if (_dynamicVoiceSources.TryGetValue(channel, out var source) && source != null)
+            {
+                source.Stop();
+                Destroy(source.gameObject);
+            }
+            _dynamicVoiceSources.Remove(channel);
         }
 
         // ── 事件接线（需求3：空间音效）──

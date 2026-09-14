@@ -75,7 +75,7 @@
 | 事件系统 | 🟡 | P0 | - | `docs/modules/infra/event-system/` | 战斗事件已定义，待补齐 `ILevelEvent`/`IBattleResultEvent`/经营/共享事件 |
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
 | 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
-| 音频系统 | 🟡 | P1 | - | `docs/modules/infra/audio-system/` | 2026-09-12 落地：AudioSystem 门面 + TbAudio 表驱动场景 BGM（交叉淡入淡出）+ 战斗态切战斗曲/duck 0.5/脱战 3s 恢复；SFX 2D/3D/UI（开火/换弹/爆炸/拾取/敌人脚步/UI 点击）；Voice 双子通道（玩家/NPC 独立音量、对话跳过停语音、IVoiceProvider TTS 预留）；四路音量持久化 + SettingsUI 滑条；占位 WAV ×14 程序生成；全链路 MCP 实测通过，待正式资源替换与听感验收 |
+| 音频系统 | 🟡 | P1 | - | `docs/modules/infra/audio-system/` | 2026-09-14 更新：AudioSystem 门面 + TbAudio 表驱动场景 BGM（交叉淡入淡出）+ 战斗态切战斗曲/duck 0.5/脱战 3s 恢复；SFX 2D/3D/UI；Voice 双子通道（玩家/NPC 独立音量、对话跳过停语音）与 OpenAI Speech API 兼容动态 TTS（状态 profile、WAV 解码、双层缓存、失败回退）；四路音量持久化 + SettingsUI 滑条；待正式资源替换、真实 API/真机听感验收与 TTS 设置 UI |
 | 特效系统 | 🟡 | P1 | - | `docs/modules/infra/effect-system/` | M1 已落地（2026-09-06），同日去配置表简化：TbEffect 拆除，元数据改挂 prefab EffectDriver 序列化字段，播放按 `EffectIds` 地址常量；EffectSystem+池化+IEffectEvent，爆炸在 Explosion.prefab（shader/材质落 AssetRaw 闭环引用链，消除 Shader.Find 手动维护点）；M2 已落地（2026-09-07）：枪口火焰/命中火花（敌/环境）/拾取光晕接入并实测，爆炸补齐三段式（预警压缩闪光+焦痕 decal）；剩 M3 编辑器预览工具 |
 
 ### 共享系统
@@ -117,7 +117,7 @@
 
 | 模块 | 状态 | 优先级 | 阻塞/依赖 | 对应目录 | 备注 |
 |------|------|--------|-----------|----------|------|
-| AI 队友系统 | ✅ | P1 | - | `docs/modules/ai/companion-system/` | M1 本体 + M2 标点 + M3 LLM 链路 + M4 加密存储/设置面板 AI 页签 + M5 实时操控通道 + M6 自由对话（T 键聊天）全部落地并在线实测通过（2026-09-08，DeepSeek）；另有主动开火（12m 警戒先发制人）与人设强化；待：Degraded 字幕样式、M5 loot 指令打磨 |
+| AI 队友系统 | ✅ | P1 | - | `docs/modules/ai/companion-system/` | M1 本体 + M2 标点 + M3 LLM 链路 + M4 加密存储/设置面板 AI 页签 + M5 实时操控通道 + M6 自由对话全部落地并在线实测通过（2026-09-08，DeepSeek）；另有主动开火与人设强化；**好感度+记忆系统落地（2026-09-14：4 档人格分档、记忆规则配置表、LLM 两阶段召回、CompanionInfoUI 双入口）**；待：记忆召回详细规则（用户出方案中）、T4 档位收益、Degraded 字幕样式 |
 
 ### 管线与工具
 
@@ -717,3 +717,20 @@ Luban 配置表数据补充
 - 坑位：①`GameConfig.cfg` 自带 `Color` 类，引用 ESkillEffect 的文件不能裸 using（CS0104），全限定或别名；②npc.xlsx 加列后 `__beans__.xlsx` 的 cfg.Npc bean 必须手动补字段行，否则 Luban 静默丢列（本次 consoleType 因此漏生成一轮）。
 - 验证：导表成功、GameProto/GameLogic build 0 错误；MCP 全链路实测（开 UI/升级扣费/前置锁定文案/存档落盘/101 关卡 MaxHp 100→110 生效），测试技能等级已还原。截图 Assets/Screenshots/skilltree_*.png。
 - 待办：节点图标（Icon 字段预留）、连线美术、用户实机验收。
+
+## 2026-09-14 AI 队友好感度 + 记忆系统落地（提案 M1-M4 全部完成）
+- 提案 `docs/Proposal/ai/companion-affinity-memory.md`（对齐决议 6 条：信息面板双入口、数值全走配置表、聊天筛选用 LLM 打标方案 B、召回用 LLM 驱动两阶段、写入提示含蓄化、档位暂不附带实际收益挂起 §10）。
+- 配置表（改表前 `.pre_affinity.bak` 备份）：新表 `companionaffinity.xlsx`（Tier 阈值 0/100/300/600；Gain 来源 chat +2/冷却600s、extract +15/每局1、protect +5/每局3）、`companionpersona.xlsx`（id=companionId*10+tier，4 段关系姿态 promptAdd）、`companionmemoryrule.xlsx`（类型×minTier→容量/写入概率/淘汰：gift T1 容量3 随机0.5 / T3 容量20 fifo 必记、chat_player+chat_about_ai T2 起 fifo5、battle_event T4 预留）；item.xlsx 加 `affinityValue`+`companionAccept` 列；companionbark.xlsx 加 minTier 列 + 高档位语录 118-123；localization +33 词条。
+- 代码（GameLogic）：`CompanionAffinitySystem`（exp/tier/冷却与限次/持久化）+ `CompanionMemorySystem`（规则执行、礼物机读 token `gift:{itemId}x{count}`、FormatForPrompt/Display）+ 三个 ConfigMgr + `ICompanionAffinityEvent` + `WorldFloatText` 公共飘字（从 BuildingPlacementSystem 抽出）；SaveData 加 companionAffinity/companionMemory 两段并挂 SwitchSlot 失效链。
+- 接线：PromptBuilder 三入口叠加档位人格 + 聊天契约 memorable/memoryType/recall 字段 + `BuildChatSystemWithRecall` 二阶段召回（"You recall:" 注入 + 禁再次召回）；CompanionBrain.TryParseChatContract（附加字段缺失不致命）+ 写入好奇飘字 + recall 每会话节流；好感来源接线 chat/extract（CrossPlayLink.OnBattleExtracted）/protect（BattleSystem.IsCompanionAttack 击杀归属 + threats 集合）；CompanionSystem 好感事件飘字；PickBark minTier 过滤。
+- UI：`CompanionInfoUI` prefab（档位/进度/人格描述/记忆列表/赠礼子面板）；双入口（聊天窗 Info 按钮 + 靠近 3m 提示按交互键，NPC 提示激活时避让）；ESC 链接入双场景输入系统。
+- 实测（MCP + 真实 DeepSeek Online）：赠礼 +10×3（T1 随机 3 送 1 记）→ 拒收返回 0 → 钢剑×6 升 T3（exp=330）→ T3 人格文本进 prompt → bark 池累计含 t2/t3 → memorable 打标准确（"I really love apple pie..." 写入 chat_player）→ **召回决定性验证：问从未聊过的礼物，模型答出"小麦，还有三把钢剑"**（只能来自召回的 gift 记忆，数量与记忆条数吻合）。测试数据已还原（exp=0/mems=0）。
+- 遗留：记忆召回详细规则等用户出方案（提案 §10）；T4 档位收益方案挂起同节；T1 靠近按 E 提示未经真实按键注入验证（MCP 注不了 GetKeyDown，与其他系统同模式，风险低）；extract/protect 好感接线未实局验证（同代码路径，风险低）。
+
+## 2026-09-14 AI NPC 混合语音链路落地
+- 路线：固定剧情台词继续使用 `dialoguenode.voiceClip` 预生成资源；AI 临时台词走云端 TTS；成功结果写 `Application.persistentDataPath/VoiceCache/`，断网/未配置/失败回退 `voice_blip`，字幕与玩法不受影响。
+- 新增：`AI/Voice/TtsConfig.cs`（独立 `tts_config.json`、密钥复用 SecretStore 加密、默认声线 + speaker profile）、`OpenAiTtsVoiceProvider.cs`（OpenAI Speech API 兼容 POST `/audio/speech`，请求 WAV）、`WavAudioClipDecoder.cs`（PCM 8/16/24/32 与 float32，含 WAVE_FORMAT_EXTENSIBLE）。根目录增加 `tts_config.example.json`。
+- 接线：`AudioSystem.Awake` 自动按配置注册 VoiceProvider；`CompanionBrain.EmitSay` 同时发字幕与语音，玩法状态映射 `companion_1_calm/combat/hurt`；新句取消旧网络请求并拒绝晚到结果，StopVoice/固定语音会同步停止动态 AudioSource。
+- 可调项：`voice` 控制基础音色，`instructions` 控制原创的安静/克制/疏离表达，`speed` 控制语速，`profiles` 分别覆盖平静/战斗/受伤。任一参数改变都会产生新缓存键，不需手动清缓存。
+- 验证：Unity 当前编辑器强制重导入并完成 `GameLogic.dll` 重编译，错误控制台为 0；`tts_config.example.json` 通过 JSON 解析。未调用真实 TTS（仓库不含 API Key），在线音色与真机缓存留用户配置后验收。
+- 待办：设置页补 TTS 可视化配置与“AI 生成语音、非真人录音”披露；真实 API 验证中文断句、声音 profile、缓存命中及 Windows/Android 路径。

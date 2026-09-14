@@ -344,6 +344,7 @@ namespace GameLogic
             // 按 UI 层级从高到低尝试关闭最上层弹窗；一次 ESC 只关闭一个。
             // 顺序：CompanionChatUI > SettingsUI > BattleBagUI > LootContainerUI > NoteUI（后续可扩展 WeaponWheelUI 等）
             if (TryCloseUI<CompanionChatUI>()) return;
+            if (TryCloseUI<CompanionInfoUI>()) return;
             if (TryCloseUI<SettingsUI>()) return;
             if (TryCloseUI<BattleBagUI>()) return;
             if (TryCloseUI<LootContainerUI>()) return;

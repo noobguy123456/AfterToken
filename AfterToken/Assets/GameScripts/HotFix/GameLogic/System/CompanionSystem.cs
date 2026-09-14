@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using GameLogic.AI.Llm;
 using TEngine;
 using UnityEngine;
@@ -38,6 +40,11 @@ namespace GameLogic
         private CompanionEntity _companion;
         private Transform _playerTransform;
         private CompanionBrain _brain;
+
+        // 队友信息交互提示（靠近按交互键打开 CompanionInfoUI），与 NpcSystem 共用 InteractionPromptUI
+        private InteractionPromptUI _infoPromptUI;
+        private CancellationTokenSource _infoPromptCts;
+        private bool _infoPromptShown;
 
         public CompanionEntity Companion => _companion;
 
@@ -92,6 +99,33 @@ namespace GameLogic
             _eventMgr.AddEvent<PingType, Vector2, int>(IPingEvent_Event.OnPingCreated, OnPingCreated);
             _eventMgr.AddEvent(IPingEvent_Event.OnPingCleared, OnPingCleared);
             _eventMgr.AddEvent<string, string>(ICompanionEvent_Event.OnCompanionStateChanged, OnCompanionStateChanged);
+            _eventMgr.AddEvent<int, int, int>(ICompanionAffinityEvent_Event.OnAffinityChanged, OnAffinityChanged);
+            _eventMgr.AddEvent<int, int>(ICompanionAffinityEvent_Event.OnAffinityTierUp, OnAffinityTierUp);
+        }
+
+        /// <summary>好感度增加：队友头顶粉色飘字 +N ♥。</summary>
+        private void OnAffinityChanged(int companionId, int delta, int total)
+        {
+            if (delta <= 0 || _companion == null)
+            {
+                return;
+            }
+            WorldFloatText.Show(Loc.Get("companion.affinity.gain", delta),
+                _companion.transform.position, new Color(1f, 0.5f, 0.75f));
+        }
+
+        /// <summary>好感度升档：金色飘字 + 升档 bark（若表里有 tier_up 触发）。</summary>
+        private void OnAffinityTierUp(int companionId, int newTier)
+        {
+            if (_companion == null)
+            {
+                return;
+            }
+            var tierCfg = CompanionAffinityConfigMgr.Instance.GetTier(newTier);
+            string tierName = tierCfg != null ? Loc.Get(tierCfg.NameKey) : $"T{newTier}";
+            WorldFloatText.Show(Loc.Get("companion.tierup", tierName),
+                _companion.transform.position, new Color(1f, 0.85f, 0.3f));
+            _brain?.SayLocal("tier_up", bypassCooldown: true);
         }
 
         private void OnDestroy()
@@ -99,6 +133,21 @@ namespace GameLogic
             _eventMgr.Clear();
             _brain?.Dispose();
             _brain = null;
+
+            _infoPromptCts?.Cancel();
+            _infoPromptCts?.Dispose();
+            _infoPromptCts = null;
+            if (_infoPromptShown)
+            {
+                _infoPromptShown = false;
+                // 提示窗可能被 NpcSystem 接管中，只有未被接管时才由这里关闭
+                if (NpcSystem.Instance == null || !NpcSystem.Instance.HasActivePrompt)
+                {
+                    GameModule.UI.CloseUI<InteractionPromptUI>();
+                }
+                _infoPromptUI = null;
+            }
+
             if (Instance == this)
             {
                 Instance = null;
@@ -125,8 +174,112 @@ namespace GameLogic
                 TryOpenChat();
             }
 
+            // 队友信息面板入口：靠近队友显示交互提示，按交互键打开
+            TickInfoPrompt();
+
             _brain?.Tick(Time.deltaTime);
         }
+
+        #region 队友信息交互提示
+
+        /// <summary>队友信息提示的交互距离（米）。</summary>
+        private const float InfoInteractDistance = 3f;
+
+        /// <summary>
+        /// 靠近队友（≤3m）且无菜单 UI/聊天框/对话打开、队友不在交战、附近无 NPC 提示时，
+        /// 用 InteractionPromptUI 显示"查看信息"提示，按交互键打开 <see cref="CompanionInfoUI"/>；
+        /// 条件不满足时收起提示。
+        /// </summary>
+        private void TickInfoPrompt()
+        {
+            bool canShow = _companion != null
+                && !_companion.IsDead
+                && PlayerTransform != null
+                && !CompanionChatUI.IsOpen
+                && !GameModule.UI.HasWindow<CompanionInfoUI>()
+                && !IsAnyMenuUIOpen()
+                && (_companion.Context == null || !_companion.Context.WantsEngage)
+                && (DialogueSystem.Instance == null || !DialogueSystem.Instance.IsPlaying)
+                && (NpcSystem.Instance == null || !NpcSystem.Instance.HasActivePrompt)
+                && Vector3.Distance(PlayerTransform.position, _companion.transform.position) <= InfoInteractDistance;
+
+            if (canShow)
+            {
+                if (!_infoPromptShown)
+                {
+                    _infoPromptShown = true;
+                    // 词条 ui.interact.companion_info 无占位符，按键名拼在前面（参考 NpcSystem.GetInteractPrompt）
+                    string keyName = KeyBindingSetting.GetKeyDisplayName(KeyBindingSetting.GetKey(KeyBindAction.Interact));
+                    ShowInfoPromptAsync($"[{keyName}] {Loc.Get("ui.interact.companion_info")}").Forget();
+                }
+
+                if (Input.GetKeyDown(KeyBindingSetting.GetKey(KeyBindAction.Interact)))
+                {
+                    HideInfoPrompt();
+                    GameModule.UI.ShowUIAsync<CompanionInfoUI>();
+                }
+            }
+            else if (_infoPromptShown)
+            {
+                HideInfoPrompt();
+            }
+        }
+
+        private async UniTaskVoid ShowInfoPromptAsync(string text)
+        {
+            _infoPromptCts?.Cancel();
+            _infoPromptCts?.Dispose();
+            _infoPromptCts = new CancellationTokenSource();
+
+            try
+            {
+                if (_infoPromptUI == null)
+                {
+                    _infoPromptUI = await GameModule.UI.ShowUIAsyncAwait<InteractionPromptUI>(_infoPromptCts.Token);
+                }
+                _infoPromptUI?.SetPrompt(text);
+            }
+            catch (System.OperationCanceledException)
+            {
+                // CompanionSystem 销毁时取消，忽略异常。
+            }
+        }
+
+        private void HideInfoPrompt()
+        {
+            _infoPromptShown = false;
+
+            // 提示窗与 NpcSystem 共用：NPC 提示激活时窗口已被对方接管，由 NpcSystem 负责关闭
+            if (NpcSystem.Instance != null && NpcSystem.Instance.HasActivePrompt)
+            {
+                _infoPromptUI = null;
+                return;
+            }
+
+            if (_infoPromptUI != null)
+            {
+                GameModule.UI.CloseUI<InteractionPromptUI>();
+                _infoPromptUI = null;
+            }
+        }
+
+        /// <summary>是否有菜单类窗口打开（开着时不出队友交互提示）。</summary>
+        private static bool IsAnyMenuUIOpen()
+        {
+            return GameModule.UI.HasWindow<SettingsUI>()
+                || GameModule.UI.HasWindow<BuildingInfoUI>()
+                || GameModule.UI.HasWindow<SkillTreeUI>()
+                || GameModule.UI.HasWindow<WarehouseUI>()
+                || GameModule.UI.HasWindow<QuestLogUI>()
+                || GameModule.UI.HasWindow<QuestBoardUI>()
+                || GameModule.UI.HasWindow<BuildingSelectionUI>()
+                || GameModule.UI.HasWindow<LobbyUI>()
+                || GameModule.UI.HasWindow<BattleBagUI>()
+                || GameModule.UI.HasWindow<LootContainerUI>()
+                || GameModule.UI.HasWindow<NoteUI>();
+        }
+
+        #endregion
 
         private void SpawnCompanion(Vector3 position)
         {

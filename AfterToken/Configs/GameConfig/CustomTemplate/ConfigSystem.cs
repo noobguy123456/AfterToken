@@ -73,6 +73,10 @@ namespace GameLogic
             "cfg_tbcompanionbark",
             "cfg_tbaudio",
             "cfg_tbskill",
+            "cfg_tbcompanionaffinitytier",
+            "cfg_tbcompanionaffinitygain",
+            "cfg_tbcompanionpersona",
+            "cfg_tbcompanionmemoryrule",
         };
 
         /// <summary>

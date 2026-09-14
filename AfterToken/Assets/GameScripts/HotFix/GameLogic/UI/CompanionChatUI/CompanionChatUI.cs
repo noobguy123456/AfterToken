@@ -1,6 +1,7 @@
 using TMPro;
 using TEngine;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace GameLogic
 {
@@ -23,6 +24,7 @@ namespace GameLogic
         private TMP_InputField _input;
         private TextMeshProUGUI _titleText;
         private TextMeshProUGUI _statusText;
+        private Button _infoButton;
 
         #region 脚本工具生成的代码
 
@@ -31,6 +33,7 @@ namespace GameLogic
             _titleText = FindChildComponent<TextMeshProUGUI>("m_rect_ChatBar/m_text_Title");
             _statusText = FindChildComponent<TextMeshProUGUI>("m_rect_ChatBar/m_text_Status");
             _input = FindChildComponent<TMP_InputField>("m_rect_ChatBar/m_input_Message");
+            _infoButton = FindChildComponent<Button>("m_rect_ChatBar/m_btn_Info");
         }
 
         #endregion
@@ -68,6 +71,14 @@ namespace GameLogic
                 _input.text = string.Empty;
                 _input.onSubmit.AddListener(OnSubmit);
                 _input.ActivateInputField();
+            }
+
+            // Info 按钮：打开队友信息面板（好感/记忆/赠礼）
+            if (_infoButton != null)
+            {
+                var infoLabel = _infoButton.GetComponentInChildren<TextMeshProUGUI>();
+                Loc.Bind(infoLabel, "ui.interact.companion_info");
+                _infoButton.onClick.AddListener(() => GameModule.UI.ShowUIAsync<CompanionInfoUI>());
             }
         }
 

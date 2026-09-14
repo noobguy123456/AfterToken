@@ -25,6 +25,14 @@
 - [x] 人设强化（2026-09-08）：`companion.xlsx` personaPrompt 重写（退役军用安防 AI、叫玩家 "boss"、冷幽默、11 个 sector 背景、说话规则+示例）；闲聊/操控 few-shot 全换新语气；实测台词 "Loot spotted. Securing it, boss."
 - [x] M6 自由对话（2026-09-08）：T 键（可改绑 `KeyBindAction.CompanionChat`）开 `CompanionChatUI`（prefab：底部输入条在字幕上方，Enter 发送/ESC 关闭/不暂停）；`CompanionBrain.RequestChatReply` 独立通道（多轮记忆 4 轮、独立计数与 1s 防抖、断联/战斗中播 chat_busy bark 拒聊）；回复 intent 仍走白名单裁决；**意图应用收窄：只有玩家直接对话（player_chat）可带 follow/hold，安全闲聊不再应用意图**（修掉 LLM 闲聊随口 hold 把队友钉原地）；输入抑制：聊天打开时 InputSystem/SimulationInputSystem/SimulationPlayerController/BuildingPlacementSystem 全部让位；实测：安全开聊/战斗拒聊/回复上字幕/"stay here"→hold→"follow me"→follow 全通；修经营场景 PlayerSystem 缺失导致 player_hp 0/0 被 LLM 误读"boss 已倒下"（血量未知时不进 prompt）
 
+- [x] 好感度系统（2026-09-14，`companion-affinity-memory.md` 提案 M1-M4 全落地）：`CompanionAffinitySystem`（静态，exp/tier/来源冷却与每局限次）+ `companionaffinity.xlsx`（阈值 0/100/300/600；来源 chat +2 冷却600s、extract +15 每局1、protect +5 每局3）；接线：聊天 RequestChatReplyAsync / CrossPlayLink.OnBattleExtracted / BattleSystem 护驾判定（IsCompanionAttack 击杀归属 + threats 集合）；升档/加好感头顶飘字（+N ♥ 粉 / 升档金 + tier_up bark）；SaveData.companionAffinity 段 + SwitchSlot 失效
+- [x] 记忆系统（2026-09-14）：`CompanionMemorySystem`（规则驱动：类型×档位→容量/写入概率/淘汰策略，内容与功能解耦走 `companionmemoryrule.xlsx`：gift T1 容量3 随机0.5 / T3 起容量20 fifo 必记、chat_player+chat_about_ai T2 起 fifo5、battle_event T4 预留）；礼物机读 token `gift:{itemId}x{count}`；SaveData.companionMemory 段
+- [x] 人格分档（2026-09-14）：`companionpersona.xlsx`（id=companionId*10+tier，4 段关系姿态 promptAdd）→ `PromptBuilder.AppendTierPersona` 三个 Build 入口基底+档位叠加；`companionbark.xlsx` 加 minTier 列 + 高档位语录 id 118-123，`PickBark` 按 minTier≤当前档位过滤（池子累计）
+- [x] 赠礼链路（2026-09-14）：item.xlsx 加 `affinityValue`/`companionAccept` 两列（钢剑 50/1、Wheat 10/1、药水 15/1，材料 0/0）；accept=0 拒收返回 0；礼物写入记忆走规则表（T1 随机、T3 必记），好奇飘字含蓄提示不暴露判定
+- [x] LLM 记忆召回两阶段（2026-09-14）：聊天契约加 memorable/memoryType/recall 字段 + few-shot 换新；recall 非空且本会话未用过→`BuildChatSystemWithRecall` 注入 "You recall:" 记忆段二次请求；**实测决定性证据：问从未聊过的礼物，模型答出"小麦，还有三把钢剑"（只能来自召回的 gift 记忆）**
+- [x] CompanionInfoUI（2026-09-14）：prefab（AssetRaw/UI/CompanionInfoUI/）档位/进度/人格描述/记忆列表/赠礼子面板；双入口（聊天窗 Info 按钮 + 靠近 3m 提示按交互键，NPC 提示激活时避让）；ESC 链接入 SimulationInputSystem + 战斗 InputSystem
+- [x] AI NPC 动态语音（2026-09-14）：`CompanionBrain.EmitSay` 同步接字幕与 TTS；按 calm/combat/hurt 选状态 profile；OpenAI Speech API 兼容 WAV 请求、运行时解码、内存/磁盘缓存、取消旧请求、失败回退占位音
+
 ## 进行中
 
 - [ ] M2 收尾：Attack 标点集火未单独实测（与 Loot 共用分类代码 + Engage 目标覆盖，风险低）
@@ -32,9 +40,14 @@
 ## 待办
 
 - [ ] Degraded 态字幕干扰样式（M4 尾巴）
-- [ ] kill 触发台词未接线（当前无法识别队友击杀归属，需弹道链路带 killer 信息）
+- [ ] ~~kill 触发台词未接线~~ 击杀归属已通（`BattleSystem.IsCompanionAttack`，护驾好感在用），kill 台词可同法接线，待排期
+- [ ] 记忆召回详细规则待用户出方案（提案 §10 挂起；当前 LLM 驱动每会话一次，T4 档位收益方案也挂起在同节）
+- [ ] 档位附带实际收益（提案 §10 挂起，等用户方案；当前仅人格差异）
 - [ ] 队友占位视觉换正式模型；枪口改模型 Muzzle socket
 - [ ] LLM 流式 SSE（MVP 非流式，扩展位已留）
+- [ ] 设置页增加 TTS endpoint/key/model/voice/speed 可视化编辑；当前复制 `tts_config.example.json` 到 `UserSettings/tts_config.json` 配置
+- [ ] 对外发行前增加 AI 生成语音披露（设置页或首次启用提示）
+- [ ] 使用真实 TTS API Key 做在线听感、中文断句、缓存命中与 Windows/Android 真机验收
 - [ ] M5 已知瑕疵：安全态 LLM 爱刷 loot 指令（逐个拾取有效但会离开玩家去捡）；聊天输入抑制为代码层 review，未经真实键鼠 e2e
 
 ## 阻塞

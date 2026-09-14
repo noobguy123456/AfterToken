@@ -56,6 +56,15 @@ namespace GameLogic
             return player != null && attackerId == player.GetInstanceID();
         }
 
+        /// <summary>
+        /// 判断伤害来源是否为 AI 队友（队友武器开火传的 ownerId 即 CompanionEntity 的 OwnerId）。
+        /// </summary>
+        private static bool IsCompanionAttack(int attackerId)
+        {
+            var companion = CompanionSystem.Instance != null ? CompanionSystem.Instance.Companion : null;
+            return companion != null && attackerId == companion.OwnerId;
+        }
+
         private void OnEntityDamaged(DamageInfo damageInfo)
         {
             if (damageInfo == null) return;
@@ -79,6 +88,15 @@ namespace GameLogic
                                 GameEvent.Get<IHitFeedbackEvent>()?.OnHitTarget(damageInfo.IsCritical, screenPos);
                             }
                             ShowDamageNumber(damageInfo);
+                        }
+
+                        // 护驾好感：队友击杀正在追击玩家的敌人（数值/每局上限走 TbCompanionAffinityGain.protect）
+                        if (tookDamage && damageable is EnemyEntity enemy && enemy.IsDead
+                            && IsCompanionAttack(damageInfo.AttackerId)
+                            && CompanionSystem.Instance != null
+                            && CompanionSystem.Instance.Threats.Contains(enemy.GetInstanceID()))
+                        {
+                            CompanionAffinitySystem.AddFromSource("protect");
                         }
                     }
                 }

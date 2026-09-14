@@ -91,6 +91,20 @@ namespace GameLogic.AI.Llm
         }
 
         /// <summary>
+        /// 好感度档位人格追加：统一人设基底（personaPrompt）之后叠加当前档位的"关系姿态"
+        /// （TbCompanionPersona.promptAdd）。基底不变保证人格统一，档位只调关系温度。
+        /// </summary>
+        private static void AppendTierPersona(StringBuilder sb, Companion persona)
+        {
+            int companionId = persona != null ? persona.Id : CompanionAffinitySystem.DefaultCompanionId;
+            string add = CompanionPersonaConfigMgr.Instance.GetPromptAdd(companionId, CompanionAffinitySystem.GetTier(companionId));
+            if (!string.IsNullOrEmpty(add))
+            {
+                sb.Append('\n').Append(add);
+            }
+        }
+
+        /// <summary>
         /// 聊天契约 intent 白名单（prompt 文本侧）。
         /// 执行侧裁决见 <see cref="CompanionBrain.IntentNone"/> 等常量，两处取值必须一致。
         /// </summary>
@@ -135,6 +149,7 @@ namespace GameLogic.AI.Llm
         {
             var sb = new StringBuilder(2048);
             sb.Append(persona?.PersonaPrompt ?? "You are a calm battlefield companion.");
+            AppendTierPersona(sb, persona);
             sb.Append('\n');
             sb.Append(WorldSummary);
             sb.Append('\n');
@@ -195,6 +210,7 @@ namespace GameLogic.AI.Llm
         {
             var sb = new StringBuilder(2048);
             sb.Append(persona?.PersonaPrompt ?? "You are a calm battlefield companion.");
+            AppendTierPersona(sb, persona);
             sb.Append('\n');
             sb.Append(WorldSummary);
             sb.Append('\n');
@@ -253,35 +269,84 @@ namespace GameLogic.AI.Llm
 
         // ── M6 自由对话通道：玩家直接对队友说话 ──
 
-        /// <summary>对话契约说明（复用 say/intent/mood 三字段，intent 只接移动类指令）。</summary>
+        /// <summary>
+        /// 对话契约说明（复用 say/intent/mood，intent 只接移动类指令；
+        /// memorable/memoryType 用于 LLM 打标记忆筛选，recall 用于两阶段记忆召回）。
+        /// </summary>
         private const string ChatContractInstruction =
             "The player (your boss) is speaking directly to you over the radio. " +
             "Respond ONLY with a JSON object, no other text: " +
             "{\"say\": \"<your reply, in character, 80 characters max>\", " +
             "\"intent\": \"" + ChatIntentWhitelist + "\", " +
-            "\"mood\": \"calm|tense|hurt\"}. " +
+            "\"mood\": \"calm|tense|hurt\", " +
+            "\"memorable\": <true if the boss's line reveals a personal fact, preference, or an opinion about you worth remembering; else false>, " +
+            "\"memoryType\": \"chat_player|chat_about_ai|none\", " +
+            "\"recall\": [<memory types you want to look up before answering, from \"gift\"|\"chat_player\"|\"chat_about_ai\"; empty array if none>]}. " +
             "Rules: actually answer what the boss asked or react to what they said; " +
             "use intent \"follow\" or \"hold\" only if the boss clearly told you to move with them or stay put; " +
-            "otherwise intent is \"none\".";
+            "otherwise intent is \"none\"; " +
+            "memoryType is \"chat_about_ai\" when the boss evaluates or describes YOU, \"chat_player\" for facts about the boss, else \"none\"; " +
+            "only request recall when the conversation genuinely touches past gifts or past talks.";
+
+        /// <summary>召回二阶段契约：记忆已注入，禁止再次请求 recall（防循环）。</summary>
+        private const string ChatRecallPhase2Instruction =
+            "Your memories requested earlier are listed above under \"You recall\". " +
+            "Answer using them naturally. In this response the \"recall\" field MUST be an empty array.";
 
         private const string ChatFewShot =
             "Examples:\n" +
             "boss says: \"how are you holding up?\"\n" +
-            "Output: {\"say\": \"Still breathing, boss. That's the whole job.\", \"intent\": \"none\", \"mood\": \"calm\"}\n" +
+            "Output: {\"say\": \"Still breathing, boss. That's the whole job.\", \"intent\": \"none\", \"mood\": \"calm\", \"memorable\": false, \"memoryType\": \"none\", \"recall\": []}\n" +
             "boss says: \"stay here and watch the door\"\n" +
-            "Output: {\"say\": \"Holding this spot. Yell if it gets loud.\", \"intent\": \"hold\", \"mood\": \"calm\"}\n" +
+            "Output: {\"say\": \"Holding this spot. Yell if it gets loud.\", \"intent\": \"hold\", \"mood\": \"calm\", \"memorable\": false, \"memoryType\": \"none\", \"recall\": []}\n" +
             "boss says: \"stick with me\"\n" +
-            "Output: {\"say\": \"On your six, boss.\", \"intent\": \"follow\", \"mood\": \"calm\"}\n" +
-            "boss says: \"what was this place, before?\"\n" +
-            "Output: {\"say\": \"Sector seven, boss. People lived here. Before the Token.\", \"intent\": \"none\", \"mood\": \"calm\"}";
+            "Output: {\"say\": \"On your six, boss.\", \"intent\": \"follow\", \"mood\": \"calm\", \"memorable\": false, \"memoryType\": \"none\", \"recall\": []}\n" +
+            "boss says: \"I grew up in sector nine, you know\"\n" +
+            "Output: {\"say\": \"Sector nine? Rough soil, boss. Explains a lot.\", \"intent\": \"none\", \"mood\": \"calm\", \"memorable\": true, \"memoryType\": \"chat_player\", \"recall\": []}\n" +
+            "boss says: \"did you like the gift I gave you?\"\n" +
+            "Output: {\"say\": \"Gifts? Let me think...\", \"intent\": \"none\", \"mood\": \"calm\", \"memorable\": false, \"memoryType\": \"none\", \"recall\": [\"gift\"]}";
 
-        /// <summary>自由对话 system prompt：人设 + 世界观 + 对话契约 + 示例。</summary>
+        /// <summary>自由对话 system prompt：人设 + 档位姿态 + 世界观 + 对话契约 + 示例。</summary>
         public static string BuildChatSystem(Companion persona)
         {
             var sb = new StringBuilder(2048);
             sb.Append(persona?.PersonaPrompt ?? "You are a calm battlefield companion.");
+            AppendTierPersona(sb, persona);
             sb.Append('\n');
             sb.Append(WorldSummary);
+            sb.Append('\n');
+            sb.Append(ChatContractInstruction);
+            sb.Append('\n');
+            sb.Append(ChatFewShot);
+            AppendLanguageInstruction(sb);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 召回二阶段 system prompt：在 BuildChatSystem 基础上注入召回的记忆段落 + 禁再次召回指令。
+        /// memories 为空时注入"无相关记忆"说明，让模型自然带过。
+        /// </summary>
+        public static string BuildChatSystemWithRecall(Companion persona, List<CompanionMemoryEntry> memories)
+        {
+            var sb = new StringBuilder(2560);
+            sb.Append(persona?.PersonaPrompt ?? "You are a calm battlefield companion.");
+            AppendTierPersona(sb, persona);
+            sb.Append('\n');
+            sb.Append(WorldSummary);
+            sb.Append('\n');
+            if (memories != null && memories.Count > 0)
+            {
+                sb.Append("You recall:\n");
+                for (int i = 0; i < memories.Count; i++)
+                {
+                    sb.Append("- ").Append(CompanionMemorySystem.FormatForPrompt(memories[i])).Append('\n');
+                }
+            }
+            else
+            {
+                sb.Append("You searched your memory but found nothing relevant.\n");
+            }
+            sb.Append(ChatRecallPhase2Instruction);
             sb.Append('\n');
             sb.Append(ChatContractInstruction);
             sb.Append('\n');

@@ -68,7 +68,7 @@ namespace GameLogic
             }
         }
 
-        /// <summary>按权重随机抽一条台词，无匹配返回 null。</summary>
+        /// <summary>按权重随机抽一条台词，无匹配返回 null。只抽当前好感档位解锁的台词（minTier ≤ 当前档位，池子累计扩大）。</summary>
         public CompanionBark PickBark(string trigger)
         {
             var barks = GetBarks(trigger);
@@ -77,22 +77,36 @@ namespace GameLogic
                 return null;
             }
 
+            int tier = CompanionAffinitySystem.GetTier();
             int totalWeight = 0;
             for (int i = 0; i < barks.Count; i++)
             {
-                totalWeight += barks[i].Weight > 0 ? barks[i].Weight : 1;
+                if (barks[i].MinTier <= tier)
+                {
+                    totalWeight += barks[i].Weight > 0 ? barks[i].Weight : 1;
+                }
+            }
+            if (totalWeight <= 0)
+            {
+                return null;
             }
 
             int roll = UnityEngine.Random.Range(0, totalWeight);
+            CompanionBark last = null;
             for (int i = 0; i < barks.Count; i++)
             {
+                if (barks[i].MinTier > tier)
+                {
+                    continue;
+                }
+                last = barks[i];
                 roll -= barks[i].Weight > 0 ? barks[i].Weight : 1;
                 if (roll < 0)
                 {
                     return barks[i];
                 }
             }
-            return barks[barks.Count - 1];
+            return last;
         }
     }
 }

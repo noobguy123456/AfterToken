@@ -1,0 +1,20 @@
+[
+  {
+    "source": "chat",
+    "value": 2,
+    "cooldownSec": 600,
+    "perRunCap": 0
+  },
+  {
+    "source": "extract",
+    "value": 15,
+    "cooldownSec": 0,
+    "perRunCap": 1
+  },
+  {
+    "source": "protect",
+    "value": 5,
+    "cooldownSec": 0,
+    "perRunCap": 3
+  }
+]

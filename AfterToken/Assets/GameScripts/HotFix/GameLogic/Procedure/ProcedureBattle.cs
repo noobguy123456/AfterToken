@@ -17,6 +17,9 @@ namespace GameLogic
 
         protected override UniTaskVoid EnterAsync()
         {
+            // 每局开始清零好感度来源的每局计数（extract/protect 的 perRunCap）
+            CompanionAffinitySystem.ResetRunCounters();
+
             string sceneName = BattleContext.CustomSceneName;
             if (string.IsNullOrEmpty(sceneName))
             {

@@ -1,0 +1,32 @@
+{
+  "enabled": true,
+  "endpoint": "https://api.openai.com/v1",
+  "apiKey": "sk-your-key-here",
+  "model": "gpt-4o-mini-tts",
+  "voice": "coral",
+  "instructions": "Speak in an original adult female voice. Quiet, restrained and distant; soft breath, precise pronunciation, low emotional intensity, subtle melancholy. Do not imitate any existing character or performer.",
+  "speed": 0.9,
+  "timeoutSeconds": 20.0,
+  "cacheEnabled": true,
+  "profiles": [
+    {
+      "speakerId": "companion_1_calm",
+      "voice": "coral",
+      "instructions": "Speak quietly and deliberately in an original adult female voice. Restrained, distant, precise, subtly melancholic. Use gentle breath and slightly longer pauses. Do not imitate any existing character or performer.",
+      "speed": 0.88
+    },
+    {
+      "speakerId": "companion_1_combat",
+      "voice": "coral",
+      "instructions": "Speak in the same original voice, calm under pressure. Short, clear, restrained tactical delivery with little breathiness and no shouting.",
+      "speed": 1.02
+    },
+    {
+      "speakerId": "companion_1_hurt",
+      "voice": "coral",
+      "instructions": "Speak in the same original restrained voice with slight breath instability and fatigue. Stay controlled; do not exaggerate pain.",
+      "speed": 0.92
+    }
+  ],
+  "_comment": "复制为 UserSettings/tts_config.json 并填入真实 API Key。Unity 编辑器始终优先读取该 gitignored 文件，方便调音；运行时同时迁移加密副本到 persistentDataPath。正式包只读取 persistentDataPath/tts_config.json。调整 voice、instructions、speed 或 profiles 会产生新的缓存键，无需手动清缓存。"
+}

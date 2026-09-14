@@ -15,7 +15,9 @@
     ],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10001,
@@ -37,7 +39,9 @@
     ],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10002,
@@ -63,7 +67,9 @@
     ],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 50
+    "stackLimit": 50,
+    "affinityValue": 50,
+    "companionAccept": 1
   },
   {
     "id": 10003,
@@ -81,7 +87,9 @@
     ],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 10
+    "stackLimit": 10,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10004,
@@ -94,7 +102,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "icon_item_wood",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10005,
@@ -107,7 +117,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "icon_item_stone",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10006,
@@ -120,7 +132,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "icon_item_wheat",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 10,
+    "companionAccept": 1
   },
   {
     "id": 10007,
@@ -133,7 +147,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "icon_item_herb",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 10008,
@@ -146,7 +162,9 @@
     "exchangeList": [],
     "itemType": 1,
     "icon": "icon_item_potion",
-    "stackLimit": 10
+    "stackLimit": 10,
+    "affinityValue": 15,
+    "companionAccept": 1
   },
   {
     "id": 11001,
@@ -159,7 +177,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 99
+    "stackLimit": 99,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 11002,
@@ -172,7 +192,9 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 50
+    "stackLimit": 50,
+    "affinityValue": 0,
+    "companionAccept": 0
   },
   {
     "id": 11003,
@@ -185,6 +207,8 @@
     "exchangeList": [],
     "itemType": 0,
     "icon": "",
-    "stackLimit": 20
+    "stackLimit": 20,
+    "affinityValue": 0,
+    "companionAccept": 0
   }
 ]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "memoryType": "gift",
+    "minTier": 1,
+    "maxCount": 3,
+    "sampleRule": "random_evict",
+    "writeChance": 0.5
+  },
+  {
+    "id": 2,
+    "memoryType": "gift",
+    "minTier": 3,
+    "maxCount": 20,
+    "sampleRule": "fifo",
+    "writeChance": 1
+  },
+  {
+    "id": 3,
+    "memoryType": "chat_player",
+    "minTier": 2,
+    "maxCount": 5,
+    "sampleRule": "fifo",
+    "writeChance": 1
+  },
+  {
+    "id": 4,
+    "memoryType": "chat_about_ai",
+    "minTier": 2,
+    "maxCount": 5,
+    "sampleRule": "fifo",
+    "writeChance": 1
+  },
+  {
+    "id": 5,
+    "memoryType": "battle_event",
+    "minTier": 4,
+    "maxCount": 5,
+    "sampleRule": "fifo",
+    "writeChance": 1
+  }
+]

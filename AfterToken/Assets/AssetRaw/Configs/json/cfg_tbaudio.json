@@ -88,6 +88,17 @@
     "sceneKey": ""
   },
   {
+    "id": 18,
+    "name": "sfx_fire_sniper",
+    "audioType": "sfx",
+    "volume": 0.9,
+    "loop": false,
+    "spatial": true,
+    "minDist": 3,
+    "maxDist": 55,
+    "sceneKey": ""
+  },
+  {
     "id": 14,
     "name": "sfx_reload",
     "audioType": "sfx",

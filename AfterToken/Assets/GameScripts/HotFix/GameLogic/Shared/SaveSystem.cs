@@ -135,6 +135,8 @@ namespace GameLogic
             Warehouse.InvalidateCache();
             QuestSystem.InvalidateCache();
             SkillSystem.InvalidateCache();
+            CompanionAffinitySystem.InvalidateCache();
+            CompanionMemorySystem.InvalidateCache();
             SensitivitySetting.InvalidateCache();
             VolumeSetting.InvalidateCache();
             QualitySetting.InvalidateCache();
@@ -282,6 +284,52 @@ namespace GameLogic
         public DialogueSaveData dialogue = new DialogueSaveData();
         public QuestSaveData quest = new QuestSaveData();
         public SkillSaveData skill = new SkillSaveData();
+        public CompanionAffinitySaveData companionAffinity = new CompanionAffinitySaveData();
+        public CompanionMemorySaveData companionMemory = new CompanionMemorySaveData();
+    }
+
+    /// <summary>
+    /// AI 队友好感度存档段：companionId → 累计好感经验值。
+    /// </summary>
+    [Serializable]
+    public class CompanionAffinitySaveData
+    {
+        public bool initialized;
+        public List<CompanionAffinityEntry> entries = new List<CompanionAffinityEntry>();
+    }
+
+    [Serializable]
+    public class CompanionAffinityEntry
+    {
+        public int companionId;
+        public int exp;
+    }
+
+    /// <summary>
+    /// AI 队友记忆存档段：companionId → 记忆列表。content 只存事实文本（物品名/玩家原句），
+    /// 不存 LLM 生成文本；类型按字符串存（策划加类型不动存档结构）。
+    /// </summary>
+    [Serializable]
+    public class CompanionMemorySaveData
+    {
+        public bool initialized;
+        public List<CompanionMemoryBucket> buckets = new List<CompanionMemoryBucket>();
+    }
+
+    [Serializable]
+    public class CompanionMemoryBucket
+    {
+        public int companionId;
+        public List<CompanionMemoryEntry> memories = new List<CompanionMemoryEntry>();
+    }
+
+    [Serializable]
+    public class CompanionMemoryEntry
+    {
+        /// <summary>记忆类型（companionmemoryrule.xlsx 的 memoryType：gift/chat_player/chat_about_ai/battle_event）。</summary>
+        public string type;
+        public string content;
+        public long timestamp;
     }
 
     /// <summary>

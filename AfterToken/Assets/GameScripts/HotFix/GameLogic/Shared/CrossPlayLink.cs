@@ -30,6 +30,9 @@ namespace GameLogic
 
             // 任务系统 extract 目标推进（与奖励发放同一时机）
             QuestSystem.OnBattleExtracted(levelId);
+
+            // 队友好感：共同成功撤离（数值/每局上限走 TbCompanionAffinityGain.extract）
+            CompanionAffinitySystem.AddFromSource("extract");
             return result;
         }
     }
