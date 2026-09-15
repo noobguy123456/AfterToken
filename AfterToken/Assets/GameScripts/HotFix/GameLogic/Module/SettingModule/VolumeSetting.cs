@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace GameLogic
@@ -21,12 +23,14 @@ namespace GameLogic
         private const float DEFAULT_VOICE_VALUE = 0.8f;
         private const float MIN_VALUE = 0f;
         private const float MAX_VALUE = 1f;
+        private const int SAVE_DEBOUNCE_MILLISECONDS = 300;
 
         private static float? _cachedMaster;
         private static float? _cachedMusic;
         private static float? _cachedSound;
         private static float? _cachedVoicePlayer;
         private static float? _cachedVoiceNpc;
+        private static CancellationTokenSource _saveDebounceCts;
 
         /// <summary>
         /// 主音量（AudioListener.volume）。
@@ -50,7 +54,7 @@ namespace GameLogic
                 var d = SaveSystem.Data.settings;
                 d.masterVolumeInitialized = true;
                 d.masterVolume = _cachedMaster.Value;
-                SaveSystem.Flush();
+                ScheduleFlush();
 
                 ApplyMaster(_cachedMaster.Value);
                 OnChanged?.Invoke();
@@ -81,7 +85,7 @@ namespace GameLogic
                 var d = SaveSystem.Data.settings;
                 d.musicVolumeInitialized = true;
                 d.musicVolume = _cachedMusic.Value;
-                SaveSystem.Flush();
+                ScheduleFlush();
 
                 ApplyMusic(_cachedMusic.Value);
                 OnChanged?.Invoke();
@@ -111,7 +115,7 @@ namespace GameLogic
                 var d = SaveSystem.Data.settings;
                 d.soundVolumeInitialized = true;
                 d.soundVolume = _cachedSound.Value;
-                SaveSystem.Flush();
+                ScheduleFlush();
 
                 ApplySound(_cachedSound.Value);
                 OnChanged?.Invoke();
@@ -139,7 +143,7 @@ namespace GameLogic
                 var d = SaveSystem.Data.settings;
                 d.voicePlayerVolumeInitialized = true;
                 d.voicePlayerVolume = _cachedVoicePlayer.Value;
-                SaveSystem.Flush();
+                ScheduleFlush();
 
                 OnChanged?.Invoke();
             }
@@ -166,7 +170,7 @@ namespace GameLogic
                 var d = SaveSystem.Data.settings;
                 d.voiceNpcVolumeInitialized = true;
                 d.voiceNpcVolume = _cachedVoiceNpc.Value;
-                SaveSystem.Flush();
+                ScheduleFlush();
 
                 OnChanged?.Invoke();
             }
@@ -193,6 +197,7 @@ namespace GameLogic
             if (GameModule.Audio != null)
             {
                 GameModule.Audio.VoiceVolume = 1f;
+                GameModule.Audio.VoiceEnable = true;
             }
         }
 
@@ -208,6 +213,8 @@ namespace GameLogic
         {
             if (GameModule.Audio != null)
             {
+                // 新设置体系由 0..1 滑条表达静音，不继承旧 PlayerPrefs 的 muted 开关。
+                GameModule.Audio.MusicEnable = true;
                 GameModule.Audio.MusicVolume = value;
             }
         }
@@ -216,8 +223,56 @@ namespace GameLogic
         {
             if (GameModule.Audio != null)
             {
+                GameModule.Audio.SoundEnable = true;
+                GameModule.Audio.UISoundEnable = true;
                 GameModule.Audio.SoundVolume = value;
+                // 当前设置页没有单独的 UI 音量，按钮音效应跟随“音效音量”。
+                GameModule.Audio.UISoundVolume = value;
             }
+        }
+
+        private static void ScheduleFlush()
+        {
+            _saveDebounceCts?.Cancel();
+            var cts = new CancellationTokenSource();
+            _saveDebounceCts = cts;
+            FlushAfterDelayAsync(cts).Forget();
+        }
+
+        private static async UniTaskVoid FlushAfterDelayAsync(CancellationTokenSource cts)
+        {
+            try
+            {
+                await UniTask.Delay(SAVE_DEBOUNCE_MILLISECONDS, ignoreTimeScale: true,
+                    cancellationToken: cts.Token);
+                SaveSystem.Flush();
+            }
+            catch (OperationCanceledException)
+            {
+                // 新滑条值覆盖旧请求，最终值会由新的延迟任务统一落盘。
+            }
+            finally
+            {
+                if (ReferenceEquals(_saveDebounceCts, cts))
+                {
+                    _saveDebounceCts = null;
+                }
+                cts.Dispose();
+            }
+        }
+
+        /// <summary>设置页关闭或应用退出时立即提交尚未落盘的音量。</summary>
+        public static void FlushPending()
+        {
+            var cts = _saveDebounceCts;
+            if (cts == null)
+            {
+                return;
+            }
+
+            _saveDebounceCts = null;
+            cts.Cancel();
+            SaveSystem.Flush();
         }
 
         /// <summary>
@@ -225,6 +280,8 @@ namespace GameLogic
         /// </summary>
         public static void InvalidateCache()
         {
+            _saveDebounceCts?.Cancel();
+            _saveDebounceCts = null;
             _cachedMaster = null;
             _cachedMusic = null;
             _cachedSound = null;

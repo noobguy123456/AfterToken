@@ -200,6 +200,7 @@ namespace GameLogic
 
         private static void Release()
         {
+            VolumeSetting.FlushPending();
             CursorManager.Release();
             EnemyRegistry.Clear();
             PortalRegistry.Clear();

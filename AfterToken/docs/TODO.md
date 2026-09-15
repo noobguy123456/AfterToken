@@ -75,7 +75,7 @@
 | 事件系统 | 🟡 | P0 | - | `docs/modules/infra/event-system/` | 战斗事件已定义，待补齐 `ILevelEvent`/`IBattleResultEvent`/经营/共享事件 |
 | 对象池 | 🟡 | P1 | - | `docs/modules/infra/pool-system/` | 通用池已有，待按类型拆分与完善 Preload/ClearAll |
 | 流程系统 | ✅ | - | - | `docs/modules/infra/procedure-system/` | `GameplayProcedureBase` + 主菜单/基地(经营)/战斗；大厅流程已废弃，选关挪进基地 |
-| 音频系统 | 🟡 | P1 | - | `docs/modules/infra/audio-system/` | 2026-09-14 更新：AudioSystem 门面 + TbAudio 表驱动场景 BGM（交叉淡入淡出）+ 战斗态切战斗曲/duck 0.5/脱战 3s 恢复；SFX 2D/3D/UI；Voice 双子通道（玩家/NPC 独立音量、对话跳过停语音）与 OpenAI Speech API 兼容动态 TTS（状态 profile、WAV 解码、双层缓存、失败回退）；四路音量持久化 + SettingsUI 滑条；待正式资源替换、真实 API/真机听感验收与 TTS 设置 UI |
+| 音频系统 | 🟡 | P1 | - | `docs/modules/infra/audio-system/` | 2026-09-15 加固：场景切换清空战斗威胁/duck，快速三连切 BGM 无 pending-load 静音；Sound 扩为 24 agent，非 BGM 短音频预加载与句柄复用，修复 Loading agent 重复分配；UI 音效跟随 Sound，语音滑条实时生效，音量写盘 300ms 防抖；BGM 改 Streaming。待正式资源、混音/听感、音效 priority/maxInstances 表配置与自动化回归；TTS 作为后续优化项 |
 | 特效系统 | 🟡 | P1 | - | `docs/modules/infra/effect-system/` | M1 已落地（2026-09-06），同日去配置表简化：TbEffect 拆除，元数据改挂 prefab EffectDriver 序列化字段，播放按 `EffectIds` 地址常量；EffectSystem+池化+IEffectEvent，爆炸在 Explosion.prefab（shader/材质落 AssetRaw 闭环引用链，消除 Shader.Find 手动维护点）；M2 已落地（2026-09-07）：枪口火焰/命中火花（敌/环境）/拾取光晕接入并实测，爆炸补齐三段式（预警压缩闪光+焦痕 decal）；剩 M3 编辑器预览工具 |
 
 ### 共享系统
@@ -734,3 +734,11 @@ Luban 配置表数据补充
 - 可调项：`voice` 控制基础音色，`instructions` 控制原创的安静/克制/疏离表达，`speed` 控制语速，`profiles` 分别覆盖平静/战斗/受伤。任一参数改变都会产生新缓存键，不需手动清缓存。
 - 验证：Unity 当前编辑器强制重导入并完成 `GameLogic.dll` 重编译，错误控制台为 0；`tts_config.example.json` 通过 JSON 解析。未调用真实 TTS（仓库不含 API Key），在线音色与真机缓存留用户配置后验收。
 - 待办：设置页补 TTS 可视化配置与“AI 生成语音、非真人录音”披露；真实 API 验证中文断句、声音 profile、缓存命中及 Windows/Android 路径。
+
+## 2026-09-15 音频管理稳定性加固
+- BGM：`PlaySceneBgm` 在场景键变化时清空 `_threats`、`_inCombat`、脱战计时和 duck，避免战斗状态跨场景/跨局残留；快速连续切歌会先释放上一轮淡出 agent，再申请新曲，规避两路 Music agent 的 pending-load 静音竞态；淡出改为记录固定起始音量的线性插值。
+- SFX/资源：Sound agent 从 4 提升到 24；当前所有非 BGM 短音频在 `AudioSystem.Awake` 预加载，播放使用 `bInPool` 复用 YooAsset 句柄；修复 `AudioCategory` 把 Loading agent 因 `AudioData==null` 误判为空闲的问题，并处理预加载/首次播放并发完成时的重复句柄。
+- 音量：Sound 滑条同步控制 UISound；旧 PlayerPrefs muted 开关不再压住新滑条；播放中的静态/动态语音实时响应玩家/NPC 子通道音量。连续拖动不再每帧完整写存档，改为 300ms 防抖，并在设置页销毁或 GameApp 退出时提交。
+- 导入：四条 BGM 改为 Streaming + Load In Background；短 SFX 保持 Decompress On Load。正式资源替换时需继续保持分类导入策略并增加平台压缩覆盖。
+- 验证：Unity 6000.0.76f1 完成 `GameLogic.dll` 与 `TEngine.Runtime.dll` 重编译，无项目 C# 或运行时错误（控制台另有 Unity AI Assistant Relay 自身的 `connection.state_change`）；Play Mode 快速 `MainMenu→Simulation→Battle→Combat` 后正确播放 `bgm_combat`，切回 Simulation 后 `inCombat=false/threats=0/duck=1` 且播放 `bgm_base`；12 次同帧 SMG 请求得到 12 路同时播放（Sound 总通道 24）；Sound/UISound 音量同步验证通过，测试音量已恢复为 1.0。
+- 后续：正式音效扩量前给 `audio.xlsx` 增加 `preload/priority/maxInstances`，补配置校验与 PlayMode 回归测试；动态 TTS 暂列后续优化，不作为当前音频模块验收阻塞项。

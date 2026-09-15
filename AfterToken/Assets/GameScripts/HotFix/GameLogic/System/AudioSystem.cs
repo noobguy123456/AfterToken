@@ -45,6 +45,7 @@ namespace GameLogic
         private AudioAgent _bgmCurrent;
         private AudioAgent _bgmFading; // 正在淡出的旧 agent
         private float _bgmFadeTimer;
+        private float _bgmFadeStartVolume;
         private float _bgmTargetVolume = 1f; // 表配音量（fade 完成后的目标）
         private string _sceneKey;
         private float _duckFactor = 1f;
@@ -53,6 +54,7 @@ namespace GameLogic
 
         // ── 语音状态 ──
         private readonly Dictionary<VoiceChannel, AudioAgent> _voiceAgents = new Dictionary<VoiceChannel, AudioAgent>(2);
+        private readonly Dictionary<VoiceChannel, float> _voiceBaseVolumes = new Dictionary<VoiceChannel, float>(2);
         private readonly Dictionary<VoiceChannel, AudioSource> _dynamicVoiceSources = new Dictionary<VoiceChannel, AudioSource>(2);
         private CancellationTokenSource _voiceCts;
         private CancellationTokenSource _npcVoiceRequestCts;
@@ -76,9 +78,17 @@ namespace GameLogic
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
             _voiceCts = new CancellationTokenSource();
             ReloadVoiceProvider();
+            PreloadRuntimeAudio();
+            VolumeSetting.OnChanged += OnVolumeSettingChanged;
 
             _eventMgr.AddEvent<int, string, string>(IEnemyEvent_Event.OnEnemyStateChanged, OnEnemyStateChanged);
             _eventMgr.AddEvent<int, int>(IEnemyEvent_Event.OnEnemyDied, OnEnemyDied);
@@ -90,6 +100,7 @@ namespace GameLogic
 
         private void OnDestroy()
         {
+            VolumeSetting.OnChanged -= OnVolumeSettingChanged;
             _eventMgr.Clear();
             _voiceCts?.Cancel();
             _voiceCts?.Dispose();
@@ -120,7 +131,7 @@ namespace GameLogic
             {
                 _bgmFadeTimer += dt;
                 float t = Mathf.Clamp01(_bgmFadeTimer / BgmFadeSeconds);
-                _bgmFading.Volume = Mathf.Lerp(_bgmFading.Volume, 0f, t);
+                _bgmFading.Volume = Mathf.Lerp(_bgmFadeStartVolume, 0f, t);
                 if (_bgmCurrent != null)
                 {
                     _bgmCurrent.Volume = Mathf.Lerp(0f, _bgmTargetVolume * _duckFactor, t);
@@ -149,9 +160,15 @@ namespace GameLogic
         /// <summary>切场景 BGM（Procedure 在场景加载完成后调用）。同键重复调用忽略。</summary>
         public void PlaySceneBgm(string sceneKey)
         {
-            if (sceneKey == _sceneKey && _bgmCurrent != null)
+            bool sceneChanged = sceneKey != _sceneKey;
+            if (!sceneChanged && _bgmCurrent != null)
             {
                 return;
+            }
+
+            if (sceneChanged)
+            {
+                ResetCombatStateForSceneChange();
             }
             _sceneKey = sceneKey;
 
@@ -174,6 +191,16 @@ namespace GameLogic
         private void CrossfadeTo(Audio cfg)
         {
             _bgmTargetVolume = cfg.Volume > 0.001f ? cfg.Volume : 1f;
+
+            // 只有两个 Music agent。快速连续切歌时先释放上一轮淡出源，避免底层
+            // 把新曲作为 pendingLoad 塞回该 agent 后又被 Stop(false) 卡死。
+            if (_bgmFading != null)
+            {
+                _bgmFading.Stop(fadeout: false);
+                _bgmFading = null;
+            }
+
+            var previousCurrent = _bgmCurrent;
             var agent = GameModule.Audio.Play(TEngine.AudioType.Music, cfg.Name, bLoop: true, volume: 0f, bAsync: true);
             if (agent == null)
             {
@@ -181,7 +208,7 @@ namespace GameLogic
             }
 
             // Play 可能复用正在播放的 agent（同 agent 直接换曲，不交叉）
-            if (agent == _bgmCurrent)
+            if (agent == previousCurrent)
             {
                 _bgmCurrent = agent;
                 _bgmFading = null;
@@ -189,13 +216,10 @@ namespace GameLogic
                 return;
             }
 
-            if (_bgmFading != null)
-            {
-                _bgmFading.Stop(fadeout: false);
-            }
-            _bgmFading = _bgmCurrent;
+            _bgmFading = previousCurrent;
             _bgmCurrent = agent;
             _bgmFadeTimer = 0f;
+            _bgmFadeStartVolume = _bgmFading != null ? _bgmFading.Volume : 0f;
 
             if (_bgmFading == null)
             {
@@ -210,6 +234,14 @@ namespace GameLogic
             {
                 _bgmCurrent.Volume = _bgmTargetVolume * _duckFactor;
             }
+        }
+
+        private void ResetCombatStateForSceneChange()
+        {
+            _threats.Clear();
+            _inCombat = false;
+            _combatExitTimer = 0f;
+            _duckFactor = 1f;
         }
 
         // ── 战斗态（需求5：切战斗 BGM + duck 突出战场信息）──
@@ -278,7 +310,8 @@ namespace GameLogic
                 Log.Warning($"[AudioSystem] 未找到音频配置: {audioName}");
                 return;
             }
-            var agent = GameModule.Audio.Play(TEngine.AudioType.Sound, cfg.Name, cfg.Loop, cfg.Volume, bAsync: true);
+            var agent = GameModule.Audio.Play(TEngine.AudioType.Sound, cfg.Name, cfg.Loop, cfg.Volume,
+                bAsync: true, bInPool: true);
             if (agent != null)
             {
                 // agent 池复用：清掉上一次 Play3D 留下的空间化设置
@@ -295,7 +328,8 @@ namespace GameLogic
                 Log.Warning($"[AudioSystem] 未找到音频配置: {audioName}");
                 return;
             }
-            var agent = GameModule.Audio.Play(TEngine.AudioType.Sound, cfg.Name, cfg.Loop, cfg.Volume, bAsync: true);
+            var agent = GameModule.Audio.Play(TEngine.AudioType.Sound, cfg.Name, cfg.Loop, cfg.Volume,
+                bAsync: true, bInPool: true);
             if (agent == null)
             {
                 return;
@@ -318,7 +352,8 @@ namespace GameLogic
             {
                 return; // UI 音效静默缺失，不刷警告
             }
-            GameModule.Audio.Play(TEngine.AudioType.UISound, cfg.Name, cfg.Loop, cfg.Volume, bAsync: true);
+            GameModule.Audio.Play(TEngine.AudioType.UISound, cfg.Name, cfg.Loop, cfg.Volume,
+                bAsync: true, bInPool: true);
         }
 
         // ── Voice（需求4：跳过即停；需求6：AI TTS 预留）──
@@ -385,10 +420,11 @@ namespace GameLogic
                 return;
             }
             var agent = GameModule.Audio.Play(TEngine.AudioType.Voice, cfg.Name, bLoop: false,
-                volume: cfg.Volume * GetVoiceChannelVolume(channel), bAsync: true);
+                volume: cfg.Volume * GetVoiceChannelVolume(channel), bAsync: true, bInPool: true);
             if (agent != null)
             {
                 _voiceAgents[channel] = agent;
+                _voiceBaseVolumes[channel] = cfg.Volume;
             }
         }
 
@@ -417,6 +453,35 @@ namespace GameLogic
             Log.Info(config.IsValid ? "[AudioSystem] 云端 TTS 已启用。" : "[AudioSystem] 云端 TTS 未配置，使用本地语音/占位音。");
         }
 
+        private void PreloadRuntimeAudio()
+        {
+            var names = AudioConfigMgr.Instance.GetRuntimePreloadNames();
+            if (names.Count > 0)
+            {
+                GameModule.Audio.PutInAudioPool(names);
+            }
+        }
+
+        private void OnVolumeSettingChanged()
+        {
+            foreach (var pair in _voiceAgents)
+            {
+                if (pair.Value != null && !pair.Value.IsFree
+                    && _voiceBaseVolumes.TryGetValue(pair.Key, out float baseVolume))
+                {
+                    pair.Value.Volume = baseVolume * GetVoiceChannelVolume(pair.Key);
+                }
+            }
+
+            foreach (var pair in _dynamicVoiceSources)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.volume = GetVoiceChannelVolume(pair.Key);
+                }
+            }
+        }
+
         private float GetVoiceChannelVolume(VoiceChannel channel)
         {
             return channel == VoiceChannel.Player ? VolumeSetting.VoicePlayer : VolumeSetting.VoiceNpc;
@@ -443,6 +508,7 @@ namespace GameLogic
                 agent.Stop(fadeout: false);
             }
             _voiceAgents.Remove(channel);
+            _voiceBaseVolumes.Remove(channel);
         }
 
         private void StopDynamicVoice(VoiceChannel channel)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GameConfig.cfg;
 
 namespace GameLogic
@@ -57,6 +58,30 @@ namespace GameLogic
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 运行期常用短音频。当前表规模很小，统一预加载非 BGM，避免首次连发时重复异步加载；
+        /// 正式资源扩量后可在表中增加 preload 字段进一步细分。
+        /// </summary>
+        public List<string> GetRuntimePreloadNames()
+        {
+            var result = new List<string>();
+            var list = ConfigSystem.Instance.Tables.TbAudio.DataList;
+            if (list == null)
+            {
+                return result;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                var audio = list[i];
+                if (audio != null && audio.AudioType != "bgm" && !string.IsNullOrEmpty(audio.Name))
+                {
+                    result.Add(audio.Name);
+                }
+            }
+            return result;
         }
     }
 }

@@ -131,7 +131,9 @@ namespace TEngine
 
             for (int i = 0; i < AudioAgents.Count; i++)
             {
-                if (AudioAgents[i].AudioData?.AssetHandle == null || AudioAgents[i].IsFree)
+                // Loading 状态下 AudioData 仍为空，但该 agent 正在使用，不能再次分配。
+                // IsFree 已覆盖从未使用（None）和播放结束（End）两种真正空闲状态。
+                if (AudioAgents[i] == null || AudioAgents[i].IsFree)
                 {
                     freeChannel = i;
                     break;

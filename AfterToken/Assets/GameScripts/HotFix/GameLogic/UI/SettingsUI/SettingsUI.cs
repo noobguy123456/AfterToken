@@ -377,6 +377,7 @@ namespace GameLogic
             SniperAimModeSetting.Save();
             KeyBindingSetting.Save();
             CrosshairSetting.Save();
+            VolumeSetting.FlushPending();
             base.OnDestroy();
         }
 

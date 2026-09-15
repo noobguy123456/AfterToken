@@ -87,7 +87,10 @@ namespace TEngine
             {
                 if (_source != null)
                 {
-                    return _audioAgentRuntimeState == AudioAgentRuntimeState.End;
+                    // 预创建但尚未使用的 agent（None）也是空闲；Loading 绝不能按
+                    // AudioData==null 判为空闲，否则同帧异步播放会反复覆盖 pendingLoad。
+                    return _audioAgentRuntimeState == AudioAgentRuntimeState.None
+                           || _audioAgentRuntimeState == AudioAgentRuntimeState.End;
                 }
                 else
                 {
@@ -312,11 +315,21 @@ namespace TEngine
         /// <param name="handle">资源操作句柄。</param>
         void OnAssetLoadComplete(AssetHandle handle)
         {
-            if (handle != null)
+            if (handle != null && _inPool)
             {
-                if (_inPool)
+                string address = handle.GetAssetInfo().Address;
+                if (_audioModule.AudioClipPool.TryGetValue(address, out var pooledHandle))
                 {
-                    _audioModule.AudioClipPool.TryAdd(handle.GetAssetInfo().Address, handle);
+                    // 预加载和首次播放可能并发完成。统一改用池内句柄，并释放重复句柄。
+                    if (!object.ReferenceEquals(pooledHandle, handle))
+                    {
+                        handle.Dispose();
+                        handle = pooledHandle;
+                    }
+                }
+                else
+                {
+                    _audioModule.AudioClipPool.Add(address, handle);
                 }
             }
 

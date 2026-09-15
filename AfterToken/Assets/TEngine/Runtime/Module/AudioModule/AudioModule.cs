@@ -508,7 +508,25 @@ namespace TEngine
                 if (AudioClipPool != null && !AudioClipPool.ContainsKey(path))
                 {
                     AssetHandle assetData = _resourceModule.LoadAssetAsyncHandle<AudioClip>(path);
-                    assetData.Completed += handle => { AudioClipPool?.Add(path, handle); };
+                    assetData.Completed += handle =>
+                    {
+                        if (handle == null)
+                        {
+                            return;
+                        }
+
+                        if (AudioClipPool == null)
+                        {
+                            handle.Dispose();
+                            return;
+                        }
+
+                        // 预加载与首次播放并发完成时只保留一个句柄，避免重复 Add 异常和泄漏。
+                        if (!AudioClipPool.TryAdd(path, handle))
+                        {
+                            handle.Dispose();
+                        }
+                    };
                 }
             }
         }
